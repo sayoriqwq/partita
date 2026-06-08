@@ -16,6 +16,15 @@ from skill_frontmatter import fail, parse_frontmatter, parse_when_to_use_keyword
 SKILL_REF_RE = re.compile(r"skills/([a-z][a-z0-9_-]*)/SKILL\.md")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 URL_PREFIXES = ("http://", "https://", "mailto:", "ftp://", "tel:", "data:")
+MINI_WAZA_MARKER = "🧭"
+SKILL_CONTRACT_SECTIONS = (
+    "## Capability",
+    "## Trigger",
+    "## Soft Boundary",
+    "## Hard Boundary",
+    "## Workflow",
+    "## Validation",
+)
 
 
 def skill_files(root: Path) -> list[Path]:
@@ -25,6 +34,7 @@ def skill_files(root: Path) -> list[Path]:
 def check_skill_files(root: Path) -> dict[str, str]:
     descriptions: dict[str, str] = {}
     for path in skill_files(root):
+        text = path.read_text()
         fields = parse_frontmatter(path)
         name = fields["name"]
         if name != path.parent.name:
@@ -39,6 +49,11 @@ def check_skill_files(root: Path) -> dict[str, str]:
             fail(f"MISSING when_to_use: {path}")
         if not fields["dispatch_intent"]:
             fail(f"MISSING dispatch_intent: {path}")
+        if MINI_WAZA_MARKER not in text:
+            fail(f"MISSING MINI-WAZA MARKER INSTRUCTION: {path}")
+        missing_sections = [section for section in SKILL_CONTRACT_SECTIONS if section not in text]
+        if missing_sections:
+            fail(f"MISSING SKILL CONTRACT SECTIONS: {path} missing {missing_sections}")
         descriptions[name] = description
         parse_when_to_use_keywords(fields["when_to_use"])
         print(f"ok: {path.as_posix()}")
@@ -81,6 +96,9 @@ def check_routing(root: Path, skills: set[str]) -> None:
     stale = refs - skills
     if stale:
         fail(f"STALE SKILL REFERENCES: {sorted(stale)}")
+    for path in (root / "scripts" / "dispatcher.md", root / "skills" / "RESOLVER.md"):
+        if MINI_WAZA_MARKER not in path.read_text():
+            fail(f"MISSING MINI-WAZA MARKER: {path.relative_to(root)}")
     print(f"ok: routing references are valid for {len(skills)} skills")
 
 
@@ -90,6 +108,7 @@ def check_rules(root: Path) -> None:
         root / "rules" / "chinese.md",
         root / "rules" / "durable-context.md",
         root / "rules" / "routing.md",
+        root / "rules" / "skill-authoring.md",
     ]
     for path in required:
         if not path.exists():

@@ -29,6 +29,7 @@ This repo does not own:
 ## Current Rule
 
 - Do not add a skill unless the user explicitly defines it.
+- Before adding a skill, apply `rules/skill-authoring.md`.
 - Do not reconstruct Waza's old skill taxonomy.
 - Keep zero skills as a valid framework state.
 - Keep shared rules short and reusable.

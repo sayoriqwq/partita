@@ -35,6 +35,8 @@ make package
 
 Only add a skill after the user defines the workflow.
 
+Design the skill from `rules/skill-authoring.md` before writing `SKILL.md`.
+
 Minimum shape:
 
 ```text
