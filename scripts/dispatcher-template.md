@@ -5,8 +5,8 @@ description: "Dispatcher for user-defined Mini-Waza workflow skills. Use when a 
 
 # Mini-Waza Dispatcher
 
-Mini-Waza currently has no predefined skills. Match only against skills that
-exist in the routing table.
+Mini-Waza is a Codex plugin with no predefined workflow skills. Match only
+against skills that exist in the routing table.
 
 ## Routing Table
 

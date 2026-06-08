@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Mini-Waza framework and future user-defined skills."""
+"""Validate Mini-Waza Codex plugin framework and future skills."""
 
 from __future__ import annotations
 
@@ -46,42 +46,32 @@ def check_skill_files(root: Path) -> dict[str, str]:
     return descriptions
 
 
-def check_marketplace(root: Path, version: str, skills: set[str], descriptions: dict[str, str]) -> None:
-    path = root / ".claude-plugin" / "marketplace.json"
+def check_plugin_manifest(root: Path, version: str) -> None:
+    path = root / ".codex-plugin" / "plugin.json"
     data = json.loads(path.read_text())
     if data.get("name") != "mini-waza":
-        fail("INVALID MARKETPLACE: name must be mini-waza")
-    plugins = data.get("plugins")
-    if not isinstance(plugins, list):
-        fail("INVALID MARKETPLACE: plugins must be a list")
-
-    seen: set[str] = set()
-    per_skill: set[str] = set()
-    for entry in plugins:
-        name = entry.get("name")
-        source = entry.get("source")
-        if not name or name in seen:
-            fail(f"INVALID MARKETPLACE ENTRY: {entry!r}")
-        seen.add(name)
-        if entry.get("version") != version:
-            fail(f"VERSION DRIFT: marketplace {name} != VERSION {version}")
-        if name == "mini-waza":
-            if source != "./":
-                fail("INVALID MARKETPLACE: bundle source must be ./")
-            continue
-        if not name.startswith("mini-waza-"):
-            fail(f"INVALID MARKETPLACE PLUGIN NAME: {name}")
-        skill = name.removeprefix("mini-waza-")
-        if source != f"./skills/{skill}":
-            fail(f"WRONG SOURCE: {name}")
-        if skill not in descriptions:
-            fail(f"MISSING SKILL DIRECTORY: {skill}")
-        per_skill.add(skill)
-
-    missing = skills - per_skill
-    if missing:
-        fail(f"NOT IN MARKETPLACE: {sorted(missing)}")
-    print(f"ok: marketplace covers {len(skills)} skills")
+        fail("INVALID PLUGIN MANIFEST: name must be mini-waza")
+    if data.get("version") != version:
+        fail(f"VERSION DRIFT: plugin.json != VERSION {version}")
+    if data.get("skills") != "./skills/":
+        fail("INVALID PLUGIN MANIFEST: skills must be ./skills/")
+    interface = data.get("interface")
+    if not isinstance(interface, dict):
+        fail("INVALID PLUGIN MANIFEST: interface must be an object")
+    for field in ("displayName", "shortDescription", "longDescription", "developerName", "category"):
+        if not isinstance(interface.get(field), str) or not interface[field].strip():
+            fail(f"INVALID PLUGIN MANIFEST: interface.{field} is required")
+    capabilities = interface.get("capabilities")
+    if not isinstance(capabilities, list) or not all(
+        isinstance(item, str) and item.strip() for item in capabilities
+    ):
+        fail("INVALID PLUGIN MANIFEST: interface.capabilities must be strings")
+    prompts = interface.get("defaultPrompt")
+    if not isinstance(prompts, list) or not all(
+        isinstance(item, str) and item.strip() for item in prompts
+    ):
+        fail("INVALID PLUGIN MANIFEST: interface.defaultPrompt must be strings")
+    print("ok: Codex plugin manifest")
 
 
 def check_routing(root: Path, skills: set[str]) -> None:
@@ -99,7 +89,6 @@ def check_rules(root: Path) -> None:
         root / "rules" / "anti-patterns.md",
         root / "rules" / "chinese.md",
         root / "rules" / "durable-context.md",
-        root / "rules" / "english.md",
         root / "rules" / "routing.md",
     ]
     for path in required:
@@ -142,7 +131,7 @@ def main() -> int:
 
     descriptions = check_skill_files(root)
     skills = set(descriptions)
-    check_marketplace(root, version, skills, descriptions)
+    check_plugin_manifest(root, version)
     check_routing(root, skills)
     check_rules(root)
     check_markdown_links(root)

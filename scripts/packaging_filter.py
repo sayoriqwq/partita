@@ -7,8 +7,7 @@ import sys
 from pathlib import Path
 
 EXCLUDE_RE = re.compile(
-    r"(^skills/[^/]+/SKILL\.md$"
-    r"|(^|/)__pycache__/"
+    r"((^|/)__pycache__/"
     r"|\.pyc$"
     r"|(^|/)\.DS_Store$)"
 )

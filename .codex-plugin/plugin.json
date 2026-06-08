@@ -1,0 +1,28 @@
+{
+  "name": "mini-waza",
+  "version": "0.1.0",
+  "description": "Codex plugin skeleton for user-defined workflow skills.",
+  "author": {
+    "name": "sayori"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "skills",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Mini-Waza",
+    "shortDescription": "A minimal Codex skill framework",
+    "longDescription": "Mini-Waza is a Codex plugin skeleton for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
+    "developerName": "sayori",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Add a custom workflow skill"
+    ]
+  }
+}

@@ -4,16 +4,16 @@
 
 ## Project
 
-`mini-waza` is a customized Waza framework fork.
+`mini-waza` is a Codex plugin skeleton for user-defined workflow skills.
 
-The first baseline intentionally ships no skills. The framework is copied from
-Waza, then reduced so the user can define their own skill set later without
-inheriting Waza's eight-skill taxonomy.
+The first baseline intentionally ships no skills. Users add their own skills
+later under `skills/<name>/SKILL.md`.
 
 ## Boundaries
 
 This repo owns:
 
+- Codex plugin metadata under `.codex-plugin/plugin.json`;
 - skill framework shape;
 - resolver and dispatcher metadata;
 - rules that can be shared across future skills;
@@ -23,17 +23,17 @@ This repo owns:
 This repo does not own:
 
 - Waza's `think/design/check/hunt/write/learn/read/health` skill contents;
-- docwarden project-context persistence;
-- contexta runtime resolve/assemble/bind/inject;
-- isomorph primitive, locator, vocabulary, or projection.
+- Claude Code plugin marketplace metadata;
+- project-specific commands, private local paths, or one-off workflow history.
 
 ## Current Rule
 
 - Do not add a skill unless the user explicitly defines it.
 - Do not reconstruct Waza's old skill taxonomy.
 - Keep zero skills as a valid framework state.
-- If a new skill is added, update `skills/RESOLVER.md`, run
-  `make regenerate`, then run `make test`.
+- Keep shared rules short and reusable.
+- If a new skill is added, update `skills/RESOLVER.md`, run `make regenerate`,
+  then run `make test`.
 
 ## Commands
 

@@ -32,19 +32,10 @@ if [ -s "$FILTERED_MANIFEST" ]; then
   tar -cf - -T "$FILTERED_MANIFEST" | (cd "$STAGE" && tar -xf -)
 fi
 
-if [ ! -f "$ROOT/scripts/dispatcher.md" ]; then
-  echo "ERROR: scripts/dispatcher.md missing; run make regenerate" >&2
+if [ ! -f "$ROOT/.codex-plugin/plugin.json" ]; then
+  echo "ERROR: .codex-plugin/plugin.json missing; run make regenerate" >&2
   exit 1
 fi
-cp "$ROOT/scripts/dispatcher.md" "$STAGE/SKILL.md"
-
-find skills -mindepth 2 -maxdepth 2 -name SKILL.md | sort | while IFS= read -r path; do
-  skill="$(basename "$(dirname "$path")")"
-  {
-    printf '\n---\n\n# SKILL: %s\n\n' "$skill"
-    awk 'BEGIN{skip=0} /^---$/{if(NR==1){skip=1;next} if(skip){skip=0;next}} !skip' "$path"
-  } >> "$STAGE/SKILL.md"
-done
 
 (cd "$STAGE" && find . -type f | sed 's#^\./##' | sort | zip -q "$OUT" -@)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Mini-Waza framework metadata.
+"""Generate Mini-Waza Codex plugin metadata.
 
 The repository is allowed to have zero skills. Skill metadata is generated only
 from actual `skills/*/SKILL.md` files, so the framework can stay empty until the
@@ -45,36 +45,27 @@ def collect_skill_metadata(root: Path) -> list[dict[str, str]]:
     return skills
 
 
-def build_marketplace(version: str, skills: list[dict[str, str]]) -> dict:
-    plugins: list[dict] = [
-        {
-            "name": "mini-waza",
-            "description": "Installs the Mini-Waza dispatcher. No user-defined skills are bundled yet.",
-            "version": version,
-            "category": "development",
-            "source": "./",
-            "homepage": "",
-        }
-    ]
-    for skill in sorted(skills, key=lambda item: item["name"]):
-        plugins.append(
-            {
-                "name": f"mini-waza-{skill['name']}",
-                "description": skill["description"],
-                "version": version,
-                "category": "development",
-                "source": f"./skills/{skill['name']}",
-                "homepage": "",
-                "skills": ["./"],
-                "strict": False,
-            }
-        )
+def build_plugin_json(version: str) -> dict:
     return {
-        "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
         "name": "mini-waza",
-        "description": "Customized Waza framework skeleton with no predefined skills.",
-        "owner": {"name": "sayori", "email": ""},
-        "plugins": plugins,
+        "version": version,
+        "description": "Codex plugin skeleton for user-defined workflow skills.",
+        "author": {"name": "sayori"},
+        "license": "MIT",
+        "keywords": ["codex", "skills", "workflow"],
+        "skills": "./skills/",
+        "interface": {
+            "displayName": "Mini-Waza",
+            "shortDescription": "A minimal Codex skill framework",
+            "longDescription": (
+                "Mini-Waza is a Codex plugin skeleton for defining custom "
+                "workflow skills without inheriting Waza's predefined taxonomy."
+            ),
+            "developerName": "sayori",
+            "category": "Developer Tools",
+            "capabilities": ["Interactive"],
+            "defaultPrompt": ["Add a custom workflow skill"],
+        },
     }
 
 
@@ -83,10 +74,12 @@ def build_package_json(version: str) -> str:
         {
             "name": "mini-waza",
             "version": version,
-            "description": "Customized Waza framework skeleton with no predefined skills.",
+            "description": "Codex plugin skeleton for user-defined workflow skills.",
+            "author": "sayori",
             "private": True,
             "license": "MIT",
             "files": [
+                ".codex-plugin",
                 "LICENSE",
                 "README.md",
                 "rules",
@@ -95,15 +88,14 @@ def build_package_json(version: str) -> str:
                 "!**/__pycache__/**",
                 "!**/*.pyc",
             ],
-            "pi": {"skills": ["./skills"]},
         },
         indent=2,
         ensure_ascii=False,
     ) + "\n"
 
 
-def render_marketplace(marketplace: dict) -> str:
-    return json.dumps(marketplace, indent=2, ensure_ascii=False) + "\n"
+def render_plugin_json(plugin_json: dict) -> str:
+    return json.dumps(plugin_json, indent=2, ensure_ascii=False) + "\n"
 
 
 def render_dispatcher(template: str, skills: list[dict[str, str]]) -> str:
@@ -166,7 +158,7 @@ def main() -> int:
     skills = collect_skill_metadata(root)
 
     rendered = {
-        root / ".claude-plugin" / "marketplace.json": render_marketplace(build_marketplace(version, skills)),
+        root / ".codex-plugin" / "plugin.json": render_plugin_json(build_plugin_json(version)),
         root / "package.json": build_package_json(version),
         root / "scripts" / "dispatcher.md": render_dispatcher(
             (root / "scripts" / "dispatcher-template.md").read_text(),

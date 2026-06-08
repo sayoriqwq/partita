@@ -1,6 +1,6 @@
-# Mini-Waza Routing
+# Routing
 
-Mini-Waza does not ship predefined skills.
+Mini-Waza is a Codex plugin that does not ship predefined skills.
 
 Routing only exists after the user defines a skill under
 `skills/<name>/SKILL.md` and records it in `skills/RESOLVER.md`.
