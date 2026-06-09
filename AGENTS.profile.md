@@ -1,7 +1,7 @@
-# Mini-Waza Profile
+# Craft Profile
 
 This file is repo-local profile context loaded by agent-guide include. It is not
-part of the Mini-Waza plugin package and is not a shared skill rule.
+part of the Craft plugin package and is not a shared skill rule.
 
 Current user instructions, `AGENTS.md`, `CLAUDE.md`, and repo files override
 this profile.
@@ -17,10 +17,11 @@ this profile.
 - Treat repeated correction as a signal for future behavior. Do not keep
   repeating a corrected mistake.
 
-## Mini-Waza Defaults
+## Craft Defaults
 
 - Use Waza's mechanism first: skill source, resolver, dispatcher, verifier, and
   packaging projection.
+- Do not inherit Waza's original skill taxonomy or skill contents.
 - Do not add repo layers just to store profile, task, or project-specific
   context.
 - User profile content remains external context unless it is abstracted into a

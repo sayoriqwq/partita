@@ -1,16 +1,15 @@
-# Mini-Waza
+# Craft
 
-`mini-waza` is a Codex plugin skeleton for user-defined workflow skills.
+`craft` is a Codex plugin harness for user-defined workflow skills.
 
 It keeps the Waza-inspired skill framework shape without shipping Waza's
 predefined skill taxonomy. Zero skills remains a valid framework state, but the
-current customization starts with a single user-defined `ym` skill.
+current customization defines the user's Craft skill domain.
 
 ## Current State
 
 - Codex plugin metadata: present.
-- User-defined skills: `iso-skill-creator`, `iso-skill-improver`, `ym-aiming`,
-  `ym-density`.
+- User-defined skills: `skill-write`, `skill-patch`, `aim`, `density`.
 - Waza original skills: removed.
 - Claude Code marketplace metadata: not part of this repo.
 
@@ -22,7 +21,7 @@ current customization starts with a single user-defined `ym` skill.
 - `scripts/build_metadata.py` regenerates `.codex-plugin/plugin.json`, `package.json`, and `scripts/dispatcher.md`.
 - `scripts/verify_skills.py` validates the framework and any future `skills/*/SKILL.md`.
 - `rules/` contains shared behavior rules that future skills may reference.
-- `packaging.allowlist` controls what ships in `dist/mini-waza.zip`.
+- `packaging.allowlist` controls what ships in `dist/craft.zip`.
 
 ## Commands
 
@@ -34,7 +33,7 @@ make package
 
 ## Install Locally
 
-Mini-Waza's primary runtime shape is a Codex plugin. For local development, map
+Craft's primary runtime shape is a Codex plugin. For local development, map
 this repo into the personal Codex plugin marketplace:
 
 ```bash
@@ -42,7 +41,7 @@ make install-codex-plugin
 ```
 
 Open a new Codex thread after installing so the plugin skills are loaded.
-The local marketplace maps `~/plugins/mini-waza` back to this repo, so source
+The local marketplace maps `~/plugins/craft` back to this repo, so source
 edits stay in one place.
 
 For a Waza-style quick check that installs the current skill directly into the

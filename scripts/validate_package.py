@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-package integrity check for Mini-Waza Codex plugin ZIP."""
+"""Post-package integrity check for Craft Codex plugin ZIP."""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ def main() -> int:
         return 1
 
     data = json.loads(plugin_json.read_text())
-    if data.get("name") != "mini-waza":
-        print("POST-PACKAGE ERROR: plugin name is not mini-waza", file=sys.stderr)
+    if data.get("name") != "craft":
+        print("POST-PACKAGE ERROR: plugin name is not craft", file=sys.stderr)
         return 1
     if data.get("skills") != "./skills/":
         print("POST-PACKAGE ERROR: plugin skills path must be ./skills/", file=sys.stderr)

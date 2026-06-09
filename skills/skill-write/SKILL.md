@@ -1,14 +1,14 @@
 ---
-name: iso-skill-creator
+name: skill-write
 description: "Use when creating or updating a Codex skill from a workflow, skill primitive, or repeated agent drift, especially when the draft is becoming generic scaffolding, a CLI wrapper, oversized docs, unclear triggers, or an unvalidated artifact. Not for merely installing a skill, running an existing script, packaging a plugin, or writing one-off docs/prompts."
 when_to_use: "create skill, update skill, skill primitive, behavior intervention, trigger boundary, soft hard boundary, validation"
-dispatch_intent: "ISO skill creation from primitive"
+dispatch_intent: "Craft skill writing from primitive"
 ---
 
-# ISO Skill Creator
+# Skill Write
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Mini-Waza skill is active.
+when this Craft skill is active.
 
 Create or update Codex skills as agent behavior interventions. Start from the
 primitive idea: prove repeated drift and behavior pressure before materializing
@@ -47,7 +47,7 @@ Do not use this skill when:
   behavior;
 - the output is one-off docs, task notes, prompts, or project instructions;
 - the request is a targeted patch to an existing named skill's trigger,
-  boundary, reading order, or workflow; use `iso-skill-improver`.
+  boundary, reading order, or workflow; use `skill-patch`.
 
 ## Soft Boundary
 
@@ -70,8 +70,8 @@ Use agent judgment for:
   inside a skill directory.
 - Do not invent unsupported Codex skill metadata.
 - Do not copy private project paths, docwarden task state, contexta export
-  commands, or isomorph internals into Mini-Waza runtime instructions unless the
-  user explicitly makes Mini-Waza own that dependency.
+  commands, or isomorph internals into Craft runtime instructions unless the
+  user explicitly makes Craft own that dependency.
 - Do not materialize a skill if the trigger and exclusion boundary are still
   unknown; ask one smallest question instead.
 
@@ -105,5 +105,5 @@ Before calling the skill usable, verify:
 - trigger includes positive use cases and exclusions;
 - soft judgment and deterministic hard constraints are separated;
 - the skill directory contains only `SKILL.md` and direct supporting resources;
-- `make regenerate` and `make test` pass after adding or changing Mini-Waza
+- `make regenerate` and `make test` pass after adding or changing Craft
   skills.

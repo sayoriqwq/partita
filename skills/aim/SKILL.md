@@ -1,14 +1,14 @@
 ---
-name: ym-aiming
+name: aim
 description: "Use when an active aim exists and the new request may drift from it, or when the user asks to set, reset, or check the active aim. Not for creating formal goals, blocking user-initiated topic changes, ordinary summaries, or execution planning."
 when_to_use: "active aim, aim drift, target switch, focus check, side request, aim brief"
-dispatch_intent: "YM aim drift warning"
+dispatch_intent: "Craft aim drift warning"
 ---
 
-# YM Aiming
+# Aim
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Mini-Waza skill is active.
+when this Craft skill is active.
 
 This skill is a warning, not a gate. It keeps the active aim visible when a
 conversation starts drifting, without blocking the user from changing topics.

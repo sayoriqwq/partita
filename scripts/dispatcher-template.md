@@ -1,14 +1,14 @@
 ---
-name: mini-waza
-description: "Dispatcher for user-defined Mini-Waza workflow skills. Use when a Mini-Waza skill exists for the user's request. Not for generic work when no matching skill has been defined."
+name: craft
+description: "Dispatcher for user-defined Craft workflow skills. Use when a Craft skill exists for the user's request. Not for generic work when no matching skill has been defined."
 ---
 
-# Mini-Waza Dispatcher
+# Craft Dispatcher
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph
-when a Mini-Waza skill is active.
+when a Craft skill is active.
 
-Mini-Waza is a Codex plugin for user-defined workflow skills. Match only
+Craft is a Codex plugin for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 
 ## Routing Table

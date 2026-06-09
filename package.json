@@ -1,7 +1,7 @@
 {
-  "name": "mini-waza",
+  "name": "craft",
   "version": "0.1.0",
-  "description": "Codex plugin skeleton for user-defined workflow skills.",
+  "description": "Codex plugin harness for user-defined workflow skills.",
   "author": "sayori",
   "private": true,
   "license": "MIT",

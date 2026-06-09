@@ -11,7 +11,8 @@ from typing import Any
 
 
 MARKETPLACE_NAME = "personal"
-PLUGIN_NAME = "mini-waza"
+PLUGIN_NAME = "craft"
+LEGACY_PLUGIN_NAMES = ("mini-waza",)
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,7 +21,7 @@ def parse_args() -> argparse.Namespace:
         "--root",
         type=Path,
         default=Path(__file__).resolve().parent.parent,
-        help="Mini-Waza repo root.",
+        help="Craft repo root.",
     )
     parser.add_argument(
         "--marketplace-root",
@@ -61,6 +62,15 @@ def ensure_symlink(link: Path, target: Path) -> None:
     link.symlink_to(target, target_is_directory=True)
 
 
+def remove_legacy_symlinks(marketplace_root: Path, target: Path) -> None:
+    for name in LEGACY_PLUGIN_NAMES:
+        link = marketplace_root / "plugins" / name
+        if not link.is_symlink():
+            continue
+        if Path(os.readlink(link)).expanduser().resolve() == target:
+            link.unlink()
+
+
 def ensure_marketplace(path: Path) -> None:
     payload = load_json(path)
     payload.setdefault("name", MARKETPLACE_NAME)
@@ -75,6 +85,17 @@ def ensure_marketplace(path: Path) -> None:
         "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
         "category": "Developer Tools",
     }
+
+    plugins[:] = [
+        item
+        for item in plugins
+        if not (
+            isinstance(item, dict)
+            and item.get("name") in LEGACY_PLUGIN_NAMES
+            and isinstance(item.get("source"), dict)
+            and item["source"].get("path") == f"./plugins/{item.get('name')}"
+        )
+    ]
 
     for index, item in enumerate(plugins):
         if isinstance(item, dict) and item.get("name") == PLUGIN_NAME:
@@ -93,6 +114,7 @@ def main() -> int:
     marketplace_json = marketplace_root / ".agents" / "plugins" / "marketplace.json"
     plugin_link = marketplace_root / "plugins" / PLUGIN_NAME
 
+    remove_legacy_symlinks(marketplace_root, root)
     ensure_symlink(plugin_link, root)
     ensure_marketplace(marketplace_json)
 

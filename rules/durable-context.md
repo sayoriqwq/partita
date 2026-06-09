@@ -11,6 +11,6 @@ project-visible memory summary.
 - Treat prior `decision`, `preference`, and `principle` entries as constraints
   for the current task.
 - Treat prior `fact` entries as stale until verified against current repo state.
-- When promoting memory into Mini-Waza rules, keep only reusable workflow
+- When promoting memory into Craft rules, keep only reusable workflow
   guidance. Strip private paths, project-specific commands, issue numbers,
   release tags, screenshots, customer details, and one-machine state.

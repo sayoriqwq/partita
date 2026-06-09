@@ -1,0 +1,4 @@
+interface:
+  display_name: "Density"
+  short_description: "Use controlled high-density Chinese"
+  default_prompt: "Use $density for sustained controlled high-density Chinese with semantic invariance, fixed symbols, line breaks, and no filler."

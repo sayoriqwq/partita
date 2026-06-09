@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Mini-Waza Codex plugin metadata.
+"""Generate Craft Codex plugin metadata.
 
 The repository is allowed to have zero skills. Skill metadata is generated only
 from actual `skills/*/SKILL.md` files, so the framework can stay empty until the
@@ -47,24 +47,24 @@ def collect_skill_metadata(root: Path) -> list[dict[str, str]]:
 
 def build_plugin_json(version: str) -> dict:
     return {
-        "name": "mini-waza",
+        "name": "craft",
         "version": version,
-        "description": "Codex plugin skeleton for user-defined workflow skills.",
+        "description": "Codex plugin harness for user-defined workflow skills.",
         "author": {"name": "sayori"},
         "license": "MIT",
         "keywords": ["codex", "skills", "workflow"],
         "skills": "./skills/",
         "interface": {
-            "displayName": "Mini-Waza",
-            "shortDescription": "A minimal Codex skill framework",
+            "displayName": "Craft",
+            "shortDescription": "A Codex skill harness for user-defined workflows",
             "longDescription": (
-                "Mini-Waza is a Codex plugin skeleton for defining custom "
-                "workflow skills without inheriting Waza's predefined taxonomy."
+                "Craft is a Codex plugin harness for defining custom workflow "
+                "skills without inheriting Waza's predefined taxonomy."
             ),
             "developerName": "sayori",
             "category": "Developer Tools",
             "capabilities": ["Interactive"],
-            "defaultPrompt": ["Add a custom workflow skill"],
+            "defaultPrompt": ["Add a custom Craft skill"],
         },
     }
 
@@ -72,9 +72,9 @@ def build_plugin_json(version: str) -> dict:
 def build_package_json(version: str) -> str:
     return json.dumps(
         {
-            "name": "mini-waza",
+            "name": "craft",
             "version": version,
-            "description": "Codex plugin skeleton for user-defined workflow skills.",
+            "description": "Codex plugin harness for user-defined workflow skills.",
             "author": "sayori",
             "private": True,
             "license": "MIT",

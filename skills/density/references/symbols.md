@@ -1,6 +1,6 @@
-# YM Density Symbols
+# Density Symbols
 
-Use this reference when `ym-density` uses non-obvious operators, explains the
+Use this reference when `density` uses non-obvious operators, explains the
 symbol system, or extends the vocabulary.
 
 ## Principle

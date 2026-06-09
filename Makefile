@@ -26,7 +26,7 @@ verify-scripts:
 	  scripts/validate_package.py
 
 package:
-	./scripts/package-skill.sh dist/mini-waza.zip
+	./scripts/package-skill.sh dist/craft.zip
 
 install-codex-plugin:
 	python3 scripts/install-codex-plugin.py --root .

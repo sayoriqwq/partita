@@ -1,6 +1,6 @@
 # Skill Authoring
 
-Shared rule for designing future Mini-Waza skills.
+Shared rule for designing future Craft skills.
 
 ## Rule
 

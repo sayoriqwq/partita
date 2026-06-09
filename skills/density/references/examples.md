@@ -1,4 +1,4 @@
-# YM Density Examples
+# Density Examples
 
 Keep this file empty unless the agent has inferred a concrete recurring error
 pattern from actual use.

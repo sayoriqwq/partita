@@ -1,14 +1,14 @@
 ---
-name: mini-waza
-description: "Dispatcher for user-defined Mini-Waza workflow skills. Use when a Mini-Waza skill exists for the user's request. Not for generic work when no matching skill has been defined."
+name: craft
+description: "Dispatcher for user-defined Craft workflow skills. Use when a Craft skill exists for the user's request. Not for generic work when no matching skill has been defined."
 ---
 
-# Mini-Waza Dispatcher
+# Craft Dispatcher
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph
-when a Mini-Waza skill is active.
+when a Craft skill is active.
 
-Mini-Waza is a Codex plugin for user-defined workflow skills. Match only
+Craft is a Codex plugin for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 
 ## Routing Table
@@ -16,10 +16,10 @@ against skills that exist in the routing table.
 <!-- routing-table:start -->
 | Intent | Skill | File |
 |--------|-------|------|
-| ISO skill creation from primitive | iso-skill-creator | `skills/iso-skill-creator/SKILL.md` |
-| ISO skill improvement patch | iso-skill-improver | `skills/iso-skill-improver/SKILL.md` |
-| YM aim drift warning | ym-aiming | `skills/ym-aiming/SKILL.md` |
-| YM controlled high-density Chinese | ym-density | `skills/ym-density/SKILL.md` |
+| Craft aim drift warning | aim | `skills/aim/SKILL.md` |
+| Craft controlled high-density Chinese | density | `skills/density/SKILL.md` |
+| Craft skill patch from real case | skill-patch | `skills/skill-patch/SKILL.md` |
+| Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
 <!-- routing-table:end -->
 
 ## How This Works

@@ -1,8 +1,8 @@
-# Mini-Waza Skill Resolver
+# Craft Skill Resolver
 
 ## Shared Output Marker
 
-All Mini-Waza skills use the same output convention: prefix the first
+All Craft skills use the same output convention: prefix the first
 user-facing line with `🧭` inline, not as its own paragraph. This marker is a
 visible loaded-skill signal.
 
@@ -21,7 +21,7 @@ When a skill is added:
 
 | Intent | Skill | File |
 | --- | --- | --- |
-| Create or update skill from primitive behavior pressure | `iso-skill-creator` | `skills/iso-skill-creator/SKILL.md` |
-| Patch named skill trigger, boundary, workflow, or validation | `iso-skill-improver` | `skills/iso-skill-improver/SKILL.md` |
-| Active aim drift warning or aim brief | `ym-aiming` | `skills/ym-aiming/SKILL.md` |
-| Controlled high-density Chinese collaboration mode | `ym-density` | `skills/ym-density/SKILL.md` |
+| Create or update skill from primitive behavior pressure | `skill-write` | `skills/skill-write/SKILL.md` |
+| Patch named skill from a real user case | `skill-patch` | `skills/skill-patch/SKILL.md` |
+| Active aim drift warning or aim brief | `aim` | `skills/aim/SKILL.md` |
+| Controlled high-density Chinese collaboration mode | `density` | `skills/density/SKILL.md` |

@@ -1,7 +1,7 @@
 {
-  "name": "mini-waza",
+  "name": "craft",
   "version": "0.1.0",
-  "description": "Codex plugin skeleton for user-defined workflow skills.",
+  "description": "Codex plugin harness for user-defined workflow skills.",
   "author": {
     "name": "sayori"
   },
@@ -13,16 +13,16 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Mini-Waza",
-    "shortDescription": "A minimal Codex skill framework",
-    "longDescription": "Mini-Waza is a Codex plugin skeleton for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
+    "displayName": "Craft",
+    "shortDescription": "A Codex skill harness for user-defined workflows",
+    "longDescription": "Craft is a Codex plugin harness for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
     "developerName": "sayori",
     "category": "Developer Tools",
     "capabilities": [
       "Interactive"
     ],
     "defaultPrompt": [
-      "Add a custom workflow skill"
+      "Add a custom Craft skill"
     ]
   }
 }

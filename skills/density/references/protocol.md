@@ -1,6 +1,6 @@
-# YM Density Protocol
+# Density Protocol
 
-Use this reference when `ym-density` needs sustained output shaping, labels,
+Use this reference when `density` needs sustained output shaping, labels,
 punctuation, English term handling, omission rules, or low-density supplements.
 
 ## 核心铁律

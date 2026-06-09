@@ -5,10 +5,10 @@
 
 ## Project
 
-`mini-waza` is a Codex plugin skeleton for user-defined workflow skills.
+`craft` is a Codex plugin harness for user-defined workflow skills.
 
 The framework started from a zero-skill baseline. The current customization
-defines user-owned `iso-*` and `ym-*` skills under `skills/<name>/SKILL.md`.
+defines user-owned Craft skills under `skills/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -23,7 +23,8 @@ This repo owns:
 
 This repo does not own:
 
-- Waza's `think/design/check/hunt/write/learn/read/health` skill contents;
+- Waza's `think/design/check/hunt/write/learn/read/health` skill contents or
+  taxonomy;
 - Claude Code plugin marketplace metadata;
 - project-specific commands, private local paths, or one-off workflow history.
 
@@ -31,7 +32,8 @@ This repo does not own:
 
 - Do not add a skill unless the user explicitly defines it.
 - Before adding a skill, apply `rules/skill-authoring.md`.
-- Do not reconstruct Waza's old skill taxonomy.
+- Do not reconstruct Waza's old skill taxonomy; use Waza only as mechanism
+  lineage.
 - Keep zero skills as a valid framework state.
 - Keep shared rules short and reusable.
 - If a new skill is added, update `skills/RESOLVER.md`, run `make regenerate`,

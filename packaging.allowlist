@@ -1,5 +1,5 @@
 # Allowlist for `make package`. Default-deny: only paths matching one of these
-# patterns ship in mini-waza.zip.
+# patterns ship in craft.zip.
 
 LICENSE
 README.md

@@ -1,14 +1,14 @@
 ---
-name: ym-density
-description: "Use when the user asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Mini-Waza density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
+name: density
+description: "Use when the user asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Craft density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
 when_to_use: "controlled high-density Chinese, max language density, terse Chinese, density mode, sustained brevity, symbolic vocabulary"
-dispatch_intent: "YM controlled high-density Chinese"
+dispatch_intent: "Craft controlled high-density Chinese"
 ---
 
-# YM Density
+# Density
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Mini-Waza skill is active.
+when this Craft skill is active.
 
 Use controlled high-density Chinese: semantic invariance first, modern Chinese,
 symbols as logic skeleton, stable technical English preserved, no filler, no
@@ -30,7 +30,7 @@ Use this skill when the user asks for:
   density mode;
 - sustained compact collaboration, especially in Chinese;
 - fixed symbolic vocabulary or controlled natural language for Chinese output;
-- continuation of a previously activated `ym-density` mode.
+- continuation of a previously activated `density` mode.
 
 Do not use this skill for:
 
@@ -61,7 +61,7 @@ Do not use this skill for:
 - Do not compress safety warnings, destructive actions, or multi-step sequences
   so far that order or consequence becomes unclear.
 - Do not invent a new symbol when controlled Chinese is clearer.
-- Do not use `🧭` unless this Mini-Waza skill is active.
+- Do not use `🧭` unless this Craft skill is active.
 
 ## Workflow
 
@@ -85,7 +85,7 @@ Do not use this skill for:
 
 ## Validation
 
-Before treating output as valid `ym-density`, check:
+Before treating output as valid `density`, check:
 
 - first user-facing line includes `🧭` inline;
 - semantic invariance remains intact;
