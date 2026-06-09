@@ -19,6 +19,7 @@ against skills that exist in the routing table.
 | ISO skill creation from primitive | iso-skill-creator | `skills/iso-skill-creator/SKILL.md` |
 | ISO skill improvement patch | iso-skill-improver | `skills/iso-skill-improver/SKILL.md` |
 | YM aim drift warning | ym-aiming | `skills/ym-aiming/SKILL.md` |
+| YM controlled high-density Chinese | ym-density | `skills/ym-density/SKILL.md` |
 <!-- routing-table:end -->
 
 ## How This Works

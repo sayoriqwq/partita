@@ -9,7 +9,8 @@ current customization starts with a single user-defined `ym` skill.
 ## Current State
 
 - Codex plugin metadata: present.
-- User-defined skills: `iso-skill-creator`, `iso-skill-improver`, `ym-aiming`.
+- User-defined skills: `iso-skill-creator`, `iso-skill-improver`, `ym-aiming`,
+  `ym-density`.
 - Waza original skills: removed.
 - Claude Code marketplace metadata: not part of this repo.
 
