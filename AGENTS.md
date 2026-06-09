@@ -1,5 +1,5 @@
 @/Users/sayori/.codex/RTK.md
-@/Users/sayori/Desktop/mini-waza/AGENTS.profile.md
+@/Users/sayori/Desktop/craft/AGENTS.profile.md
 
 # Agent Instructions
 
