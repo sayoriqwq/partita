@@ -21,8 +21,10 @@ When a skill is added:
 
 | Intent | Skill | File |
 | --- | --- | --- |
+| Sustained necessary challenge until agreement | `argue` | `skills/argue/SKILL.md` |
 | Create or update skill from primitive behavior pressure | `skill-write` | `skills/skill-write/SKILL.md` |
 | Patch named skill from a real case or structure audit | `skill-patch` | `skills/skill-patch/SKILL.md` |
-| Active aim drift warning or aim brief | `aim` | `skills/aim/SKILL.md` |
+| Craft aim and topic alignment | `aim` | `skills/aim/SKILL.md` |
 | Controlled high-density Chinese collaboration mode | `density` | `skills/density/SKILL.md` |
+| Block expansion until current v1 lands | `land` | `skills/land/SKILL.md` |
 | Research area harness setup or migration | `setup-research-area` | `skills/setup-research-area/SKILL.md` |

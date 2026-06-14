@@ -16,8 +16,10 @@ against skills that exist in the routing table.
 <!-- routing-table:start -->
 | Intent | Skill | File |
 |--------|-------|------|
-| Craft aim drift warning | aim | `skills/aim/SKILL.md` |
+| Craft aim and topic alignment | aim | `skills/aim/SKILL.md` |
+| Sustained necessary challenge until agreement | argue | `skills/argue/SKILL.md` |
 | Craft controlled high-density Chinese | density | `skills/density/SKILL.md` |
+| Block expansion until current v1 lands | land | `skills/land/SKILL.md` |
 | Research area harness setup | setup-research-area | `skills/setup-research-area/SKILL.md` |
 | Craft skill patch or structure audit | skill-patch | `skills/skill-patch/SKILL.md` |
 | Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
