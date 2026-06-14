@@ -22,8 +22,10 @@ When a skill is added:
 | Intent | Skill | File |
 | --- | --- | --- |
 | Sustained necessary challenge until agreement | `argue` | `skills/argue/SKILL.md` |
+| Generate and narrow candidate directions | `brainstorm` | `skills/brainstorm/SKILL.md` |
 | Create or update skill from primitive behavior pressure | `skill-write` | `skills/skill-write/SKILL.md` |
 | Patch named skill from a real case or structure audit | `skill-patch` | `skills/skill-patch/SKILL.md` |
 | Craft aim and topic alignment | `aim` | `skills/aim/SKILL.md` |
 | Controlled high-density Chinese collaboration mode | `density` | `skills/density/SKILL.md` |
 | Block expansion until current v1 lands | `land` | `skills/land/SKILL.md` |
+| Expand vague seed idea into actionable target | `want` | `skills/want/SKILL.md` |

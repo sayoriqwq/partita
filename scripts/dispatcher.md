@@ -18,10 +18,12 @@ against skills that exist in the routing table.
 |--------|-------|------|
 | Craft aim and topic alignment | aim | `skills/aim/SKILL.md` |
 | Sustained necessary challenge until agreement | argue | `skills/argue/SKILL.md` |
+| Generate and narrow candidate directions | brainstorm | `skills/brainstorm/SKILL.md` |
 | Craft controlled high-density Chinese | density | `skills/density/SKILL.md` |
 | Block expansion until current v1 lands | land | `skills/land/SKILL.md` |
 | Craft skill patch or structure audit | skill-patch | `skills/skill-patch/SKILL.md` |
 | Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
+| Expand vague seed idea into actionable target | want | `skills/want/SKILL.md` |
 <!-- routing-table:end -->
 
 ## How This Works
