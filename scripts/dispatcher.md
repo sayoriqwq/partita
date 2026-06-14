@@ -18,7 +18,8 @@ against skills that exist in the routing table.
 |--------|-------|------|
 | Craft aim drift warning | aim | `skills/aim/SKILL.md` |
 | Craft controlled high-density Chinese | density | `skills/density/SKILL.md` |
-| Craft skill patch from real case | skill-patch | `skills/skill-patch/SKILL.md` |
+| Research area harness setup | setup-research-area | `skills/setup-research-area/SKILL.md` |
+| Craft skill patch or structure audit | skill-patch | `skills/skill-patch/SKILL.md` |
 | Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
 <!-- routing-table:end -->
 

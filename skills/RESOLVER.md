@@ -22,6 +22,7 @@ When a skill is added:
 | Intent | Skill | File |
 | --- | --- | --- |
 | Create or update skill from primitive behavior pressure | `skill-write` | `skills/skill-write/SKILL.md` |
-| Patch named skill from a real user case | `skill-patch` | `skills/skill-patch/SKILL.md` |
+| Patch named skill from a real case or structure audit | `skill-patch` | `skills/skill-patch/SKILL.md` |
 | Active aim drift warning or aim brief | `aim` | `skills/aim/SKILL.md` |
 | Controlled high-density Chinese collaboration mode | `density` | `skills/density/SKILL.md` |
+| Research area harness setup or migration | `setup-research-area` | `skills/setup-research-area/SKILL.md` |
