@@ -1,4 +1,4 @@
-.PHONY: test verify-framework verify-generated verify-routing verify-scripts package regenerate install-codex-plugin install-codex-skill
+.PHONY: test verify-framework verify-generated verify-routing verify-scripts package regenerate install install-codex-plugin install-codex-skill
 
 test: verify-framework verify-generated verify-routing verify-scripts
 
@@ -28,9 +28,12 @@ verify-scripts:
 package:
 	./scripts/package-skill.sh dist/craft.zip
 
-install-codex-plugin:
+install: install-codex-plugin
+
+install-codex-plugin: install-codex-skill
 	python3 scripts/install-codex-plugin.py --root .
 	codex plugin marketplace add ~
 
 install-codex-skill:
+	npx skills remove author patch research-area -g -a codex opencode -y || true
 	npx skills add . -a codex -g --skill '*' -y --full-depth

@@ -28,31 +28,30 @@ current customization defines the user's Craft skill domain.
 ```bash
 make test
 make regenerate
+make install
 make package
 ```
 
 ## Install Locally
 
-Craft's primary runtime shape is a Codex plugin. For local development, map
-this repo into the personal Codex plugin marketplace:
+Craft's local install path syncs skills globally first, then maps this repo
+into the personal Codex plugin marketplace:
 
 ```bash
-make install-codex-plugin
+make install
 ```
 
-Open a new Codex thread after installing so the plugin skills are loaded.
-The local marketplace maps `~/plugins/craft` back to this repo, so source
-edits stay in one place.
+Open a new Codex thread after installing so global skills are reloaded. The
+local marketplace maps `~/plugins/craft` back to this repo, so source edits stay
+in one place.
 
-For a Waza-style quick check that installs the current skill directly into the
-global Codex skill directory, use:
+To run only the global sync:
 
 ```bash
 make install-codex-skill
 ```
 
-This installs the current `skills/*/SKILL.md` set without changing the plugin
-source of truth.
+`make install-codex-plugin` also runs the global sync before marketplace setup.
 
 ## Adding A Skill
 

@@ -1,7 +1,7 @@
 ---
 name: density
-description: "Use when the user asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Craft density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
-when_to_use: "controlled high-density Chinese, max language density, terse Chinese, density mode, sustained brevity, symbolic vocabulary"
+description: "Use when the user directly invokes or loads density, asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Craft density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
+when_to_use: "direct density invocation, load density, controlled high-density Chinese, max language density, terse Chinese, density mode, sustained brevity, symbolic vocabulary"
 dispatch_intent: "Craft controlled high-density Chinese"
 ---
 
@@ -26,6 +26,7 @@ phrases that lose semantic structure.
 
 Use this skill when the user asks for:
 
+- direct invocation, load, or mention of `$density` as the requested mode;
 - controlled high-density Chinese, maximum language density, terse Chinese, or
   density mode;
 - sustained compact collaboration, especially in Chinese;
@@ -65,13 +66,15 @@ Do not use this skill for:
 
 ## Workflow
 
-1. Activate persistent mode when requested.
-2. Delete filler, pleasantries, hedging, repeated summaries, and low-information
+1. Activate persistent mode when requested or directly invoked.
+2. If invoked with no other task, acknowledge activation in `density` output
+   instead of inspecting, validating, or patching the skill.
+3. Delete filler, pleasantries, hedging, repeated summaries, and low-information
    verbs.
-3. Keep structure words modern and readable.
-4. Load references only when the current output needs that detail.
-5. Format recommendations as `推荐: X`, not `我的推荐是 X`.
-6. If the user says the density is too high, too low, too broad, or too
+4. Keep structure words modern and readable.
+5. Load references only when the current output needs that detail.
+6. Format recommendations as `推荐: X`, not `我的推荐是 X`.
+7. If the user says the density is too high, too low, too broad, or too
    strange, treat that feedback as calibration and adjust immediately.
 
 ## References
@@ -88,6 +91,8 @@ Do not use this skill for:
 Before treating output as valid `density`, check:
 
 - first user-facing line includes `🧭` inline;
+- direct `$density` invocation activates the mode instead of triggering skill
+  audit or implementation work;
 - semantic invariance remains intact;
 - output uses modern Chinese, not classical Chinese or broken terse voice;
 - line breaks carry structure instead of long connective prose;

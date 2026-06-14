@@ -15,3 +15,20 @@ Shared rule for designing future Craft skills.
   smallest uncertain semantic unit.
 - Keep export shape and validation visible before treating a skill as usable.
 - Materialize only Codex-supported skill surfaces in this repo.
+
+## Interpretation Gate
+
+Use an interpretation gate before changing skill names, trigger policy, harness
+install behavior, global skill state, or marker conventions when the user's
+instruction can be read more than one way.
+
+State the planned interpretation before editing:
+
+- what will be kept;
+- what will be changed;
+- what will not be touched;
+- any global install or runtime effect.
+
+Then ask for confirmation or correction. Do not treat broad words such as
+`default`, `flat`, `prefix`, `global`, `marker`, `restore`, or `all` as
+implementation-ready when they affect multiple surfaces.

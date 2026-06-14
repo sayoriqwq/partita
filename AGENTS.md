@@ -36,6 +36,9 @@ This repo does not own:
   lineage.
 - Keep zero skills as a valid framework state.
 - Keep shared rules short and reusable.
+- Before changing skill names, trigger policy, harness install behavior, global
+  skill state, or marker conventions, use an interpretation gate if the user's
+  instruction can be read more than one way.
 - If a new skill is added, update `skills/RESOLVER.md`, run `make regenerate`,
   then run `make test`.
 
