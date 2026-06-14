@@ -35,5 +35,5 @@ install-codex-plugin: install-codex-skill
 	codex plugin marketplace add ~
 
 install-codex-skill:
-	npx skills remove author patch research-area -g -a codex opencode -y || true
+	npx skills remove author patch -g -a codex opencode -y || true
 	npx skills add . -a codex -g --skill '*' -y --full-depth
