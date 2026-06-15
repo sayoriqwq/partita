@@ -21,6 +21,8 @@ current customization defines the user's Craft skill domain.
 - `scripts/build_metadata.py` regenerates `.codex-plugin/plugin.json`, `package.json`, and `scripts/dispatcher.md`.
 - `scripts/verify_skills.py` validates the framework and any future `skills/*/SKILL.md`.
 - `rules/` contains shared behavior rules that future skills may reference.
+- `rules/skills/` is the harness entrypoint for Craft skill design language:
+  primitive, shape, care, and authoring.
 - `packaging.allowlist` controls what ships in `dist/craft.zip`.
 
 ## Commands
@@ -57,7 +59,7 @@ make install-codex-skill
 
 Only add a skill after the user defines the workflow.
 
-Design the skill from `rules/skill-authoring.md` before writing `SKILL.md`.
+Design the skill from `rules/skills/index.md` before writing `SKILL.md`.
 
 Minimum shape:
 

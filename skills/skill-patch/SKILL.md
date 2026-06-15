@@ -1,7 +1,7 @@
 ---
 name: skill-patch
-description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit a skill's structure against skill-primitive or Craft skill-shape rules. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
-when_to_use: "skill improvement, real user case, structure audit, skill shape audit, target skill, trigger drift, boundary patch, case capture, workflow patch, validation gap"
+description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, duration, or Craft skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
+when_to_use: "skill improvement, real user case, structure audit, primitive preservation, skill shape audit, namespace audit, constraint audit, state audit, activation audit, duration audit, target skill, trigger drift, boundary patch, case capture, workflow patch, validation gap"
 dispatch_intent: "Craft skill patch or structure audit"
 ---
 
@@ -26,8 +26,8 @@ Use this skill when:
 
 - the user names a target skill and reports a real behavior problem;
 - a concrete case should become a reusable skill example or regression pattern;
-- the user asks whether a named skill's structure is valid, compliant, or worth
-  improving under skill-primitive or Craft skill-shape rules;
+- the user asks whether a named skill preserves its primitive, namespace,
+  constraint, state, activation, duration, or Craft skill shape;
 - dogfood shows wrong routing, over-reading, under-reading, vague boundaries, or
   work outside the skill's responsibility.
 
@@ -40,6 +40,15 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `skill-patch` is `stateful`, `activation: narrow`, and
+`duration: task`. It may write or update `SKILL.md`, references, real case
+records, resolver metadata, and verifier surfaces that belong to the requested
+skill patch. It stops when the requested case patch or structure audit is
+implemented, validated, and reported. Its constraints are mixed: routing,
+scope, and patch judgment are `soft`; generated metadata, link checks, package
+checks, and test commands are primitive `constraint.hard` only when enforced by
+scripts, CLIs, verifiers, or tests.
+
 Use agent judgment for:
 
 - whether the observed case reveals a reusable skill-use failure;
@@ -51,6 +60,11 @@ Use agent judgment for:
 - whether the target should be improved, split, renamed, or left alone.
 
 ## Hard Boundary
+
+This section mixes model-applied boundaries with hard checks. Only items tied
+to machine-checkable surfaces such as scripts, CLIs, verifiers, tests, schemas,
+or package validation are primitive `constraint.hard`; prose-only boundaries
+remain strict `soft` constraints.
 
 - The real user case is the teaching unit. If safe and allowed, capture it in
   the target skill's references.
@@ -71,8 +85,9 @@ Use agent judgment for:
 2. For `case-patch`, capture what happened, what the agent must learn, and what
    detail to omit. Apply [case capture](references/case-capture.md) only when a
    real case is available.
-3. For `structure-audit`, apply skill-authoring and
-   [skill shape](references/skill-shape.md) rules without inventing cases.
+3. For `structure-audit`, apply [primitive](../../rules/skills/primitive.md)
+   when checking semantics, then [shape](../../rules/skills/shape.md) when
+   checking materialized `SKILL.md` form. Do not invent cases.
 4. Name the patch intent and smallest patch location: description, trigger,
    boundary, workflow, references, validation, or case file.
 5. Edit only the target skill and directly stale routing or metadata surfaces.
@@ -83,8 +98,12 @@ Use agent judgment for:
 
 - Read [case capture](references/case-capture.md) before adding, moving, or
   deleting examples or case patterns.
-- Read [skill shape](references/skill-shape.md) before restructuring a skill,
-  splitting references, or auditing structure.
+- Read [primitive](../../rules/skills/primitive.md) before auditing primitive
+  preservation, constraint, state, activation, or duration.
+- Read [shape](../../rules/skills/shape.md) before auditing namespace,
+  description, `SKILL.md` body, references, or verifier surface.
+- Read [care](../../rules/skills/care.md) before auditing projection loss,
+  cases, or forward tests.
 - Read [cases](references/cases.md) when checking known recurrence patterns.
 
 ## Validation
@@ -94,6 +113,11 @@ Before calling the improvement done, verify:
 - the first user-facing line includes `🧭` inline;
 - the target skill, mode, and patch intent are explicit;
 - case capture happens only for real cases, and structure audits invent none;
+- primitive preservation and materialized shape are checked separately;
+- hard constraints without machine-checkable enforcement are reported as
+  projection loss;
+- stateful edits are limited to the target skill and directly stale metadata,
+  references, cases, or verifier surfaces;
 - the edit is smaller than a rewrite;
 - concrete cases live in one-level references, not the every-use body;
 - generated dispatcher/resolver metadata is in sync when needed;

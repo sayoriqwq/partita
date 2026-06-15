@@ -26,7 +26,7 @@ this profile.
   context.
 - User profile content remains external context unless it is abstracted into a
   reusable skill-design rule.
-- Future skills should start from behavior intervention, pressure scenario,
-  trigger boundary, soft/hard boundary, workflow, and validation.
+- Future skills should start from `rules/skills/`: primitive, shape, care, and
+  authoring.
 - The current loaded-skill marker is `🧭`. Future skill families may use
   family-specific markers.

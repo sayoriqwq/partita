@@ -14,7 +14,7 @@ Keep the current v1 landing topic from expanding before it has landed.
 
 ## Capability
 
-Turn ongoing collaboration into a hard landing discipline: once the user names a
+Turn ongoing collaboration into a strict landing discipline: once the user names a
 v1 topic, block new branches that are not necessary for that v1 and ask whether
 the topic should be adjusted or the branch should be treated as off-topic.
 
@@ -40,6 +40,12 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `land` is `stateless`, `activation: narrow`, and
+`duration: topic`. It keeps only conversation-local landing state and stops when
+the v1 lands, the user switches topic, or the user exits the mode. Its
+constraints are model-applied `soft` constraints; it has no `constraint.hard`
+until a verifier or CLI can enforce scope classification.
+
 Classify each new point against the active landing topic:
 
 - `blocker`: v1 cannot land without it; allow and handle it.
@@ -57,6 +63,10 @@ user supplies the landing topic in the same request, use that directly.
 
 ## Hard Boundary
 
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
+
 - Do not continue into `expand` or `switch` work before the user chooses.
 - Do not create backlog, issue, roadmap, or later-version artifacts unless the
   user explicitly asks.
@@ -67,8 +77,8 @@ user supplies the landing topic in the same request, use that directly.
 
 ## Workflow
 
-1. Activate persistent mode when requested and identify the landing topic or v1
-   target. If missing, ask for the current v1 topic and done condition.
+1. Activate topic-duration mode when requested and identify the landing topic or
+   v1 target. If missing, ask for the current v1 topic and done condition.
 2. For each new idea, request, or requirement, classify it with the soft boundary
    labels before acting.
 3. For `blocker` or `v1`, proceed and keep the answer focused on the next
@@ -89,4 +99,8 @@ Before treating output as valid `land`, check:
 - expansion or topic switch produced a blocking `Land block`;
 - the user was asked to choose between adjusting the topic and returning;
 - no expansion work happened before that choice;
-- v1 landing remains tied to a concrete done or verification condition.
+- v1 landing remains tied to a concrete done or verification condition;
+- `land` does not write persistent artifacts unless another skill or explicit
+  user request owns that state;
+- `land` stops when the v1 lands, the user switches topic, or the user exits the
+  mode.

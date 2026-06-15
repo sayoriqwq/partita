@@ -25,6 +25,20 @@ SKILL_CONTRACT_SECTIONS = (
     "## Workflow",
     "## Validation",
 )
+STATE_TOKENS = ("`stateful`", "`stateless`")
+ACTIVATION_TOKENS = ("`activation: broad`", "`activation: narrow`")
+DURATION_TOKENS = ("`duration: turn`", "`duration: task`", "`duration: topic`", "`duration: mode`")
+
+
+def section_between(text: str, start: str, end: str) -> str:
+    start_index = text.find(start)
+    if start_index == -1:
+        return ""
+    content_start = start_index + len(start)
+    end_index = text.find(end, content_start)
+    if end_index == -1:
+        return text[content_start:]
+    return text[content_start:end_index]
 
 
 def skill_files(root: Path) -> list[Path]:
@@ -54,6 +68,18 @@ def check_skill_files(root: Path) -> dict[str, str]:
         missing_sections = [section for section in SKILL_CONTRACT_SECTIONS if section not in text]
         if missing_sections:
             fail(f"MISSING SKILL CONTRACT SECTIONS: {path} missing {missing_sections}")
+        soft_boundary = section_between(text, "## Soft Boundary", "## Hard Boundary")
+        if "Primitive audit:" not in soft_boundary:
+            fail(f"MISSING PRIMITIVE AUDIT: {path}")
+        if not any(token in soft_boundary for token in STATE_TOKENS):
+            fail(f"PRIMITIVE AUDIT MISSING STATE: {path}")
+        if not any(token in soft_boundary for token in ACTIVATION_TOKENS):
+            fail(f"PRIMITIVE AUDIT MISSING ACTIVATION: {path}")
+        if not any(token in soft_boundary for token in DURATION_TOKENS):
+            fail(f"PRIMITIVE AUDIT MISSING DURATION: {path}")
+        hard_boundary = section_between(text, "## Hard Boundary", "## Workflow")
+        if "primitive `constraint.hard`" not in hard_boundary or "machine-checkable" not in hard_boundary:
+            fail(f"HARD BOUNDARY MUST DISTINGUISH MACHINE CHECKS: {path}")
         descriptions[name] = description
         parse_when_to_use_keywords(fields["when_to_use"])
         print(f"ok: {path.as_posix()}")
@@ -108,7 +134,11 @@ def check_rules(root: Path) -> None:
         root / "rules" / "chinese.md",
         root / "rules" / "durable-context.md",
         root / "rules" / "routing.md",
-        root / "rules" / "skill-authoring.md",
+        root / "rules" / "skills" / "index.md",
+        root / "rules" / "skills" / "primitive.md",
+        root / "rules" / "skills" / "shape.md",
+        root / "rules" / "skills" / "care.md",
+        root / "rules" / "skills" / "authoring.md",
     ]
     for path in required:
         if not path.exists():

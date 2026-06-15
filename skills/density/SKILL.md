@@ -42,6 +42,13 @@ Do not use this skill for:
 
 ## Soft Boundary
 
+Primitive audit: `density` is `stateless`, `activation: narrow`, and
+`duration: mode`. It keeps only conversation-local calibration state and stops
+only when the user explicitly leaves the mode or a higher-priority instruction
+requires normal expression. Its constraints are model-applied `soft`
+constraints; it has no primitive `constraint.hard` until a verifier or CLI can
+enforce semantic invariance and output density.
+
 - Persist once activated. Do not offer a normal-mode exit. Calibrate density
   inside this mode instead.
 - Semantic invariance > language density.
@@ -55,6 +62,10 @@ Do not use this skill for:
 - Read supporting references only when the current output needs that detail.
 
 ## Hard Boundary
+
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
 
 - Do not let any compression change, drop, or blur core meaning.
 - Do not use classical Chinese as the compression strategy.
@@ -97,4 +108,5 @@ Before treating output as valid `density`, check:
 - output uses modern Chinese, not classical Chinese or broken terse voice;
 - line breaks carry structure instead of long connective prose;
 - no fixed length cap was applied against user context;
+- no persistent artifact was created by `density` itself;
 - uncertainty, risk, order, or destructive consequences remain clear.

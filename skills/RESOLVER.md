@@ -11,7 +11,7 @@ Do not recreate Waza's original eight-skill table here.
 
 When a skill is added:
 
-1. apply `rules/skill-authoring.md`;
+1. apply `rules/skills/index.md`;
 2. create `skills/<name>/SKILL.md`;
 3. add one row to the table below;
 4. run `make regenerate`;

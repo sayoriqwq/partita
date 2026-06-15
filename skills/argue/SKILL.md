@@ -45,6 +45,13 @@ Do not use this skill for:
 
 ## Soft Boundary
 
+Primitive audit: `argue` is `stateless`, `activation: narrow`, and
+`duration: topic`. It keeps only conversation-local dispute state and stops
+when the user and agent agree on the topic, the user moves on, or a new topic
+is explicitly chosen. Its constraints are model-applied `soft` constraints; it
+has no primitive `constraint.hard` until a verifier or CLI can enforce topic
+relevance and agreement state.
+
 - Persist once activated for the current topic. The end condition is agreement
   between the user and agent on that topic.
 - Keep the topic and tentative conclusion explicit when they are unclear.
@@ -59,6 +66,10 @@ Do not use this skill for:
   topic or should wait.
 
 ## Hard Boundary
+
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
 
 - Do not argue for the sake of disagreement.
 - Do not invent facts, evidence, or external constraints to make an objection.
@@ -89,4 +100,5 @@ Before treating output as valid `argue`, check:
 - each challenge is necessary and topic-relevant;
 - objections target correctness, feasibility, scope, or decision quality;
 - the response moves toward agreement instead of open-ended debate;
+- no persistent artifact was created by `argue` itself;
 - agreement ends the mode for that topic.

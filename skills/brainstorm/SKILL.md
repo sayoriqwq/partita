@@ -51,6 +51,13 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `brainstorm` is `stateless`, `activation: broad`, and
+`duration: task`. It keeps only conversation-local candidate state and stops
+when a direction is chosen, the user asks to execute, or the conversation moves
+to `want` or a concrete task mode. Its constraints are model-applied `soft`
+constraints; it has no primitive `constraint.hard` until a verifier or CLI can
+enforce candidate diversity, boundedness, or handoff.
+
 Use agent judgment to choose the brainstorming shape:
 
 - `frame`: state the topic, audience, constraints, diversity axes, and stop
@@ -69,6 +76,10 @@ Prefer diversity over volume. A useful set of five distinct candidates beats a
 long list of variations on one idea.
 
 ## Hard Boundary
+
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
 
 - Do not treat generated candidates as the user's true desire.
 - Do not keep brainstorming after the user has selected a direction.
@@ -110,4 +121,5 @@ Before treating output as valid `brainstorm`, check:
 - the set is bounded or explicitly user-sized;
 - at most two framing questions were asked before generating;
 - the response includes a narrowing, selection, or handoff step;
+- no persistent artifact was created by `brainstorm` itself;
 - the skill stops once a direction is chosen.

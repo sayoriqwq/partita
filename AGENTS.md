@@ -31,7 +31,12 @@ This repo does not own:
 ## Current Rule
 
 - Do not add a skill unless the user explicitly defines it.
-- Before adding a skill, apply `rules/skill-authoring.md`.
+- Before adding or changing a skill, apply `rules/skills/index.md`, then the
+  relevant layer rule: `primitive.md`, `shape.md`, `care.md`, or
+  `authoring.md`.
+- Skill design language lives under `rules/skills/`. Do not add more
+  prefix-named rule files such as `skill-*.md` when a directory layer can carry
+  the scope.
 - Do not reconstruct Waza's old skill taxonomy; use Waza only as mechanism
   lineage.
 - Keep zero skills as a valid framework state.

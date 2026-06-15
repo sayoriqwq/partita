@@ -54,6 +54,13 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `want` is `stateless`, `activation: broad`, and
+`duration: task`. It keeps only conversation-local clarification state and
+stops when the `Want brief` is actionable, the user chooses a different mode,
+or another skill owns the now-clear target. Its constraints are model-applied
+`soft` constraints; it has no primitive `constraint.hard` until a verifier or
+CLI can enforce clarification quality, question count, or handoff readiness.
+
 Use agent judgment to choose the smallest clarification move:
 
 - `mirror`: restate the seed idea in sharper words while preserving the user's
@@ -77,6 +84,10 @@ language when it carries meaning, but replace vague filler with observable
 outcomes, constraints, and success signals.
 
 ## Hard Boundary
+
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
 
 - Do not ask the user to write a better prompt as the first move.
 - Do not generate candidate desires, blank-page idea lists, or unrelated target
@@ -122,4 +133,5 @@ Before treating output as valid `want`, check:
 - execution waits until there is a provisional target and success signal;
 - no candidate desires or blank-page brainstorm were generated;
 - no more than three direct questions were asked in the turn;
+- no persistent artifact was created by `want` itself;
 - the skill stops once the target is clear enough for ordinary task work.

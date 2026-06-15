@@ -48,6 +48,13 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `aim` is `stateless`, `activation: broad`, and
+`duration: topic` when an active aim exists or a sustained mode needs an
+anchor. It keeps only conversation-local aim state and stops when the aim is
+completed, paused, switched, or no longer relevant. Its constraints are
+model-applied `soft` constraints; it has no primitive `constraint.hard` until a
+verifier or CLI can enforce aim-drift classification.
+
 Classify the current request against the active aim:
 
 - `aligned`: directly serves the aim; continue without extra ceremony unless
@@ -63,6 +70,10 @@ Classify the current request against the active aim:
 The warning should make drift visible without judging the user's choice.
 
 ## Hard Boundary
+
+This section is required by the current `SKILL.md` shape. These are strict
+model-applied boundaries, not primitive `constraint.hard`, because no
+machine-checkable enforcement surface exists for them yet.
 
 - Do not create, update, or close formal goals.
 - Do not write files, run tools, browse, or scan repositories just to infer an
@@ -109,5 +120,7 @@ Before treating the skill as correctly applied, check:
   `Aim brief`;
 - missing topic or target for a sustained mode produced a visible
   `topic-needed` question;
+- no persistent artifact was created, and the topic-duration aim state stops
+  when the aim is complete, paused, switched, or irrelevant;
 - no formal goal or external workflow artifact was created;
 - durable drift was not executed without user confirmation.

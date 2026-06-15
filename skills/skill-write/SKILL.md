@@ -1,7 +1,7 @@
 ---
 name: skill-write
 description: "Use when creating or updating a Codex skill from a workflow, skill primitive, or repeated agent drift, especially when the draft is becoming generic scaffolding, a CLI wrapper, oversized docs, unclear triggers, or an unvalidated artifact. Not for merely installing a skill, running an existing script, packaging a plugin, or writing one-off docs/prompts."
-when_to_use: "create skill, update skill, skill primitive, behavior intervention, trigger boundary, soft hard boundary, validation"
+when_to_use: "create skill, update skill, primitive, behavior intervention, trigger boundary, soft constraint, hard constraint, validation"
 dispatch_intent: "Craft skill writing from primitive"
 ---
 
@@ -11,13 +11,14 @@ Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Craft skill is active.
 
 Create or update Codex skills as agent behavior interventions. Start from the
-primitive idea: prove repeated drift and behavior pressure before materializing
-`SKILL.md`.
+skill primitive: prove repeated drift and behavior pressure before
+materializing `SKILL.md`.
 
 ## Capability
 
-Turn a workflow, correction, or skill-primitive-shaped source into a concise
-Codex skill with clear activation, boundaries, resource rules, and validation.
+Turn a workflow, correction, or primitive-shaped source into a concise
+Codex skill with clear activation, boundaries, state, resource rules, and
+validation.
 
 Pressure scenarios:
 
@@ -51,6 +52,16 @@ Do not use this skill when:
 
 ## Soft Boundary
 
+Primitive audit: `skill-write` is `stateful`, `activation: narrow`, and
+`duration: task`. It may create or update persistent skill files, direct
+supporting resources, rules, resolver metadata, and verifier surfaces that
+belong to the requested skill-writing task. It stops when the skill baseline is
+materialized, validated, and reported, or when the missing primitive choice
+blocks safe authoring. Its constraints are mixed: design judgment is `soft`;
+frontmatter parsing, metadata generation, link checks, package checks, and test
+commands are primitive `constraint.hard` only when enforced by scripts, CLIs,
+verifiers, or tests.
+
 Use agent judgment for:
 
 - whether repeated drift is strong enough to justify a reusable skill;
@@ -60,12 +71,21 @@ Use agent judgment for:
 - where user review is needed, and the smallest semantic unit to ask about;
 - whether the draft is generic, verbose, implementation-shaped, or
   runtime-shaped;
+- whether state, activation, duration, and namespace are being kept in the right
+  layer;
 - whether primitive semantics survive the materialized skill.
 
 ## Hard Boundary
 
+This section mixes model-applied boundaries with hard checks. Only items tied
+to machine-checkable surfaces such as scripts, CLIs, verifiers, tests, schemas,
+or package validation are primitive `constraint.hard`; prose-only boundaries
+remain strict `soft` constraints.
+
 - Deterministic scaffolding, metadata generation, linting, packaging, and
   filesystem checks belong in scripts or CLIs.
+- Put a single hard check in `scripts/`. If related checks form a command
+  family, design a CLI instead of accumulating unrelated scripts.
 - Do not add README, changelog, install guide, process notes, or unrelated docs
   inside a skill directory.
 - Do not invent unsupported Codex skill metadata.
@@ -77,7 +97,8 @@ Use agent judgment for:
 
 ## Workflow
 
-1. Name the repeated pressure: what agent failure will recur without this skill?
+1. Build or read the skill primitive: pressure, capability, trigger, boundary,
+   constraint, state, activation, duration, workflow, and validation.
 2. Decide the artifact layer:
    - `skill`: behavior intervention with trigger, boundary, workflow, validation;
    - `prompt/profile`: always-on preference or collaboration style;
@@ -85,16 +106,27 @@ Use agent judgment for:
    - `script/CLI`: deterministic, repeated, or fragile operation;
    - `reference`: conditional detail loaded only when needed;
    - `asset`: material used in final output.
-3. If a skill primitive or equivalent source exists, treat it as semantic input:
-   capability, trigger, soft boundary, hard boundary, workflow, export shape, and
-   validation.
+3. Preserve layer boundaries: primitive decides semantics, shape carries them,
+   and care tracks projection loss.
 4. Draft only the every-use skill body. Move optional detail to one-layer
    references only when needed.
 5. Write frontmatter `description` as activation surface: include use cases and
-   exclusions, not a neutral summary.
-6. If direction is clear, implement a reversible baseline and validate it.
-7. If a decision is unclear, ask for one minimal semantic choice, not a broad
+   exclusions, and make it broad or narrow according to the primitive.
+6. Keep namespace as optional matching or plugin projection identity, not as a
+   prefix inside the skill name.
+7. If direction is clear, implement a reversible baseline and validate it.
+8. If a decision is unclear, ask for one minimal semantic choice, not a broad
    planning confirmation.
+
+## References
+
+- Read [skills](../../rules/skills/index.md) before creating a new skill.
+- Read [primitive](../../rules/skills/primitive.md) before defining pressure,
+  constraint, state, activation, duration, or validation.
+- Read [shape](../../rules/skills/shape.md) before adding namespace or writing
+  the materialized `SKILL.md`.
+- Read [care](../../rules/skills/care.md) before checking projection loss or
+  future patch surfaces.
 
 ## Validation
 
@@ -103,7 +135,13 @@ Before calling the skill usable, verify:
 - the first user-facing line includes `🧭` inline;
 - capability names a behavior intervention and pressure scenario;
 - trigger includes positive use cases and exclusions;
+- soft constraints stay in model-applied instructions, and hard constraints have
+  a machine-checkable enforcement surface;
+- state, activation, and duration are explicit when they affect behavior,
+  routing, or persistence;
 - soft judgment and deterministic hard constraints are separated;
+- stateful edits are limited to the skill and directly supporting resources,
+  rules, resolver metadata, or verifier surfaces required by the task;
 - the skill directory contains only `SKILL.md` and direct supporting resources;
 - `make regenerate` and `make test` pass after adding or changing Craft
   skills.
