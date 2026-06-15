@@ -25,6 +25,7 @@ against skills that exist in the routing table.
 | Set up Effect target area with effect-harness | setup-effect-area | `skills/setup-effect-area/SKILL.md` |
 | Craft skill patch or structure audit | skill-patch | `skills/skill-patch/SKILL.md` |
 | Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
+| Update effect-harness official source and baseline | update-effect-harness | `skills/update-effect-harness/SKILL.md` |
 | Expand vague seed idea into actionable target | want | `skills/want/SKILL.md` |
 <!-- routing-table:end -->
 

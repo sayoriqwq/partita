@@ -30,4 +30,5 @@ When a skill is added:
 | Block expansion until current v1 lands | `land` | `skills/land/SKILL.md` |
 | Pin external repository source | `pin` | `skills/pin/SKILL.md` |
 | Set up Effect target area with effect-harness | `setup-effect-area` | `skills/setup-effect-area/SKILL.md` |
+| Update effect-harness official source and baseline | `update-effect-harness` | `skills/update-effect-harness/SKILL.md` |
 | Expand vague seed idea into actionable target | `want` | `skills/want/SKILL.md` |
