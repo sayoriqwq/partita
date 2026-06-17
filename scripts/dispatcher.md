@@ -22,6 +22,7 @@ against skills that exist in the routing table.
 | Craft controlled high-density Chinese | density | `skills/density/SKILL.md` |
 | Block expansion until current v1 lands | land | `skills/land/SKILL.md` |
 | Pin external repository source | pin | `skills/pin/SKILL.md` |
+| Reconcile task changes with current framing | reconcile | `skills/reconcile/SKILL.md` |
 | Set up Effect target area with effect-harness | setup-effect-area | `skills/setup-effect-area/SKILL.md` |
 | Craft skill patch or structure audit | skill-patch | `skills/skill-patch/SKILL.md` |
 | Craft skill writing from primitive | skill-write | `skills/skill-write/SKILL.md` |
