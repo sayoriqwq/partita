@@ -148,7 +148,7 @@ def check_rules(root: Path) -> None:
 
 def check_markdown_links(root: Path) -> None:
     for path in sorted(root.glob("**/*.md")):
-        if ".git" in path.parts:
+        if ".git" in path.parts or "node_modules" in path.parts:
             continue
         text = path.read_text()
         for target in LINK_RE.findall(text):

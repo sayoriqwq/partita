@@ -69,29 +69,55 @@ def build_plugin_json(version: str) -> dict:
     }
 
 
-def build_package_json(version: str) -> str:
-    return json.dumps(
-        {
-            "name": "craft",
-            "version": version,
-            "description": "Codex plugin harness for user-defined workflow skills.",
-            "author": "sayori",
-            "private": True,
-            "license": "MIT",
-            "files": [
-                ".codex-plugin",
-                "LICENSE",
-                "README.md",
-                "rules",
-                "scripts",
-                "skills",
-                "!**/__pycache__/**",
-                "!**/*.pyc",
-            ],
+def effect_harness_package_fields(root: Path) -> dict:
+    manifest_path = root / ".effect-harness.json"
+    if not manifest_path.exists():
+        return {}
+
+    manifest = json.loads(manifest_path.read_text())
+    baseline = manifest["packageBaseline"]
+    commands = manifest["commands"]
+    return {
+        "dependencies": {
+            "effect": baseline["effect"],
+            "@effect/platform-node": baseline["@effect/platform-node"],
         },
-        indent=2,
-        ensure_ascii=False,
-    ) + "\n"
+        "devDependencies": {
+            "@effect/vitest": baseline["@effect/vitest"],
+            "@effect/tsgo": baseline["@effect/tsgo"],
+            "@effect/language-service": baseline["@effect/language-service"],
+            "@typescript/native-preview": baseline["@typescript/native-preview"],
+        },
+        "scripts": {
+            "effect:status": commands["status"],
+            "effect:verify": commands["verify"],
+            "typecheck": "tsgo --noEmit",
+            "verify": "make test && pnpm typecheck && pnpm effect:verify",
+        },
+    }
+
+
+def build_package_json(root: Path, version: str) -> str:
+    package_json = {
+        "name": "craft",
+        "version": version,
+        "description": "Codex plugin harness for user-defined workflow skills.",
+        "author": "sayori",
+        "private": True,
+        "license": "MIT",
+        "files": [
+            ".codex-plugin",
+            "LICENSE",
+            "README.md",
+            "rules",
+            "scripts",
+            "skills",
+            "!**/__pycache__/**",
+            "!**/*.pyc",
+        ],
+    }
+    package_json.update(effect_harness_package_fields(root))
+    return json.dumps(package_json, indent=2, ensure_ascii=False) + "\n"
 
 
 def render_plugin_json(plugin_json: dict) -> str:
@@ -159,7 +185,7 @@ def main() -> int:
 
     rendered = {
         root / ".codex-plugin" / "plugin.json": render_plugin_json(build_plugin_json(version)),
-        root / "package.json": build_package_json(version),
+        root / "package.json": build_package_json(root, version),
         root / "scripts" / "dispatcher.md": render_dispatcher(
             (root / "scripts" / "dispatcher-template.md").read_text(),
             skills,

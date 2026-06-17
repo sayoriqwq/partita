@@ -14,5 +14,21 @@
     "skills",
     "!**/__pycache__/**",
     "!**/*.pyc"
-  ]
+  ],
+  "dependencies": {
+    "effect": "4.0.0-beta.83",
+    "@effect/platform-node": "4.0.0-beta.83"
+  },
+  "devDependencies": {
+    "@effect/vitest": "4.0.0-beta.83",
+    "@effect/tsgo": "0.14.4",
+    "@effect/language-service": "0.86.2",
+    "@typescript/native-preview": "7.0.0-dev.20260615.1"
+  },
+  "scripts": {
+    "effect:status": "node \"/Users/sayori/Desktop/effect-harness/dist/bin/effect-harness.js\" status",
+    "effect:verify": "node \"/Users/sayori/Desktop/effect-harness/dist/bin/effect-harness.js\" verify --target .",
+    "typecheck": "tsgo --noEmit",
+    "verify": "make test && pnpm typecheck && pnpm effect:verify"
+  }
 }
