@@ -120,13 +120,14 @@ remain strict `soft` constraints.
 
 ## References
 
-- Read [skills](../../rules/skills/index.md) before creating a new skill.
-- Read [primitive](../../rules/skills/primitive.md) before defining pressure,
-  constraint, state, activation, duration, or validation.
-- Read [shape](../../rules/skills/shape.md) before adding namespace or writing
-  the materialized `SKILL.md`.
-- Read [care](../../rules/skills/care.md) before checking projection loss or
-  future patch surfaces.
+- Read `/Users/sayori/Desktop/craft/rules/skills/index.md` before creating a
+  new skill.
+- Read `/Users/sayori/Desktop/craft/rules/skills/primitive.md` before defining
+  pressure, constraint, state, activation, duration, or validation.
+- Read `/Users/sayori/Desktop/craft/rules/skills/shape.md` before adding
+  namespace or writing the materialized `SKILL.md`.
+- Read `/Users/sayori/Desktop/craft/rules/skills/care.md` before checking
+  projection loss or future patch surfaces.
 
 ## Validation
 
