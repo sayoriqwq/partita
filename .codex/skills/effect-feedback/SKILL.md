@@ -45,7 +45,7 @@ task is ordinary Effect implementation.
 2. Check official pinned sources and diagnostics.
 3. If official source covers it, route to that source and do not create feedback.
 4. If the gap is reusable and business-neutral, write a local entry in `.codex/effect-feedback/`.
-5. Ask the maintainer whether to upstream it to `/Users/sayori/Desktop/effect-harness/harness/feedback/index.md`.
+5. Ask the maintainer whether to upstream it to `/Users/sayori/Desktop/yume-infra/effect-harness/harness/feedback/index.md`.
 
 ## Local Entry
 

@@ -1,9 +1,10 @@
 {
   "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts"
+    "src",
+    "tests"
   ],
   "compilerOptions": {
+    "noEmit": true,
     "plugins": [
       {
         "name": "@effect/language-service",

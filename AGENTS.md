@@ -64,13 +64,13 @@ make package
 <!-- effect-harness:start -->
 # Effect Harness
 
-This repo uses `/Users/sayori/Desktop/effect-harness` as its Effect harness root.
+This repo uses `/Users/sayori/Desktop/yume-infra/effect-harness` as its Effect harness root.
 
 Before writing non-trivial Effect code, read:
 
-- `/Users/sayori/Desktop/effect-harness/repos/effect/LLMS.md`
-- `/Users/sayori/Desktop/effect-harness/harness/index.md`
-- `/Users/sayori/Desktop/effect-harness/repos/effect.subtree.json`
+- `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`
+- `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`
+- `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect.subtree.json`
 - `.effect-harness.json`
 
 Runtime skills and agents installed by the harness:
@@ -87,7 +87,7 @@ pnpm effect:verify
 pnpm verify
 ```
 
-Do not import from `/Users/sayori/Desktop/effect-harness/repos/effect`.
+Do not import from `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect`.
 Do not copy effect-harness `.codex/skills`; this target only uses the runtime installed under
 `.codex/`.
 <!-- effect-harness:end -->

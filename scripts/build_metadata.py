@@ -83,16 +83,23 @@ def effect_harness_package_fields(root: Path) -> dict:
             "@effect/platform-node": baseline["@effect/platform-node"],
         },
         "devDependencies": {
+            "@antfu/eslint-config": "^9.0.0",
+            "eslint": "^10.3.0",
             "@effect/vitest": baseline["@effect/vitest"],
             "@effect/tsgo": baseline["@effect/tsgo"],
             "@effect/language-service": baseline["@effect/language-service"],
             "@typescript/native-preview": baseline["@typescript/native-preview"],
+            "knip": "^6.12.0",
+            "typescript": "^6.0.3",
         },
         "scripts": {
             "effect:status": commands["status"],
             "effect:verify": commands["verify"],
+            "knip": "knip",
+            "lint": 'eslint eslint.config.mjs "src/**/*.ts" "tests/**/*.ts" --no-error-on-unmatched-pattern',
+            "lint:fix": 'eslint eslint.config.mjs "src/**/*.ts" "tests/**/*.ts" --fix --no-error-on-unmatched-pattern',
             "typecheck": "tsgo --noEmit",
-            "verify": "make test && pnpm typecheck && pnpm effect:verify",
+            "verify": "make test && pnpm typecheck && pnpm lint && pnpm knip && pnpm effect:verify",
         },
     }
 

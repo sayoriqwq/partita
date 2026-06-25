@@ -7,8 +7,8 @@ Use this worker configuration when delegating focused Effect implementation or r
 - Target repo instructions and current task.
 - `.effect-harness.json`.
 - `.codex/skills/effect-code/SKILL.md`.
-- `/Users/sayori/Desktop/effect-harness/repos/effect/LLMS.md`.
-- `/Users/sayori/Desktop/effect-harness/harness/index.md`.
+- `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`.
+- `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`.
 - Patched `tsgo --noEmit` diagnostics.
 
 ## Responsibilities
@@ -21,6 +21,6 @@ Use this worker configuration when delegating focused Effect implementation or r
 
 ## Hard Stops
 
-- Do not import from `/Users/sayori/Desktop/effect-harness/repos/effect`.
+- Do not import from `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect`.
 - Do not update the harness source pin.
 - Do not copy effect-harness maintainer skills into this repo.

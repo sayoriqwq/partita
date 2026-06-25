@@ -35,7 +35,7 @@ business decisions that do not require Effect guidance.
 
 ## Hard Boundary
 
-- Do not import from `/Users/sayori/Desktop/effect-harness/repos/effect`.
+- Do not import from `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect`.
 - Do not copy effect-harness maintainer skills into the target.
 - Use installed packages: `effect`, `@effect/platform-node`, `@effect/vitest`.
 - Use patched `tsgo --noEmit` as the primary Effect diagnostic loop.
@@ -45,10 +45,10 @@ business decisions that do not require Effect guidance.
 
 1. Read target instructions and existing code.
 2. Read official/harness sources in this order:
-   - `/Users/sayori/Desktop/effect-harness/repos/effect/LLMS.md`
-   - `/Users/sayori/Desktop/effect-harness/repos/effect/ai-docs/src/`
-   - `/Users/sayori/Desktop/effect-harness/repos/effect/migration/v3-to-v4.md`
-   - `/Users/sayori/Desktop/effect-harness/harness/index.md`
+   - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`
+   - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/ai-docs/src/`
+   - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/migration/v3-to-v4.md`
+   - `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`
    - `.effect-harness.json`
 3. Use `Context.Service` for services on this baseline.
 4. Treat `@effect/tsgo` suggestions as type-boundary work, not assertion cleanup.

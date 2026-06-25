@@ -16,19 +16,26 @@
     "!**/*.pyc"
   ],
   "dependencies": {
-    "effect": "4.0.0-beta.83",
-    "@effect/platform-node": "4.0.0-beta.83"
+    "effect": "4.0.0-beta.90",
+    "@effect/platform-node": "4.0.0-beta.90"
   },
   "devDependencies": {
-    "@effect/vitest": "4.0.0-beta.83",
-    "@effect/tsgo": "0.14.4",
+    "@antfu/eslint-config": "^9.0.0",
+    "eslint": "^10.3.0",
+    "@effect/vitest": "4.0.0-beta.90",
+    "@effect/tsgo": "0.14.6",
     "@effect/language-service": "0.86.2",
-    "@typescript/native-preview": "7.0.0-dev.20260615.1"
+    "@typescript/native-preview": "7.0.0-dev.20260624.1",
+    "knip": "^6.12.0",
+    "typescript": "^6.0.3"
   },
   "scripts": {
-    "effect:status": "node \"/Users/sayori/Desktop/effect-harness/dist/bin/effect-harness.js\" status",
-    "effect:verify": "node \"/Users/sayori/Desktop/effect-harness/dist/bin/effect-harness.js\" verify --target .",
+    "effect:status": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" status",
+    "effect:verify": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" verify --target .",
+    "knip": "knip",
+    "lint": "eslint eslint.config.mjs \"src/**/*.ts\" \"tests/**/*.ts\" --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint eslint.config.mjs \"src/**/*.ts\" \"tests/**/*.ts\" --fix --no-error-on-unmatched-pattern",
     "typecheck": "tsgo --noEmit",
-    "verify": "make test && pnpm typecheck && pnpm effect:verify"
+    "verify": "make test && pnpm typecheck && pnpm lint && pnpm knip && pnpm effect:verify"
   }
 }
