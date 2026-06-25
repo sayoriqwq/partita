@@ -1,7 +1,7 @@
-# Craft Profile
+# Partita Profile
 
 This file is repo-local profile context loaded by agent-guide include. It is not
-part of the Craft plugin package and is not a shared skill rule.
+part of the Partita plugin package and is not a shared skill rule.
 
 Current user instructions, `AGENTS.md`, `CLAUDE.md`, and repo files override
 this profile.
@@ -17,7 +17,7 @@ this profile.
 - Treat repeated correction as a signal for future behavior. Do not keep
   repeating a corrected mistake.
 
-## Craft Defaults
+## Partita Defaults
 
 - Use Waza's mechanism first: skill source, resolver, dispatcher, verifier, and
   packaging projection.
@@ -28,8 +28,8 @@ this profile.
   reusable skill-design rule.
 - Future skills should start from `rules/skills/`: primitive, shape, care, and
   authoring.
-- Treat Craft skill files as source authority. Runtime copies in other repos are
-  projections; CLI/verifier implementation belongs in the repo that owns that
-  mechanism.
+- Treat Partita skill files as source authority. Runtime copies in other repos
+  are projections; CLI/verifier implementation belongs in the repo that owns
+  that mechanism.
 - The current loaded-skill marker is `🧭`. Future skill families may use
   family-specific markers.

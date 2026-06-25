@@ -8,7 +8,7 @@ dispatch_intent: "Update effect-harness official source and baseline"
 # Update Effect Harness
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Update `effect-harness` itself against official Effect source and package
 baselines without turning a recurring harness operation into an ad hoc manual

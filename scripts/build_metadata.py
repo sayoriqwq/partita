@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Craft Codex plugin metadata.
+"""Generate Partita Codex plugin metadata.
 
 The repository is allowed to have zero skills. Skill metadata is generated only
 from actual `skills/*/SKILL.md` files, so the framework can stay empty until the
@@ -47,7 +47,7 @@ def collect_skill_metadata(root: Path) -> list[dict[str, str]]:
 
 def build_plugin_json(version: str) -> dict:
     return {
-        "name": "craft",
+        "name": "partita",
         "version": version,
         "description": "Codex plugin harness for user-defined workflow skills.",
         "author": {"name": "sayori"},
@@ -55,16 +55,16 @@ def build_plugin_json(version: str) -> dict:
         "keywords": ["codex", "skills", "workflow"],
         "skills": "./skills/",
         "interface": {
-            "displayName": "Craft",
+            "displayName": "Partita",
             "shortDescription": "A Codex skill harness for user-defined workflows",
             "longDescription": (
-                "Craft is a Codex plugin harness for defining custom workflow "
+                "Partita is a Codex plugin harness for defining custom workflow "
                 "skills without inheriting Waza's predefined taxonomy."
             ),
             "developerName": "sayori",
             "category": "Developer Tools",
             "capabilities": ["Interactive"],
-            "defaultPrompt": ["Add a custom Craft skill"],
+            "defaultPrompt": ["Add a custom Partita skill"],
         },
     }
 
@@ -99,7 +99,7 @@ def effect_harness_package_fields(root: Path) -> dict:
 
 def build_package_json(root: Path, version: str) -> str:
     package_json = {
-        "name": "craft",
+        "name": "partita",
         "version": version,
         "description": "Codex plugin harness for user-defined workflow skills.",
         "author": "sayori",

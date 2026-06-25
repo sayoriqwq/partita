@@ -1,14 +1,14 @@
 ---
 name: density
-description: "Use when the user directly invokes or loads density, asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Craft density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
+description: "Use when the user directly invokes or loads density, asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Partita density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
 when_to_use: "direct density invocation, load density, controlled high-density Chinese, max language density, terse Chinese, density mode, sustained brevity, symbolic vocabulary"
-dispatch_intent: "Craft controlled high-density Chinese"
+dispatch_intent: "Partita controlled high-density Chinese"
 ---
 
 # Density
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Use controlled high-density Chinese: semantic invariance first, modern Chinese,
 symbols as logic skeleton, stable technical English preserved, no filler, no
@@ -73,7 +73,7 @@ machine-checkable enforcement surface exists for them yet.
 - Do not compress safety warnings, destructive actions, or multi-step sequences
   so far that order or consequence becomes unclear.
 - Do not invent a new symbol when controlled Chinese is clearer.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

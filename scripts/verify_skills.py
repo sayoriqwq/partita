@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Craft Codex plugin framework and future skills."""
+"""Validate Partita Codex plugin framework and future skills."""
 
 from __future__ import annotations
 
@@ -90,8 +90,8 @@ def check_skill_files(root: Path) -> dict[str, str]:
 def check_plugin_manifest(root: Path, version: str) -> None:
     path = root / ".codex-plugin" / "plugin.json"
     data = json.loads(path.read_text())
-    if data.get("name") != "craft":
-        fail("INVALID PLUGIN MANIFEST: name must be craft")
+    if data.get("name") != "partita":
+        fail("INVALID PLUGIN MANIFEST: name must be partita")
     if data.get("version") != version:
         fail(f"VERSION DRIFT: plugin.json != VERSION {version}")
     if data.get("skills") != "./skills/":

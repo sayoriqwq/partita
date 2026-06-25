@@ -1,10 +1,10 @@
-# Craft
+# Partita
 
-`craft` is a Codex plugin harness for user-defined workflow skills.
+`partita` is a Codex plugin harness for user-defined workflow skills.
 
 It keeps the Waza-inspired skill framework shape without shipping Waza's
 predefined skill taxonomy. Zero skills remains a valid framework state, but the
-current customization defines the user's Craft skill domain.
+current customization defines the user's Partita skill domain.
 
 ## Current State
 
@@ -21,9 +21,9 @@ current customization defines the user's Craft skill domain.
 - `scripts/build_metadata.py` regenerates `.codex-plugin/plugin.json`, `package.json`, and `scripts/dispatcher.md`.
 - `scripts/verify_skills.py` validates the framework and any future `skills/*/SKILL.md`.
 - `rules/` contains shared behavior rules that future skills may reference.
-- `rules/skills/` is the harness entrypoint for Craft skill design language:
+- `rules/skills/` is the harness entrypoint for Partita skill design language:
   primitive, shape, care, and authoring.
-- `packaging.allowlist` controls what ships in `dist/craft.zip`.
+- `packaging.allowlist` controls what ships in `dist/partita.zip`.
 
 ## Commands
 
@@ -36,7 +36,7 @@ make package
 
 ## Install Locally
 
-Craft's local install path syncs skills globally first, then maps this repo
+Partita's local install path syncs skills globally first, then maps this repo
 into the personal Codex plugin marketplace:
 
 ```bash
@@ -44,8 +44,8 @@ make install
 ```
 
 Open a new Codex thread after installing so global skills are reloaded. The
-local marketplace maps `~/plugins/craft` back to this repo, so source edits stay
-in one place.
+local marketplace maps `~/plugins/partita` back to this repo, so source edits
+stay in one place.
 
 To run only the global sync:
 

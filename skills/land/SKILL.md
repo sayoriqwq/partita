@@ -8,7 +8,7 @@ dispatch_intent: "Block expansion until current v1 lands"
 # Land
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Keep the current v1 landing topic from expanding before it has landed.
 
@@ -73,7 +73,7 @@ machine-checkable enforcement surface exists for them yet.
 - Do not block true blockers, validation failures, or missing information needed
   to land v1.
 - Do not treat a preference, curiosity, or nice-to-have as necessary for v1.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

@@ -1,8 +1,8 @@
-# Craft Skill Resolver
+# Partita Skill Resolver
 
 ## Shared Output Marker
 
-All Craft skills use the same output convention: prefix the first
+All Partita skills use the same output convention: prefix the first
 user-facing line with `🧭` inline, not as its own paragraph. This marker is a
 visible loaded-skill signal.
 
@@ -25,7 +25,7 @@ When a skill is added:
 | Generate and narrow candidate directions | `brainstorm` | `skills/brainstorm/SKILL.md` |
 | Create or update skill from primitive behavior pressure | `skill-write` | `skills/skill-write/SKILL.md` |
 | Patch named skill from a real case or structure audit | `skill-patch` | `skills/skill-patch/SKILL.md` |
-| Craft aim and topic alignment | `aim` | `skills/aim/SKILL.md` |
+| Partita aim and topic alignment | `aim` | `skills/aim/SKILL.md` |
 | Controlled high-density Chinese collaboration mode | `density` | `skills/density/SKILL.md` |
 | Block expansion until current v1 lands | `land` | `skills/land/SKILL.md` |
 | Pin external repository source | `pin` | `skills/pin/SKILL.md` |

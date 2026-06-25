@@ -8,7 +8,7 @@ dispatch_intent: "Sustained necessary challenge until agreement"
 # Argue
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Use sustained, topic-relevant challenge while the user is unsure whether their
 theory, idea, requirement, or conclusion is correct.
@@ -76,7 +76,7 @@ machine-checkable enforcement surface exists for them yet.
 - Do not keep challenging after the user and agent agree on the topic.
 - Do not treat silence, fatigue, or a request to move on as agreement.
 - Do not bury a blocking objection under polite agreement.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

@@ -2,13 +2,13 @@
 name: aim
 description: "Use when an active aim exists and the new request may drift from it, when the user sets or checks the current topic/target, or when a sustained mode such as argue needs an explicit topic before it can run. Not for creating formal goals, blocking user-initiated topic changes, ordinary summaries, or execution planning."
 when_to_use: "active aim, active topic, aim drift, target switch, topic check, focus check, side request, sustained mode prerequisite, aim brief"
-dispatch_intent: "Craft aim and topic alignment"
+dispatch_intent: "Partita aim and topic alignment"
 ---
 
 # Aim
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 This skill is a warning and alignment check, not a formal goal system. It keeps
 the active aim visible when a conversation starts drifting, and provides the

@@ -1,6 +1,6 @@
 # Authoring
 
-Workflow for turning a primitive into a Craft skill.
+Workflow for turning a primitive into a Partita skill.
 
 ## Rule
 

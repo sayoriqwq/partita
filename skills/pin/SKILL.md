@@ -8,7 +8,7 @@ dispatch_intent: "Pin external repository source"
 # Pin
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Pin an external repository into the current repository as a durable source
 surface with provenance, locator, update path, and verification.

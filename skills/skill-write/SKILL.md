@@ -2,13 +2,13 @@
 name: skill-write
 description: "Use when creating or updating a Codex skill from a workflow, skill primitive, or repeated agent drift, especially when the draft is becoming generic scaffolding, a CLI wrapper, oversized docs, unclear triggers, or an unvalidated artifact. Not for merely installing a skill, running an existing script, packaging a plugin, or writing one-off docs/prompts."
 when_to_use: "create skill, update skill, primitive, behavior intervention, trigger boundary, soft constraint, hard constraint, validation"
-dispatch_intent: "Craft skill writing from primitive"
+dispatch_intent: "Partita skill writing from primitive"
 ---
 
 # Skill Write
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Create or update Codex skills as agent behavior interventions. Start from the
 skill primitive: prove repeated drift and behavior pressure before
@@ -90,8 +90,8 @@ remain strict `soft` constraints.
   inside a skill directory.
 - Do not invent unsupported Codex skill metadata.
 - Do not copy private project paths, docwarden task state, contexta export
-  commands, or isomorph internals into Craft runtime instructions unless the
-  user explicitly makes Craft own that dependency.
+  commands, or isomorph internals into Partita runtime instructions unless the
+  user explicitly makes Partita own that dependency.
 - Do not materialize a skill if the trigger and exclusion boundary are still
   unknown; ask one smallest question instead.
 
@@ -120,13 +120,13 @@ remain strict `soft` constraints.
 
 ## References
 
-- Read `/Users/sayori/Desktop/craft/rules/skills/index.md` before creating a
+- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/index.md` before creating a
   new skill.
-- Read `/Users/sayori/Desktop/craft/rules/skills/primitive.md` before defining
+- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/primitive.md` before defining
   pressure, constraint, state, activation, duration, or validation.
-- Read `/Users/sayori/Desktop/craft/rules/skills/shape.md` before adding
+- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/shape.md` before adding
   namespace or writing the materialized `SKILL.md`.
-- Read `/Users/sayori/Desktop/craft/rules/skills/care.md` before checking
+- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/care.md` before checking
   projection loss or future patch surfaces.
 
 ## Validation
@@ -144,5 +144,5 @@ Before calling the skill usable, verify:
 - stateful edits are limited to the skill and directly supporting resources,
   rules, resolver metadata, or verifier surfaces required by the task;
 - the skill directory contains only `SKILL.md` and direct supporting resources;
-- `make regenerate` and `make test` pass after adding or changing Craft
+- `make regenerate` and `make test` pass after adding or changing Partita
   skills.

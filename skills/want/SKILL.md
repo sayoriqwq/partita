@@ -8,7 +8,7 @@ dispatch_intent: "Expand vague seed idea into actionable target"
 # Want
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Help the user expand an existing but under-articulated idea before asking them
 to write a better prompt or treating the surface wording as ready for execution.
@@ -49,7 +49,7 @@ Do not use this skill when:
   research, writing, review, or planning;
 - the request is primarily emotional support, therapy, diagnosis, or life
   coaching;
-- another active Craft skill already has the narrower job and the user's target
+- another active Partita skill already has the narrower job and the user's target
   is clear enough for that skill.
 
 ## Soft Boundary
@@ -99,7 +99,7 @@ machine-checkable enforcement surface exists for them yet.
   framework.
 - Do not invent private motives, diagnoses, stakes, or constraints.
 - Do not keep clarifying after the user has a workable target.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

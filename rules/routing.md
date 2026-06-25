@@ -1,6 +1,6 @@
 # Routing
 
-Craft is a Codex plugin that does not ship predefined skills.
+Partita is a Codex plugin that does not ship predefined skills.
 
 Routing only exists after the user defines a skill under
 `skills/<name>/SKILL.md` and records it in `skills/RESOLVER.md`.
@@ -9,5 +9,5 @@ Routing only exists after the user defines a skill under
 
 - Do not silently map user requests to Waza's old `think/design/check/hunt/write/learn/read/health` taxonomy.
 - Do not invent a route for a missing skill.
-- If a matching Craft skill exists, read its `SKILL.md` before acting.
+- If a matching Partita skill exists, read its `SKILL.md` before acting.
 - If no matching skill exists, do normal agent work and leave the framework unchanged.

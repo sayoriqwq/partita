@@ -26,7 +26,7 @@ verify-scripts:
 	  scripts/validate_package.py
 
 package:
-	./scripts/package-skill.sh dist/craft.zip
+	./scripts/package-skill.sh dist/partita.zip
 
 install: install-codex-plugin
 

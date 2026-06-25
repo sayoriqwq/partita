@@ -1,6 +1,6 @@
 # Shape
 
-Shape is the supported form that carries a primitive into a usable Craft skill.
+Shape is the supported form that carries a primitive into a usable Partita skill.
 
 Use this rule when writing or auditing `SKILL.md`, progressive disclosure, or
 bundled resources. Shape checks happen after the primitive is known.
@@ -79,5 +79,5 @@ bundled resources. Shape checks happen after the primitive is known.
 - Keep generated metadata and runtime copies out of manual patch scope.
 - Do not create a cross-skill framework, docs package, schema, or automation
   just to record feedback.
-- Do not preserve private source paths as Craft runtime requirements unless
-  Craft explicitly owns those paths.
+- Do not preserve private source paths as Partita runtime requirements unless
+  Partita explicitly owns those paths.

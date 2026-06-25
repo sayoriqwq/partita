@@ -8,7 +8,7 @@ dispatch_intent: "Reconcile task changes with current framing"
 # Reconcile
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Audit a completed task phase for stale framing before changing anything.
 
@@ -81,7 +81,7 @@ prose-only boundaries remain strict `soft` constraints.
   surface and authority.
 - Do not invent an authority document or accepted framing when none exists; ask
   for the smallest missing anchor.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

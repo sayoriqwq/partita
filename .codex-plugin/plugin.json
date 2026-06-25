@@ -1,5 +1,5 @@
 {
-  "name": "craft",
+  "name": "partita",
   "version": "0.1.0",
   "description": "Codex plugin harness for user-defined workflow skills.",
   "author": {
@@ -13,16 +13,16 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Craft",
+    "displayName": "Partita",
     "shortDescription": "A Codex skill harness for user-defined workflows",
-    "longDescription": "Craft is a Codex plugin harness for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
+    "longDescription": "Partita is a Codex plugin harness for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
     "developerName": "sayori",
     "category": "Developer Tools",
     "capabilities": [
       "Interactive"
     ],
     "defaultPrompt": [
-      "Add a custom Craft skill"
+      "Add a custom Partita skill"
     ]
   }
 }

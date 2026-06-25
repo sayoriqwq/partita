@@ -15,4 +15,4 @@ and patch skill shape without inventing a case.
 
 Rule: use `rules/skills/primitive.md` for semantic preservation and
 `rules/skills/shape.md` for materialized shape. Keep external skill-writing
-templates out of Craft runtime instructions.
+templates out of Partita runtime instructions.

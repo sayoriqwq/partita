@@ -11,8 +11,8 @@ from typing import Any
 
 
 MARKETPLACE_NAME = "personal"
-PLUGIN_NAME = "craft"
-LEGACY_PLUGIN_NAMES = ("mini-waza",)
+PLUGIN_NAME = "partita"
+LEGACY_PLUGIN_NAMES = ("mini-waza", "craft")
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
         "--root",
         type=Path,
         default=Path(__file__).resolve().parent.parent,
-        help="Craft repo root.",
+        help="Partita repo root.",
     )
     parser.add_argument(
         "--marketplace-root",

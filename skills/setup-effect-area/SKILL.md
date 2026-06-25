@@ -1,6 +1,6 @@
 ---
 name: setup-effect-area
-description: "Use when the user asks to set up, update, verify, or repair a TypeScript/Effect target repository against effect-harness runtime and CLI contracts. Not for updating effect-harness itself, generic repo pinning, writing Effect business features, or defining Craft skill semantics."
+description: "Use when the user asks to set up, update, verify, or repair a TypeScript/Effect target repository against effect-harness runtime and CLI contracts. Not for updating effect-harness itself, generic repo pinning, writing Effect business features, or defining Partita skill semantics."
 when_to_use: "setup effect area, update Effect target, effect-harness init, Effect target setup, verify Effect harness target, setup TypeScript Effect repo, effect runtime contract"
 dispatch_intent: "Set up Effect target area with effect-harness"
 ---
@@ -8,20 +8,20 @@ dispatch_intent: "Set up Effect target area with effect-harness"
 # Setup Effect Area
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Set up a target TypeScript/Effect repository against an existing
 `effect-harness` CLI and runtime contract.
 
 ## Capability
 
-Use Craft-owned skill guidance to drive the `effect-harness`-owned executable
+Use Partita-owned skill guidance to drive the `effect-harness`-owned executable
 mechanism: resolve target and harness roots, run the harness setup path, inspect
 managed output, and verify the target against the harness contract.
 
 Pressure scenario: the agent hand-copies Effect docs or skills, adds a
 target-local dispatcher, updates baseline versions manually, or lets
-`effect-harness` runtime copies become the source of Craft skill semantics.
+`effect-harness` runtime copies become the source of Partita skill semantics.
 Another pressure scenario: the agent patches one target file while leaving the
 package baseline, verify chain, managed runtime, and harness manifest
 inconsistent.
@@ -34,7 +34,7 @@ Use this skill when the user asks to:
 - update a target repo after `effect-harness` baseline or runtime contract
   changes;
 - verify whether a target repo is compatible with the current `effect-harness`;
-- coordinate Craft skill source with `effect-harness` managed runtime copies.
+- coordinate Partita skill source with `effect-harness` managed runtime copies.
 
 Do not use this skill when:
 
@@ -42,7 +42,7 @@ Do not use this skill when:
 - the user asks to update `effect-harness` itself, `effect-harness/repos/effect`,
   or the official Effect source subtree; use `update-effect-harness`;
 - the user wants Effect API design or target business feature work after setup;
-- the task is to redesign Craft skill semantics inside `effect-harness`.
+- the task is to redesign Partita skill semantics inside `effect-harness`.
 
 ## Soft Boundary
 
@@ -67,7 +67,7 @@ Classify the target before editing:
 
 Authority split:
 
-- Craft owns skill source semantics.
+- Partita owns skill source semantics.
 - `effect-harness` owns setup CLI, verifier, runtime projection, and sync
   mechanism.
 - Target repos own target-local product code and local verification results.
@@ -81,7 +81,7 @@ to machine-checkable surfaces such as the `effect-harness` CLI, package scripts,
 git status, or verifier output are primitive `constraint.hard`; prose-only
 boundaries remain strict `soft` constraints.
 
-- Do not define Craft skill semantics in `effect-harness`; update Craft first,
+- Do not define Partita skill semantics in `effect-harness`; update Partita first,
   then sync managed copies through an explicit mechanism.
 - Do not copy the harness repo's internal skills into a target repo. Target
   repos receive only `harness/runtime/codex` output from `effect-harness init`.
@@ -145,7 +145,7 @@ Before treating output as valid `setup-effect-area`, check:
 - target root and harness root are explicit;
 - target classification is `fresh-setup`, `target-update`, or
   `blocked-by-harness`;
-- Craft skill source and `effect-harness` CLI/runtime ownership are separated;
+- Partita skill source and `effect-harness` CLI/runtime ownership are separated;
 - setup or update dry-run happened before target writes;
 - `.effect-harness.json` was inspected after setup/update;
 - focused Effect subagents, if used, were given `.codex/agents/effect-worker.md`;

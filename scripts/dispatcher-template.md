@@ -1,14 +1,14 @@
 ---
-name: craft
-description: "Dispatcher for user-defined Craft workflow skills. Use when a Craft skill exists for the user's request. Not for generic work when no matching skill has been defined."
+name: partita
+description: "Dispatcher for user-defined Partita workflow skills. Use when a Partita skill exists for the user's request. Not for generic work when no matching skill has been defined."
 ---
 
-# Craft Dispatcher
+# Partita Dispatcher
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph
-when a Craft skill is active.
+when a Partita skill is active.
 
-Craft is a Codex plugin for user-defined workflow skills. Match only
+Partita is a Codex plugin for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 
 ## Routing Table

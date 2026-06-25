@@ -1,13 +1,13 @@
 ---
 name: skill-patch
-description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, duration, or Craft skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
+description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, duration, or Partita skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
 when_to_use: "skill improvement, real user case, structure audit, primitive preservation, skill shape audit, namespace audit, constraint audit, state audit, activation audit, duration audit, target skill, trigger drift, boundary patch, case capture, workflow patch, validation gap"
-dispatch_intent: "Craft skill patch or structure audit"
+dispatch_intent: "Partita skill patch or structure audit"
 ---
 
 # Skill Patch
 
-Prefix your first user-facing line with `🧭` inline when this Craft skill is active.
+Prefix your first user-facing line with `🧭` inline when this Partita skill is active.
 
 Patch an existing skill from a real observed case or a structure audit.
 
@@ -27,7 +27,7 @@ Use this skill when:
 - the user names a target skill and reports a real behavior problem;
 - a concrete case should become a reusable skill example or regression pattern;
 - the user asks whether a named skill preserves its primitive, namespace,
-  constraint, state, activation, duration, or Craft skill shape;
+  constraint, state, activation, duration, or Partita skill shape;
 - dogfood shows wrong routing, over-reading, under-reading, vague boundaries, or
   work outside the skill's responsibility.
 
@@ -121,4 +121,4 @@ Before calling the improvement done, verify:
 - the edit is smaller than a rewrite;
 - concrete cases live in one-level references, not the every-use body;
 - generated dispatcher/resolver metadata is in sync when needed;
-- `make regenerate` and `make test` pass after Craft skill changes.
+- `make regenerate` and `make test` pass after Partita skill changes.

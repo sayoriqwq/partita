@@ -8,7 +8,7 @@ dispatch_intent: "Generate and narrow candidate directions"
 # Brainstorm
 
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
-when this Craft skill is active.
+when this Partita skill is active.
 
 Generate candidate directions before the user has chosen one, then create a
 clear narrowing path instead of leaving the conversation as an endless idea
@@ -90,7 +90,7 @@ machine-checkable enforcement surface exists for them yet.
 - Do not use brainstorming as a substitute for factual research when current
   information is required.
 - Do not expand one chosen seed idea inside this skill; hand it to `want`.
-- Do not use `🧭` unless this Craft skill is active.
+- Do not use `🧭` unless this Partita skill is active.
 
 ## Workflow
 

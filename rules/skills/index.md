@@ -1,6 +1,6 @@
 # Skills
 
-Shared design language for Craft skills.
+Shared design language for Partita skills.
 
 Use this directory when creating, auditing, or maintaining skills:
 
@@ -10,7 +10,7 @@ Use this directory when creating, auditing, or maintaining skills:
 - [care](care.md): how existing skills are patched, audited, and protected from
   drift.
 - [authoring](authoring.md): the workflow for turning a primitive into a
-  usable Craft skill.
+  usable Partita skill.
 
 ## Layer Map
 
