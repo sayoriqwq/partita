@@ -68,7 +68,11 @@ Minimum shape:
 
 ```text
 skills/<name>/SKILL.md
+skills/<name>/agents/openai.yaml
 ```
+
+`agents/openai.yaml` is required when the primitive uses
+`invocation: explicit`, and optional for Codex App UI or tool dependencies.
 
 Required frontmatter:
 
@@ -76,10 +80,12 @@ Required frontmatter:
 ---
 name: <name>
 description: "Use when ... Not for ..."
-when_to_use: "comma, separated, triggers"
-dispatch_intent: "short routing label"
 ---
 ```
+
+Keep `SKILL.md` frontmatter to `name` and `description`. Put Codex-specific
+UI, `policy.allow_implicit_invocation`, and tool dependencies in
+`agents/openai.yaml`.
 
 After adding or changing a skill:
 

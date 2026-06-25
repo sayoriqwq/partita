@@ -1,8 +1,6 @@
 ---
 name: reconcile
 description: "Use when the user has finished a task phase and wants a semantic residue audit against the current topic, source document, or accepted framing. Lists suspicious stale or migration-era code/docs before repair. Not for general cleanup, formatting, ordinary code review, bug finding, or unapproved deletion."
-when_to_use: "phase closeout, semantic residue audit, stale framing, migration wording, current topic authority, source document alignment, approved repair"
-dispatch_intent: "Reconcile task changes with current framing"
 ---
 
 # Reconcile
@@ -48,7 +46,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `reconcile` is `stateful`, `activation: narrow`, and
+Primitive audit: `reconcile` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may write code, docs, tests, or generated metadata only in
 the repair phase after explicit user approval. It stops when the audit list is
 delivered, or when approved repairs are implemented, verified, and reported.

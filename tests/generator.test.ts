@@ -69,8 +69,6 @@ describe('Partita generator', () => {
         `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
-when_to_use: demo, sample
-dispatch_intent: "Run the demo skill"
 ---
 
 # Demo
@@ -80,26 +78,23 @@ dispatch_intent: "Run the demo skill"
       assert.deepStrictEqual(fields, {
         name: 'demo',
         description: 'Use when demo is needed. Not for unrelated work.',
-        whenToUse: 'demo, sample',
-        dispatchIntent: 'Run the demo skill',
       })
     }))
 
-  it.effect('rejects stale metadata.version in skill frontmatter', () =>
+  it.effect('rejects unsupported skill frontmatter fields', () =>
     Effect.gen(function* () {
       const error = yield* Effect.flip(parseSkillFrontmatter(
         'skills/demo/SKILL.md',
         `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
-metadata:
-  version: 1.2.3
+unsupported_field: Demo routing
 ---
 `,
       ))
 
       assert.strictEqual(error._tag, 'PartitaFrontmatterError')
-      assert.include(error.message, 'STALE metadata.version')
+      assert.include(error.message, 'UNSUPPORTED FRONTMATTER FIELD')
     }))
 
   it.effect('renders generated files for a zero-skill repo', () =>
@@ -120,7 +115,7 @@ metadata:
       const packageFile = requireElement(files, 1)
       const dispatcherFile = requireElement(files, 2)
 
-      assert.include(dispatcherFile.content, '| Intent | Skill | File |')
+      assert.include(dispatcherFile.content, '| Skill | Description | File |')
       assert.notInclude(dispatcherFile.content, 'skills/demo/SKILL.md')
 
       const pluginJson = JSON.parse(pluginFile.content) as { version: string, skills: string }
@@ -148,7 +143,6 @@ metadata:
         'skills/bravo/SKILL.md': `---
 name: bravo
 description: "Use when bravo is needed. Not for unrelated work."
-dispatch_intent: Bravo intent
 ---
 `,
         'skills/alpha/SKILL.md': `---
@@ -163,8 +157,8 @@ description: "Use when alpha is needed. Not for unrelated work."
         skills.map(skill => skill.name),
         ['alpha', 'bravo'],
       )
-      assert.strictEqual(requireElement(skills, 0).dispatchIntent, '')
-      assert.strictEqual(requireElement(skills, 1).dispatchIntent, 'Bravo intent')
+      assert.strictEqual(requireElement(skills, 0).description, 'Use when alpha is needed. Not for unrelated work.')
+      assert.strictEqual(requireElement(skills, 1).description, 'Use when bravo is needed. Not for unrelated work.')
 
       yield* writeFixtureFile(
         root,
@@ -188,7 +182,6 @@ description: "Use when alpha is needed. Not for unrelated work."
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
-dispatch_intent: Demo routing
 ---
 `,
       })
@@ -205,7 +198,7 @@ dispatch_intent: Demo routing
       )
 
       const dispatcher = yield* fs.readFileString(joinPath(root, 'skills', 'DISPATCHER.md'))
-      assert.include(dispatcher, '| Demo routing | demo | `skills/demo/SKILL.md` |')
+      assert.include(dispatcher, '| demo | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
 
       const checks = yield* checkGeneratedFiles(root)
       assert.deepStrictEqual(

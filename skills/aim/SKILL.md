@@ -1,8 +1,6 @@
 ---
 name: aim
 description: "Use when an active aim exists and the new request may drift from it, when the user sets or checks the current topic/target, or when a sustained mode such as argue needs an explicit topic before it can run. Not for creating formal goals, blocking user-initiated topic changes, ordinary summaries, or execution planning."
-when_to_use: "active aim, active topic, aim drift, target switch, topic check, focus check, side request, sustained mode prerequisite, aim brief"
-dispatch_intent: "Partita aim and topic alignment"
 ---
 
 # Aim
@@ -48,7 +46,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `aim` is `stateless`, `activation: broad`, and
+Primitive audit: `aim` is `stateless`, `activation: broad`, `invocation: implicit`, and
 `duration: topic` when an active aim exists or a sustained mode needs an
 anchor. It keeps only conversation-local aim state and stops when the aim is
 completed, paused, switched, or no longer relevant. Its constraints are

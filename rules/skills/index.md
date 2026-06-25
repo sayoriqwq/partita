@@ -24,6 +24,7 @@ Skill Design Language
 |   |-- constraint
 |   |-- state
 |   |-- activation
+|   |-- invocation
 |   |-- duration
 |   |-- workflow
 |   `-- validation
@@ -32,6 +33,7 @@ Skill Design Language
 |   |-- namespace
 |   |-- description
 |   |-- frontmatter
+|   |-- openai_metadata
 |   |-- body
 |   |-- references
 |   `-- verifier

@@ -61,9 +61,9 @@ describe('Partita verifier', () => {
         '',
         `Prefix with ${marker}.`,
         '',
-        '| Intent | Skill | File |',
+        '| Skill | Description | File |',
         '| --- | --- | --- |',
-        '| Missing | missing | `skills/missing/SKILL.md` |',
+        '| missing | Missing skill fixture | `skills/missing/SKILL.md` |',
       ].join('\n'))
 
       const report = yield* verifyRouting({ root })
@@ -72,6 +72,25 @@ describe('Partita verifier', () => {
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('routing.missing_skill_refs'))
       assert.isTrue(codes.includes('routing.stale_skill_refs'))
+    }))
+
+  it.effect('reports OpenAI invocation policy drift', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/SKILL.md', validSkill().replace('`invocation: implicit`', '`invocation: explicit`'))
+      write(root, 'skills/demo/agents/openai.yaml', [
+        'interface:',
+        '  display_name: "Demo"',
+        '  short_description: "Demo skill fixture"',
+        'policy:',
+        '  allow_implicit_invocation: true',
+      ].join('\n'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.explicit_allows_implicit'))
     }))
 
   it.effect('validates package stage boundaries', () =>
@@ -132,8 +151,6 @@ function validSkill(): string {
     '---',
     'name: demo',
     'description: "Use when verifying Partita skill shape in tests. Not for production routing or broad behavior."',
-    'when_to_use: "demo verifier"',
-    'dispatch_intent: "Verify demo skill fixture"',
     '---',
     '',
     '# Demo',
@@ -152,7 +169,7 @@ function validSkill(): string {
     '',
     '## Soft Boundary',
     '',
-    'Primitive audit: `demo` is `stateless`, `activation: narrow`, and `duration: turn`.',
+    'Primitive audit: `demo` is `stateless`, `activation: narrow`, `invocation: implicit`, and `duration: turn`.',
     '',
     '## Hard Boundary',
     '',
@@ -174,9 +191,9 @@ function resolver(): string {
     '',
     `All Partita skills use ${marker} as the visible loaded-skill signal.`,
     '',
-    '| Intent | Skill | File |',
+    '| Skill | Description | File |',
     '| --- | --- | --- |',
-    '| Demo | `demo` | `skills/demo/SKILL.md` |',
+    '| `demo` | Demo skill fixture | `skills/demo/SKILL.md` |',
   ].join('\n')
 }
 
@@ -186,9 +203,9 @@ function dispatcher(): string {
     '',
     `Prefix with ${marker} when a Partita skill is active.`,
     '',
-    '| Intent | Skill | File |',
+    '| Skill | Description | File |',
     '| --- | --- | --- |',
-    '| Demo | demo | `skills/demo/SKILL.md` |',
+    '| demo | Demo skill fixture | `skills/demo/SKILL.md` |',
   ].join('\n')
 }
 

@@ -1,8 +1,6 @@
 ---
 name: land
 description: "Use when the user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic. Not for open brainstorming, later-version planning, ordinary aim drift warnings, or when no landing topic exists yet."
-when_to_use: "land mode, v1 landing, scope creep block, first version, prevent expansion, current topic, necessary blocker, off-topic reflection"
-dispatch_intent: "Block expansion until current v1 lands"
 ---
 
 # Land
@@ -40,7 +38,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `land` is `stateless`, `activation: narrow`, and
+Primitive audit: `land` is `stateless`, `activation: narrow`, `invocation: implicit`, and
 `duration: topic`. It keeps only conversation-local landing state and stops when
 the v1 lands, the user switches topic, or the user exits the mode. Its
 constraints are model-applied `soft` constraints; it has no `constraint.hard`

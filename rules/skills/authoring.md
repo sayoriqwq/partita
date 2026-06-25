@@ -8,8 +8,8 @@ Workflow for turning a primitive into a Partita skill.
   CLI wrapper, plugin namespace, or generic scaffold.
 - Name the repeated pressure before writing a skill. If no repeatable agent
   drift exists, do not add a skill.
-- Define trigger, boundary, constraint, state, activation, duration, workflow,
-  and validation before materializing `SKILL.md`.
+- Define trigger, boundary, constraint, state, activation, invocation, duration,
+  workflow, and validation before materializing `SKILL.md`.
 - Use [shape](shape.md) to carry the primitive through supported files.
 - Use [care](care.md) to track projection loss and future patch surfaces.
 - Separate soft agent judgment from hard deterministic constraints. Soft
@@ -21,6 +21,9 @@ Workflow for turning a primitive into a Partita skill.
 - Keep workflow moves reviewable. When user confirmation is needed, ask for the
   smallest uncertain semantic unit.
 - Materialize only Codex-supported skill surfaces in this repo.
+- When a skill needs Codex-specific invocation policy, UI metadata, or tool
+  dependency declarations, materialize that in `agents/openai.yaml`, not in
+  `SKILL.md` frontmatter.
 
 ## Interpretation Gate
 

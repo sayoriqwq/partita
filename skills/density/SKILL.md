@@ -1,8 +1,6 @@
 ---
 name: density
 description: "Use when the user directly invokes or loads density, asks for controlled high-density Chinese, maximum language density, terse sustained collaboration, fixed symbolic vocabulary, or Partita density mode. Not for one-off summarization, code minification, classical Chinese, hiding uncertainty, or compressing safety-critical meaning."
-when_to_use: "direct density invocation, load density, controlled high-density Chinese, max language density, terse Chinese, density mode, sustained brevity, symbolic vocabulary"
-dispatch_intent: "Partita controlled high-density Chinese"
 ---
 
 # Density
@@ -42,7 +40,7 @@ Do not use this skill for:
 
 ## Soft Boundary
 
-Primitive audit: `density` is `stateless`, `activation: narrow`, and
+Primitive audit: `density` is `stateless`, `activation: narrow`, `invocation: explicit`, and
 `duration: mode`. It keeps only conversation-local calibration state and stops
 only when the user explicitly leaves the mode or a higher-priority instruction
 requires normal expression. Its constraints are model-applied `soft`

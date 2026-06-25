@@ -3,8 +3,6 @@ import { Schema } from 'effect'
 export interface SkillMetadata {
   readonly name: string
   readonly description: string
-  readonly whenToUse: string
-  readonly dispatchIntent: string
 }
 
 export interface PluginManifest {

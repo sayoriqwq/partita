@@ -1,8 +1,6 @@
 ---
 name: skill-patch
-description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, duration, or Partita skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
-when_to_use: "skill improvement, real user case, structure audit, primitive preservation, skill shape audit, namespace audit, constraint audit, state audit, activation audit, duration audit, target skill, trigger drift, boundary patch, case capture, workflow patch, validation gap"
-dispatch_intent: "Partita skill patch or structure audit"
+description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, invocation, metadata, duration, or Partita skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
 ---
 
 # Skill Patch
@@ -27,7 +25,8 @@ Use this skill when:
 - the user names a target skill and reports a real behavior problem;
 - a concrete case should become a reusable skill example or regression pattern;
 - the user asks whether a named skill preserves its primitive, namespace,
-  constraint, state, activation, duration, or Partita skill shape;
+  constraint, state, activation, invocation, metadata, duration, or Partita
+  skill shape;
 - dogfood shows wrong routing, over-reading, under-reading, vague boundaries, or
   work outside the skill's responsibility.
 
@@ -40,7 +39,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `skill-patch` is `stateful`, `activation: narrow`, and
+Primitive audit: `skill-patch` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may write or update `SKILL.md`, references, real case
 records, resolver metadata, and verifier surfaces that belong to the requested
 skill patch. It stops when the requested case patch or structure audit is
@@ -99,9 +98,10 @@ remain strict `soft` constraints.
 - Read [case capture](references/case-capture.md) before adding, moving, or
   deleting examples or case patterns.
 - Read [primitive](../../rules/skills/primitive.md) before auditing primitive
-  preservation, constraint, state, activation, or duration.
+  preservation, constraint, state, activation, invocation, or duration.
 - Read [shape](../../rules/skills/shape.md) before auditing namespace,
-  description, `SKILL.md` body, references, or verifier surface.
+  description, OpenAI metadata, `SKILL.md` body, references, or verifier
+  surface.
 - Read [care](../../rules/skills/care.md) before auditing projection loss,
   cases, or forward tests.
 - Read [cases](references/cases.md) when checking known recurrence patterns.

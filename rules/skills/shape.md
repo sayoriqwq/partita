@@ -14,9 +14,11 @@ bundled resources. Shape checks happen after the primitive is known.
   `activation`: broad descriptions cover natural language cases; narrow
   descriptions avoid accidental routing. It should also make sustained duration
   visible when a skill persists beyond one turn.
-- `frontmatter`: Codex-supported metadata such as `name`, `description`,
-  `when_to_use`, and `dispatch_intent`. Do not add unsupported metadata just to
-  preserve a primitive field.
+- `frontmatter`: Codex-supported metadata: `name` and `description`. Do not
+  add unsupported metadata just to preserve a primitive field.
+- `openai_metadata`: optional Codex-specific metadata in
+  `agents/openai.yaml`. Use it for Codex App UI, invocation policy, and tool
+  dependencies; do not move primitive semantics into this file.
 - `body`: every-use instructions in `SKILL.md`.
 - `references`: conditional detail loaded only when the active task needs it.
 - `verifier`: deterministic checks over supported file shape, routing, and
@@ -42,6 +44,23 @@ bundled resources. Shape checks happen after the primitive is known.
 - Check whether duration is visible enough to prevent accidental persistence or
   premature exit.
 
+## OpenAI Metadata
+
+- Use `skills/<name>/agents/openai.yaml` for Codex-specific metadata only.
+- Keep `interface` fields user-facing: `display_name`, `short_description`,
+  icons, brand color, and `default_prompt`.
+- Use `policy.allow_implicit_invocation` to project the primitive's
+  `invocation` choice:
+  - `invocation: implicit` means Codex may choose the skill from matching
+    natural language. `allow_implicit_invocation` should be `true` when the
+    policy is written; omission follows Codex's default `true`.
+  - `invocation: explicit` means accidental activation is too costly. Write
+    `policy.allow_implicit_invocation: false`; explicit `$skill` invocation
+    still works.
+- Use `dependencies.tools` for declared tool dependencies such as MCP servers.
+- Do not add Claude-only frontmatter fields or duplicate routing prose into
+  `agents/openai.yaml`.
+
 ## Structure Audit
 
 - Check that the capability names an agent behavior intervention, not a folder
@@ -57,6 +76,9 @@ bundled resources. Shape checks happen after the primitive is known.
   semantic unit when user confirmation is needed.
 - Check that workflow or validation names the stop condition for `task`, `topic`,
   or `mode` duration.
+- Check that `activation` and `invocation` are both preserved: description
+  controls match quality; `agents/openai.yaml` controls whether Codex may
+  invoke without an explicit `$skill`.
 - Check that validation proves the skill can be used, including generated
   metadata when frontmatter changes.
 - Check that namespace, when present in routing or plugin projection, is not

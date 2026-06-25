@@ -1,8 +1,6 @@
 ---
 name: pin
 description: "Use when the user asks to pin an external repository or source repo into the current repository as a durable tracked source with locator, manifest, update path, and verification. Not for Effect-specific harness setup, package-version pinning only, UI/thread pinning, or copying source without provenance."
-when_to_use: "pin external repo, repo pin, source pin, vendor repository, subtree source, submodule source, tracked upstream source, repo locator, source provenance, update path"
-dispatch_intent: "Pin external repository source"
 ---
 
 # Pin
@@ -48,7 +46,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `pin` is `stateful`, `activation: narrow`, and
+Primitive audit: `pin` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may write a pinned source tree, manifest, lock file,
 documentation route, update script, verifier hook, or package metadata. It
 stops when the repo pin is materialized and verified, or when source ownership,

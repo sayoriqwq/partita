@@ -1,8 +1,6 @@
 ---
 name: skill-write
-description: "Use when creating or updating a Codex skill from a workflow, skill primitive, or repeated agent drift, especially when the draft is becoming generic scaffolding, a CLI wrapper, oversized docs, unclear triggers, or an unvalidated artifact. Not for merely installing a skill, running an existing script, packaging a plugin, or writing one-off docs/prompts."
-when_to_use: "create skill, update skill, primitive, behavior intervention, trigger boundary, soft constraint, hard constraint, validation"
-dispatch_intent: "Partita skill writing from primitive"
+description: "Use when creating or updating a Codex skill from a workflow, skill primitive, or repeated agent drift, especially when the draft needs activation, invocation, metadata, boundaries, or validation design. Not for merely installing a skill, running an existing script, packaging a plugin, or writing one-off docs/prompts."
 ---
 
 # Skill Write
@@ -17,7 +15,7 @@ materializing `SKILL.md`.
 ## Capability
 
 Turn a workflow, correction, or primitive-shaped source into a concise
-Codex skill with clear activation, boundaries, state, resource rules, and
+Codex skill with clear activation, invocation policy, boundaries, state, resource rules, and
 validation.
 
 Pressure scenarios:
@@ -52,7 +50,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `skill-write` is `stateful`, `activation: narrow`, and
+Primitive audit: `skill-write` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may create or update persistent skill files, direct
 supporting resources, rules, resolver metadata, and verifier surfaces that
 belong to the requested skill-writing task. It stops when the skill baseline is
@@ -71,8 +69,8 @@ Use agent judgment for:
 - where user review is needed, and the smallest semantic unit to ask about;
 - whether the draft is generic, verbose, implementation-shaped, or
   runtime-shaped;
-- whether state, activation, duration, and namespace are being kept in the right
-  layer;
+- whether state, activation, invocation, duration, namespace, and OpenAI
+  metadata are being kept in the right layer;
 - whether primitive semantics survive the materialized skill.
 
 ## Hard Boundary
@@ -89,6 +87,8 @@ remain strict `soft` constraints.
 - Do not add README, changelog, install guide, process notes, or unrelated docs
   inside a skill directory.
 - Do not invent unsupported Codex skill metadata.
+- Keep `SKILL.md` frontmatter limited to `name` and `description`; put Codex UI,
+  invocation policy, and tool dependencies in `agents/openai.yaml`.
 - Do not copy private project paths, docwarden task state, contexta export
   commands, or isomorph internals into Partita runtime instructions unless the
   user explicitly makes Partita own that dependency.
@@ -98,7 +98,7 @@ remain strict `soft` constraints.
 ## Workflow
 
 1. Build or read the skill primitive: pressure, capability, trigger, boundary,
-   constraint, state, activation, duration, workflow, and validation.
+   constraint, state, activation, invocation, duration, workflow, and validation.
 2. Decide the artifact layer:
    - `skill`: behavior intervention with trigger, boundary, workflow, validation;
    - `prompt/profile`: always-on preference or collaboration style;
@@ -112,10 +112,13 @@ remain strict `soft` constraints.
    references only when needed.
 5. Write frontmatter `description` as activation surface: include use cases and
    exclusions, and make it broad or narrow according to the primitive.
-6. Keep namespace as optional matching or plugin projection identity, not as a
+6. Write or update `agents/openai.yaml` when Codex-specific UI,
+   `policy.allow_implicit_invocation`, or tool dependencies are part of the
+   skill shape.
+7. Keep namespace as optional matching or plugin projection identity, not as a
    prefix inside the skill name.
-7. If direction is clear, implement a reversible baseline and validate it.
-8. If a decision is unclear, ask for one minimal semantic choice, not a broad
+8. If direction is clear, implement a reversible baseline and validate it.
+9. If a decision is unclear, ask for one minimal semantic choice, not a broad
    planning confirmation.
 
 ## References
@@ -123,7 +126,7 @@ remain strict `soft` constraints.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/index.md` before creating a
   new skill.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/primitive.md` before defining
-  pressure, constraint, state, activation, duration, or validation.
+  pressure, constraint, state, activation, invocation, duration, or validation.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/shape.md` before adding
   namespace or writing the materialized `SKILL.md`.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/care.md` before checking
@@ -138,7 +141,7 @@ Before calling the skill usable, verify:
 - trigger includes positive use cases and exclusions;
 - soft constraints stay in model-applied instructions, and hard constraints have
   a machine-checkable enforcement surface;
-- state, activation, and duration are explicit when they affect behavior,
+- state, activation, invocation, and duration are explicit when they affect behavior,
   routing, or persistence;
 - soft judgment and deterministic hard constraints are separated;
 - stateful edits are limited to the skill and directly supporting resources,

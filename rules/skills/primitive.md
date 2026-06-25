@@ -28,6 +28,11 @@ and the choices that must survive materialization.
   natural conversation should trigger the skill automatically. Use `narrow`
   when the skill is a dedicated workflow that should mostly run by explicit
   invocation.
+- `invocation`: whether Codex may select the skill without an explicit `$skill`
+  mention. Use `implicit` when natural-language routing is intended. Use
+  `explicit` when accidental activation would change collaboration mode,
+  create sustained pressure, or run a workflow that should require a direct
+  user opt-in.
 - `duration`: how long the skill should remain active after activation. Use
   `turn` for one response, `task` for the current task, `topic` for the current
   discussion topic, and `mode` for a sustained collaboration mode.
@@ -41,8 +46,10 @@ and the choices that must survive materialization.
   defines enforcement.
 - Do not call a constraint hard unless it has a machine-checkable enforcement
   surface. If it relies only on model judgment, it is soft.
-- Keep state and activation explicit when they affect routing, persistence, or
-  user-visible behavior.
+- Keep state, activation, and invocation explicit when they affect routing,
+  persistence, or user-visible behavior.
+- Do not collapse `activation` into `invocation`: a narrow skill can still allow
+  implicit invocation when its description is precise enough for safe routing.
 - Keep duration explicit when the skill can outlive one response. Every duration
   needs a stop condition.
 - Do not put examples, project paths, command details, or namespace mechanics in

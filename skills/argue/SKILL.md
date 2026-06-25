@@ -1,8 +1,6 @@
 ---
 name: argue
 description: "Use when the user wants sustained challenge on an uncertain theory, idea, requirement, or conclusion and is not sure whether it is correct. Not for ordinary implementation, code review, adversarial debate for its own sake, or when the user has already made a settled decision."
-when_to_use: "argue mode, challenge my idea, uncertain conclusion, test theory, discuss requirements, necessary objections, reach agreement"
-dispatch_intent: "Sustained necessary challenge until agreement"
 ---
 
 # Argue
@@ -45,7 +43,7 @@ Do not use this skill for:
 
 ## Soft Boundary
 
-Primitive audit: `argue` is `stateless`, `activation: narrow`, and
+Primitive audit: `argue` is `stateless`, `activation: narrow`, `invocation: explicit`, and
 `duration: topic`. It keeps only conversation-local dispute state and stops
 when the user and agent agree on the topic, the user moves on, or a new topic
 is explicitly chosen. Its constraints are model-applied `soft` constraints; it

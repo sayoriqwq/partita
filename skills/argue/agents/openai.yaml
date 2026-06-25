@@ -1,0 +1,6 @@
+interface:
+  display_name: "Argue"
+  short_description: "Challenge an uncertain idea until it is settled"
+  default_prompt: "Use $argue to challenge this uncertain idea, requirement, or conclusion until the topic is settled."
+policy:
+  allow_implicit_invocation: false

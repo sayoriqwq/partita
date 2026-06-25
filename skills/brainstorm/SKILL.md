@@ -1,8 +1,6 @@
 ---
 name: brainstorm
 description: "Use when the user wants open-ended ideation, candidate directions, possible wants, names, approaches, features, angles, or options before choosing one. Not for expanding an already-present seed idea, executing a clear task, sustained critique, exhaustive research, or planning after the target is chosen."
-when_to_use: "brainstorm, ideate, generate ideas, candidate directions, possible wants, options, angles, names, features, divergent thinking, choose direction"
-dispatch_intent: "Generate and narrow candidate directions"
 ---
 
 # Brainstorm
@@ -51,7 +49,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `brainstorm` is `stateless`, `activation: broad`, and
+Primitive audit: `brainstorm` is `stateless`, `activation: broad`, `invocation: implicit`, and
 `duration: task`. It keeps only conversation-local candidate state and stops
 when a direction is chosen, the user asks to execute, or the conversation moves
 to `want` or a concrete task mode. Its constraints are model-applied `soft`

@@ -11,8 +11,9 @@ recording a real user-observed case.
 - `patch`: changing an existing skill to prevent recurrence.
 - `case`: a real user-observed behavior pattern that teaches a skill.
 - `audit`: checking primitive preservation or materialized shape.
-- `projection_loss`: semantic loss when a primitive becomes `SKILL.md`, runtime
-  instructions, dispatcher rows, or plugin exports.
+- `projection_loss`: semantic loss when a primitive becomes `SKILL.md`,
+  `agents/openai.yaml`, runtime instructions, dispatcher rows, or plugin
+  exports.
 - `forward_test`: the next similar situation that should now trigger, avoid
   triggering, or execute differently.
 
@@ -23,5 +24,7 @@ recording a real user-observed case.
 - Split content before the main skill becomes heavy.
 - Prefer one directly useful case over many invented examples.
 - When auditing, check primitive preservation and shape separately.
+- Treat a mismatch between primitive invocation and
+  `policy.allow_implicit_invocation` as projection loss.
 - Treat a prose-only hard constraint as projection loss until it has a
   machine-checkable enforcement surface.

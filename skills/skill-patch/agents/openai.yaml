@@ -2,3 +2,5 @@ interface:
   display_name: "Skill Patch"
   short_description: "Patch named skills from direct feedback"
   default_prompt: "Use $skill-patch to patch this named skill from the feedback."
+policy:
+  allow_implicit_invocation: true

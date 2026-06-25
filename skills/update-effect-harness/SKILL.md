@@ -1,8 +1,6 @@
 ---
 name: update-effect-harness
 description: "Use when the user asks to update effect-harness itself to the latest official Effect source pin, package baseline, or self-update workflow. Not for setting up an Effect target repo, generic repo pinning, writing Effect application code, or one-off dependency bumps outside effect-harness."
-when_to_use: "update effect-harness, refresh Effect baseline, update Effect source pin, beta version drift, effect:status outdated, make effect-harness current, update harness mechanism"
-dispatch_intent: "Update effect-harness official source and baseline"
 ---
 
 # Update Effect Harness
@@ -50,7 +48,7 @@ Do not use this skill when:
 ## Soft Boundary
 
 Primitive audit: `update-effect-harness` is `stateful`,
-`activation: narrow`, and `duration: task`. It may write source pins,
+`activation: narrow`, `invocation: implicit`, and `duration: task`. It may write source pins,
 baseline manifests, package metadata, lockfiles, docs, verifier contracts,
 tests, or update CLI surfaces in `effect-harness`. It stops when the harness is
 verified current, or when the missing update mechanism is named as the blocker.

@@ -1,8 +1,6 @@
 ---
 name: setup-effect-area
 description: "Use when the user asks to set up, update, verify, or repair a TypeScript/Effect target repository against effect-harness runtime and CLI contracts. Not for updating effect-harness itself, generic repo pinning, writing Effect business features, or defining Partita skill semantics."
-when_to_use: "setup effect area, update Effect target, effect-harness init, Effect target setup, verify Effect harness target, setup TypeScript Effect repo, effect runtime contract"
-dispatch_intent: "Set up Effect target area with effect-harness"
 ---
 
 # Setup Effect Area
@@ -46,7 +44,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `setup-effect-area` is `stateful`, `activation: narrow`, and
+Primitive audit: `setup-effect-area` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may write target package metadata, tsconfig, `.codex`
 runtime, `.effect-harness.json`, AGENTS managed blocks, lockfiles, and managed
 runtime copies. It stops when the target verifies against `effect-harness`, or

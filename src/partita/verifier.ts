@@ -22,8 +22,6 @@ export interface ValidationReport {
 interface SkillFrontmatter {
   readonly name: string
   readonly description: string
-  readonly whenToUse: string
-  readonly dispatchIntent: string
 }
 
 interface FrontmatterParseResult {
@@ -45,6 +43,7 @@ const skillContractSections = [
 ] as const
 const stateTokens = ['`stateful`', '`stateless`'] as const
 const activationTokens = ['`activation: broad`', '`activation: narrow`'] as const
+const invocationTokens = ['`invocation: implicit`', '`invocation: explicit`'] as const
 const durationTokens = ['`duration: turn`', '`duration: task`', '`duration: topic`', '`duration: mode`'] as const
 
 const requiredRuleFiles = [
@@ -136,12 +135,6 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     if (!lowered.includes('use when') || !lowered.includes('not for')) {
       issues.push(issue('skill.description_activation_surface', 'description must include Use when and Not for', relativePath))
     }
-    if (!parsed.fields.whenToUse) {
-      issues.push(issue('skill.missing_when_to_use', 'missing when_to_use', relativePath))
-    }
-    if (!parsed.fields.dispatchIntent) {
-      issues.push(issue('skill.missing_dispatch_intent', 'missing dispatch_intent', relativePath))
-    }
     if (!text.includes(miniWazaMarker)) {
       issues.push(issue('skill.missing_marker', `missing ${miniWazaMarker} marker instruction`, relativePath))
     }
@@ -161,6 +154,10 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     if (!activationTokens.some(token => softBoundary.includes(token))) {
       issues.push(issue('skill.primitive_activation_missing', 'Primitive audit must include activation token', relativePath))
     }
+    const invocation = primitiveInvocation(softBoundary)
+    if (!invocation) {
+      issues.push(issue('skill.primitive_invocation_missing', 'Primitive audit must include invocation token', relativePath))
+    }
     if (!durationTokens.some(token => softBoundary.includes(token))) {
       issues.push(issue('skill.primitive_duration_missing', 'Primitive audit must include duration token', relativePath))
     }
@@ -169,11 +166,87 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     if (!hardBoundary.includes('primitive `constraint.hard`') || !hardBoundary.includes('machine-checkable')) {
       issues.push(issue('skill.hard_boundary_wording', 'Hard Boundary must distinguish primitive `constraint.hard` from machine-checkable enforcement', relativePath))
     }
+    issues.push(...checkOpenAiMetadata(root, name, path, invocation))
 
     descriptions[name] = description
   }
 
   return { descriptions, issues }
+}
+
+function primitiveInvocation(softBoundary: string): 'implicit' | 'explicit' | undefined {
+  if (softBoundary.includes(invocationTokens[0])) {
+    return 'implicit'
+  }
+  if (softBoundary.includes(invocationTokens[1])) {
+    return 'explicit'
+  }
+  return undefined
+}
+
+function checkOpenAiMetadata(
+  root: string,
+  skillName: string,
+  skillPath: string,
+  invocation: 'implicit' | 'explicit' | undefined,
+): ReadonlyArray<ValidationIssue> {
+  const metadataPath = join(dirname(skillPath), 'agents', 'openai.yaml')
+  const relativeMetadataPath = relativePathFrom(root, metadataPath)
+  const exists = existsSync(metadataPath)
+  if (!exists && invocation !== 'explicit') {
+    return []
+  }
+
+  const issues: Array<ValidationIssue> = []
+  if (!exists) {
+    issues.push(issue(
+      'openai_metadata.missing',
+      `${skillName} has invocation: explicit, so agents/openai.yaml must set policy.allow_implicit_invocation: false`,
+      relativeMetadataPath,
+    ))
+    return issues
+  }
+
+  const allowImplicit = parseAllowImplicitInvocation(readText(metadataPath), relativeMetadataPath)
+  issues.push(...allowImplicit.issues)
+  if (allowImplicit.value === undefined) {
+    issues.push(issue('openai_metadata.missing_invocation_policy', 'agents/openai.yaml must declare policy.allow_implicit_invocation', relativeMetadataPath))
+    return issues
+  }
+
+  if (invocation === 'explicit' && allowImplicit.value !== false) {
+    issues.push(issue('openai_metadata.explicit_allows_implicit', 'invocation: explicit requires policy.allow_implicit_invocation: false', relativeMetadataPath))
+  }
+  if (invocation === 'implicit' && allowImplicit.value !== true) {
+    issues.push(issue('openai_metadata.implicit_disallows_implicit', 'invocation: implicit must not set policy.allow_implicit_invocation: false', relativeMetadataPath))
+  }
+
+  return issues
+}
+
+function parseAllowImplicitInvocation(
+  text: string,
+  path: string,
+): { readonly value?: boolean, readonly issues: ReadonlyArray<ValidationIssue> } {
+  for (const rawLine of text.split(/\r?\n/u)) {
+    const line = rawLine.trim()
+    const separator = line.indexOf(':')
+    if (separator === -1 || line.slice(0, separator) !== 'allow_implicit_invocation') {
+      continue
+    }
+
+    const value = line.slice(separator + 1).trim()
+    if (value === 'true') {
+      return { issues: [], value: true }
+    }
+    if (value === 'false') {
+      return { issues: [], value: false }
+    }
+    return {
+      issues: [issue('openai_metadata.invalid_invocation_policy', 'policy.allow_implicit_invocation must be true or false', path)],
+    }
+  }
+  return { issues: [] }
 }
 
 function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
@@ -192,45 +265,20 @@ function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
     }
   }
 
-  const fields: Partial<SkillFrontmatter> & { readonly version?: string } = {}
-  let inMetadata = false
+  const fields: Partial<SkillFrontmatter> = {}
   for (const rawLine of lines.slice(1, end)) {
     if (!rawLine.trim()) {
       continue
     }
 
     if (rawLine.startsWith('  ')) {
-      if (!inMetadata) {
-        issues.push(issue('frontmatter.invalid_indent', `invalid frontmatter indent: ${JSON.stringify(rawLine)}`, path))
-        continue
-      }
-      const [key, rawValue] = splitFrontmatterLine(rawLine.trim())
-      if (!rawValue) {
-        issues.push(issue('frontmatter.invalid_line', `invalid frontmatter line: ${JSON.stringify(rawLine)}`, path))
-        continue
-      }
-      if (key === 'version') {
-        const parsed = parseScalar('metadata.version', rawValue, path)
-        issues.push(...parsed.issues)
-        if (parsed.value) {
-          Object.assign(fields, { version: parsed.value })
-        }
-      }
+      issues.push(issue('frontmatter.invalid_indent', `invalid frontmatter indent: ${JSON.stringify(rawLine)}`, path))
       continue
     }
 
-    inMetadata = false
     const [key, rawValue] = splitFrontmatterLine(rawLine)
     if (!rawValue) {
       issues.push(issue('frontmatter.invalid_line', `invalid frontmatter line: ${JSON.stringify(rawLine)}`, path))
-      continue
-    }
-
-    if (key === 'metadata') {
-      if (rawValue.trim()) {
-        issues.push(issue('frontmatter.invalid_metadata', 'metadata must be a mapping', path))
-      }
-      inMetadata = true
       continue
     }
 
@@ -242,6 +290,9 @@ function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
         Object.assign(fields, { [field]: parsed.value })
       }
     }
+    else {
+      issues.push(issue('frontmatter.unsupported_field', `unsupported frontmatter field: ${key}; Codex skills use only name and description`, path))
+    }
   }
 
   if (!fields.name?.trim()) {
@@ -250,10 +301,6 @@ function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
   if (!fields.description?.trim()) {
     issues.push(issue('frontmatter.missing_description', 'missing description', path))
   }
-  if (fields.version) {
-    issues.push(issue('frontmatter.stale_version', 'metadata.version is stale; use top-level VERSION', path))
-  }
-
   if (!fields.name || !fields.description) {
     return { issues }
   }
@@ -261,9 +308,7 @@ function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
   return {
     fields: {
       description: fields.description.trim(),
-      dispatchIntent: fields.dispatchIntent?.trim() ?? '',
       name: fields.name.trim(),
-      whenToUse: fields.whenToUse?.trim() ?? '',
     },
     issues,
   }
@@ -283,10 +328,6 @@ function frontmatterFieldName(key: string): keyof SkillFrontmatter | undefined {
       return 'name'
     case 'description':
       return 'description'
-    case 'when_to_use':
-      return 'whenToUse'
-    case 'dispatch_intent':
-      return 'dispatchIntent'
     default:
       return undefined
   }

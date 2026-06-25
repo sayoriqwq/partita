@@ -244,15 +244,18 @@ const renderDispatcher = Effect.fn('renderDispatcher')(function* (
     return yield* failGenerator('skills/DISPATCHER.md', 'ERROR: dispatcher template is missing routing-table markers')
   }
 
-  const rows = ['| Intent | Skill | File |', '|--------|-------|------|']
+  const rows = ['| Skill | Description | File |', '|-------|-------------|------|']
   for (const skill of [...skills].sort((left, right) => left.name.localeCompare(right.name))) {
-    const intent = skill.dispatchIntent || skill.name
-    rows.push(`| ${intent} | ${skill.name} | \`skills/${skill.name}/SKILL.md\` |`)
+    rows.push(`| ${skill.name} | ${markdownTableCell(skill.description)} | \`skills/${skill.name}/SKILL.md\` |`)
   }
 
   const block = `${ROUTING_TABLE_START}\n${rows.join('\n')}\n${ROUTING_TABLE_END}`
   return `${template.slice(0, start)}${block}${template.slice(end + ROUTING_TABLE_END.length)}`
 })
+
+function markdownTableCell(value: string): string {
+  return value.replace(/\s+/g, ' ').replaceAll('|', '\\|').trim()
+}
 
 export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* (root: string) {
   const version = yield* readVersion(root)

@@ -1,8 +1,6 @@
 ---
 name: want
 description: "Use when the user already has a seed idea, vague desire, dissatisfaction, or half-formed request and needs help expanding it into intent, context, constraints, and a next actionable instruction. Not for blank-page brainstorming, generating candidate desires, executing already-clear tasks, therapy, or specialized planning once the target is clear."
-when_to_use: "seed idea, vague idea, unclear want, half-formed request, idea expansion, desire articulation, prompt shaping, requirement unfolding"
-dispatch_intent: "Expand vague seed idea into actionable target"
 ---
 
 # Want
@@ -54,7 +52,7 @@ Do not use this skill when:
 
 ## Soft Boundary
 
-Primitive audit: `want` is `stateless`, `activation: broad`, and
+Primitive audit: `want` is `stateless`, `activation: broad`, `invocation: implicit`, and
 `duration: task`. It keeps only conversation-local clarification state and
 stops when the `Want brief` is actionable, the user chooses a different mode,
 or another skill owns the now-clear target. Its constraints are model-applied

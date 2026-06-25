@@ -2,3 +2,5 @@ interface:
   display_name: "Aim"
   short_description: "Warn when a request drifts from the active aim"
   default_prompt: "Use $aim to check whether this request drifts from the active aim; return an Aim note for drift or an Aim brief when setting a target."
+policy:
+  allow_implicit_invocation: true

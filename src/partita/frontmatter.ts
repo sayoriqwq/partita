@@ -8,9 +8,6 @@ const FRONTMATTER_DELIMITER = '---'
 interface ParsedFields {
   name?: string
   description?: string
-  whenToUse?: string
-  dispatchIntent?: string
-  version?: string
 }
 
 function failFrontmatter(path: string, message: string) {
@@ -123,7 +120,6 @@ export const parseSkillFrontmatter = Effect.fn('parseSkillFrontmatter')(function
   }
 
   const fields: ParsedFields = {}
-  let inMetadata = false
 
   for (const rawLine of lines.slice(1, end)) {
     if (!rawLine.trim()) {
@@ -131,49 +127,31 @@ export const parseSkillFrontmatter = Effect.fn('parseSkillFrontmatter')(function
     }
 
     if (rawLine.startsWith('  ')) {
-      if (!inMetadata) {
-        return yield* failFrontmatter(path, `INVALID FRONTMATTER INDENT: ${path}: ${JSON.stringify(rawLine)}`)
-      }
-      const [key, hasSeparator, rawValue] = partition(rawLine.trim(), ':')
-      if (!hasSeparator) {
-        return yield* failFrontmatter(path, `INVALID FRONTMATTER LINE: ${path}: ${JSON.stringify(rawLine)}`)
-      }
-      if (key === 'version') {
-        fields.version = yield* parseScalar(path, 'metadata.version', rawValue)
-      }
-      continue
+      return yield* failFrontmatter(path, `INVALID FRONTMATTER INDENT: ${path}: ${JSON.stringify(rawLine)}`)
     }
 
-    inMetadata = false
     const [key, hasSeparator, rawValue] = partition(rawLine, ':')
     if (!hasSeparator) {
       return yield* failFrontmatter(path, `INVALID FRONTMATTER LINE: ${path}: ${JSON.stringify(rawLine)}`)
     }
 
-    if (key === 'metadata') {
-      if (rawValue.trim()) {
-        return yield* failFrontmatter(path, `INVALID FRONTMATTER METADATA: ${path} metadata must be a mapping`)
-      }
-      inMetadata = true
-    }
-    else if (key === 'name') {
+    if (key === 'name') {
       fields.name = yield* parseScalar(path, key, rawValue)
     }
     else if (key === 'description') {
       fields.description = yield* parseScalar(path, key, rawValue)
     }
-    else if (key === 'when_to_use') {
-      fields.whenToUse = yield* parseScalar(path, key, rawValue)
-    }
-    else if (key === 'dispatch_intent') {
-      fields.dispatchIntent = yield* parseScalar(path, key, rawValue)
+    else {
+      return yield* failFrontmatter(
+        path,
+        `UNSUPPORTED FRONTMATTER FIELD: ${path} field ${JSON.stringify(key)}. `
+        + 'Codex skills only use name and description here.',
+      )
     }
   }
 
   const name = fields.name
   const description = fields.description
-  const whenToUse = fields.whenToUse ?? ''
-  const dispatchIntent = fields.dispatchIntent ?? ''
 
   if (!name?.trim()) {
     return yield* failFrontmatter(path, `MISSING name: in ${path}`)
@@ -181,19 +159,10 @@ export const parseSkillFrontmatter = Effect.fn('parseSkillFrontmatter')(function
   if (!description?.trim()) {
     return yield* failFrontmatter(path, `MISSING description: in ${path}`)
   }
-  if (fields.version !== undefined) {
-    return yield* failFrontmatter(
-      path,
-      `STALE metadata.version: ${path} still declares a per-skill version. `
-      + 'Source of truth is the top-level VERSION file; remove the metadata block from frontmatter.',
-    )
-  }
 
   return {
     name: name.trim(),
     description: description.trim(),
-    whenToUse: whenToUse.trim(),
-    dispatchIntent: dispatchIntent.trim(),
   } satisfies SkillMetadata
 })
 
