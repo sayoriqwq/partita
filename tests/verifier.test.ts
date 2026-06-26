@@ -13,7 +13,7 @@ const requiredSourceFiles = [
   'wiki/index.md',
   'wiki/harness/index.md',
   'wiki/skill/index.md',
-  'wiki/skill/assertion.md',
+  'wiki/skill/rule.md',
   'wiki/skill/primitive.md',
   'wiki/skill/orchestrator.md',
   'wiki/skill/case/index.md',
@@ -49,6 +49,7 @@ const requiredSourceFiles = [
   'wiki/collaboration/index.md',
   'wiki/documentation/index.md',
   'wiki/vocabulary/index.md',
+  'wiki/vocabulary/assertion.md',
 ] as const
 
 describe('Partita verifier', () => {
@@ -137,9 +138,11 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('routing.stale_skill_refs'))
     }))
 
-  it.effect('accepts primitive namespace skill handles', () =>
+  it.effect('accepts supported namespace skill handles', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', validSkill().replace('name: demo', 'name: argue'))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
       write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/DISPATCHER.md', [
@@ -149,6 +152,7 @@ describe('Partita verifier', () => {
         '| Handle | Name | Invocation | Description | File |',
         '| --- | --- | --- | --- | --- |',
         '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
+        '| og:argue | argue | true | Argue skill fixture | `skills/orientation/argue/SKILL.md` |',
         '| pm:notate | notate | true | Notate skill fixture | `skills/primitive/notate/SKILL.md` |',
         '<!-- partita:projection:end id="routing-table" -->',
       ].join('\n'))

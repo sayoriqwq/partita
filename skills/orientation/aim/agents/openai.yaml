@@ -1,0 +1,6 @@
+interface:
+  display_name: "Aim"
+  short_description: "维护当前对话的轻量方向"
+  default_prompt: "使用 $aim 设置、重设、维持或检查当前 conversation-local aim，不创建 formal goal。"
+policy:
+  allow_implicit_invocation: false

@@ -8,8 +8,8 @@ Current Codex surfaces include `SKILL.md`, `agents/openai.yaml`, optional
 and the Partita verifier.
 
 Runtime installation may flatten skill directories by frontmatter name. Source
-families such as `skills/primitive/<name>` are maintained in the repository and
-dispatcher projection; they are not required to appear as nested global install
-paths.
+families such as `skills/orientation/<name>` and `skills/primitive/<name>` are
+maintained in the repository and dispatcher projection; they are not required to
+appear as nested global install paths.
 
 See [[projection/codex/index]].

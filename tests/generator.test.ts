@@ -175,6 +175,12 @@ description: "Use when alpha is needed. Not for unrelated work."
 ---
 `,
         'skills/alpha/agents/openai.yaml': openAiMetadata(false),
+        'skills/orientation/argue/SKILL.md': `---
+name: argue
+description: "Use when arguing is needed. Not for settled decisions."
+---
+`,
+        'skills/orientation/argue/agents/openai.yaml': openAiMetadata(false),
         'skills/primitive/notate/SKILL.md': `---
 name: notate
 description: "Use when notating a skill is needed. Not for local retuning."
@@ -186,19 +192,20 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const skills = yield* collectSkillMetadata(root)
       assert.deepStrictEqual(
         skills.map(skill => skill.name),
-        ['alpha', 'bravo', 'notate'],
+        ['alpha', 'bravo', 'argue', 'notate'],
       )
       assert.deepStrictEqual(
         skills.map(skill => skill.handle),
-        ['alpha', 'bravo', 'pm:notate'],
+        ['alpha', 'bravo', 'og:argue', 'pm:notate'],
       )
       assert.deepStrictEqual(
         skills.map(skill => skill.allowImplicitInvocation),
-        [false, true, false],
+        [false, true, false, false],
       )
       assert.strictEqual(requireElement(skills, 0).description, 'Use when alpha is needed. Not for unrelated work.')
       assert.strictEqual(requireElement(skills, 1).description, 'Use when bravo is needed. Not for unrelated work.')
-      assert.strictEqual(requireElement(skills, 2).relativePath, 'skills/primitive/notate/SKILL.md')
+      assert.strictEqual(requireElement(skills, 2).relativePath, 'skills/orientation/argue/SKILL.md')
+      assert.strictEqual(requireElement(skills, 3).relativePath, 'skills/primitive/notate/SKILL.md')
 
       yield* writeFixtureFile(
         root,
@@ -225,6 +232,12 @@ description: "Use when demo is needed. Not for unrelated work."
 ---
 `,
         'skills/demo/agents/openai.yaml': openAiMetadata(true),
+        'skills/orientation/argue/SKILL.md': `---
+name: argue
+description: "Use when arguing is needed. Not for settled decisions."
+---
+`,
+        'skills/orientation/argue/agents/openai.yaml': openAiMetadata(false),
         'skills/primitive/notate/SKILL.md': `---
 name: notate
 description: "Use when notating a skill is needed. Not for local retuning."
@@ -247,6 +260,7 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const dispatcher = yield* fs.readFileString(joinPath(root, 'skills', 'DISPATCHER.md'))
       assert.include(dispatcher, '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->')
       assert.include(dispatcher, '| demo | demo | true | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
+      assert.include(dispatcher, '| og:argue | argue | false | Use when arguing is needed. Not for settled decisions. | `skills/orientation/argue/SKILL.md` |')
       assert.include(dispatcher, '| pm:notate | notate | false | Use when notating a skill is needed. Not for local retuning. | `skills/primitive/notate/SKILL.md` |')
 
       const checks = yield* checkGeneratedFiles(root)

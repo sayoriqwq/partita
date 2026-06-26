@@ -8,7 +8,8 @@
 
 The framework supports a zero-skill baseline. The current customization defines
 user-owned Partita skills under direct skill paths and supported namespace paths
-such as `skills/primitive/<name>/SKILL.md`.
+such as `skills/orientation/<name>/SKILL.md` and
+`skills/primitive/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -20,7 +21,8 @@ This repo owns:
 - canonical wiki nodes shared across future skills;
 - verifier skeleton;
 - user-defined skills under direct skill paths and supported namespace paths
-  such as `skills/primitive/<name>/SKILL.md`.
+  such as `skills/orientation/<name>/SKILL.md` and
+  `skills/primitive/<name>/SKILL.md`.
 
 This repo does not own:
 
@@ -41,12 +43,10 @@ This repo does not own:
   Wiki nodes hold the canonical behavior language; copies installed into
   external harnesses or target repos are managed projections and must not
   redefine the skill.
-- `partita` is the product and plugin name, not a skill prefix. The `primitive`
-  source namespace is the current Partita-managed base layer and projects as
-  `pm:<name>` in dispatcher and plugin-facing handles.
-  Codex global skill installation is flat by frontmatter `name`, so
-  `skills/primitive/notate/SKILL.md` installs as `notate`; the source family
-  remains in this repo and dispatcher projection.
+- `partita` is the product and plugin name, not a skill prefix. Source
+  namespaces project dispatcher handles while frontmatter and global Codex
+  installation stay flat: `orientation` projects as `og:<name>`, and
+  `primitive` projects as `pm:<name>`.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
@@ -55,6 +55,10 @@ This repo does not own:
 - Before changing skill names, trigger policy, harness install behavior, global
   skill state, or marker conventions, use an interpretation gate if the user's
   instruction can be read more than one way.
+- If a new request-orientation skill is added, create
+  `skills/orientation/<name>/SKILL.md` and
+  `skills/orientation/<name>/agents/openai.yaml`, run `pnpm generate`, then run
+  `pnpm verify`.
 - If a new Partita-managed base skill is added, create
   `skills/primitive/<name>/SKILL.md` and
   `skills/primitive/<name>/agents/openai.yaml`, run `pnpm generate`, then run

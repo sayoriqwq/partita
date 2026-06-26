@@ -1,0 +1,6 @@
+interface:
+  display_name: "Argue"
+  short_description: "压力测试当前 aim 下的一条未稳固 assertion"
+  default_prompt: "使用 $argue 在把一条未稳固 assertion 当作前提推进前，先做一次最小充分 pressure test。"
+policy:
+  allow_implicit_invocation: false

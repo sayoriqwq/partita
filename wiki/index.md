@@ -19,7 +19,7 @@ wiki.
 ## Core Chain
 
 ```text
-workflow gate -> case -> pressure -> assertion -> skill -> projection
+workflow gate -> case -> pressure -> rule -> skill -> projection
 ```
 
 The wiki is canonical. Runtime files such as `SKILL.md` files under `skills/`,

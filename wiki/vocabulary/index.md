@@ -6,3 +6,4 @@ Vocabulary nodes are short definitions, not rule sources.
 - [[vocabulary/workflow]]
 - [[vocabulary/projection]]
 - [[vocabulary/runtime]]
+- [[vocabulary/assertion]]

@@ -6,4 +6,4 @@ layer.
 Do not define a skill from a positive capability wish. Reframe the wish as a
 default failure, or do not make it a skill.
 
-See [[skill/case/pressure]] and [[skill/assertion]].
+See [[skill/case/pressure]] and [[skill/rule]].

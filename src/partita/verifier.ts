@@ -20,7 +20,7 @@ export interface ValidationReport {
   readonly issues: ReadonlyArray<ValidationIssue>
 }
 
-const skillRefPattern = /skills\/(?:(primitive)\/)?([a-z][a-z0-9_-]*)\/SKILL\.md/gu
+const skillRefPattern = /skills\/(?:(orientation|primitive)\/)?([a-z][a-z0-9_-]*)\/SKILL\.md/gu
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
@@ -33,6 +33,7 @@ const fileProjectionPrefix = '<!-- partita:projection:file '
 const blockProjectionStartPrefix = '<!-- partita:projection:start '
 const blockProjectionEndPrefix = '<!-- partita:projection:end '
 const namespaceShorthands = {
+  orientation: 'og',
   primitive: 'pm',
 } as const
 
@@ -85,7 +86,7 @@ const requiredWikiFiles = [
   'wiki/index.md',
   'wiki/harness/index.md',
   'wiki/skill/index.md',
-  'wiki/skill/assertion.md',
+  'wiki/skill/rule.md',
   'wiki/skill/primitive.md',
   'wiki/skill/orchestrator.md',
   'wiki/skill/case/index.md',
@@ -121,6 +122,7 @@ const requiredWikiFiles = [
   'wiki/collaboration/index.md',
   'wiki/documentation/index.md',
   'wiki/vocabulary/index.md',
+  'wiki/vocabulary/assertion.md',
 ] as const
 
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {

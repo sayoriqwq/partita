@@ -44,7 +44,7 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY show `🎼 notate`, rejection reason, A/Y/X assertion, source path, projected handle, and verification result.
+- Conversation: MAY show `🎼 notate`, rejection reason, A/Y/X rule, source path, projected handle, and verification result.
 - Filesystem: MAY create one internal primitive skill under `skills/primitive/<name>/`, its `agents/openai.yaml`, local references, and directly required generated projections.
 - External: none.
 

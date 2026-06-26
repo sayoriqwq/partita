@@ -9,7 +9,7 @@ description: "Use when creating a public workflow skill from a real workflow cas
 
 ## Rule
 
-面对足以创建 public workflow skill 的真实 workflow case 时，MUST 先写出 workflow assertion、gate logic、internal skill routing 和 disclosure boundary，避免创建 task category、大 prompt，或没有治理动作的 internal skill bundle。
+面对足以创建 public workflow skill 的真实 workflow case 时，MUST 先写出 workflow rule、gate logic、internal skill routing 和 disclosure boundary，避免创建 task category、大 prompt，或没有治理动作的 internal skill bundle。
 
 ## Pattern
 
@@ -34,7 +34,7 @@ Soft:
 - MUST require a real workflow case before creating a public workflow skill.
 - MUST reject material that cannot support workflow A/Y/X、gate logic、internal skill routing 和 disclosure boundary.
 - MUST NOT invent workflow case、routing、gate logic、disclosure boundary 或 A/Y/X。
-- MUST keep the public workflow skill's own governance assertion distinct from the internal skills it routes to.
+- MUST keep the public workflow skill's own governance rule distinct from the internal skills it routes to.
 - MUST decide `policy.allow_implicit_invocation` from Pattern precision and side-effect risk.
 - MUST treat external workflow skills and deleted old skills as references only, never as source of truth.
 - SHOULD ask only for the smallest missing workflow material when rejection is recoverable.
@@ -46,7 +46,7 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY show `🎼 conduct`, rejection reason, workflow assertion, gate logic, internal skill routing, disclosure boundary, and verification result.
+- Conversation: MAY show `🎼 conduct`, rejection reason, workflow rule, gate logic, internal skill routing, disclosure boundary, and verification result.
 - Filesystem: MAY create one public workflow skill under a supported direct skill path, its `agents/openai.yaml`, local references, and directly required generated projections.
 - External: none.
 

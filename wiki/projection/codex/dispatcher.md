@@ -17,7 +17,8 @@ Handle | Name | Invocation | Description | File
 
 `Invocation` projects `policy.allow_implicit_invocation` as `true` or `false`.
 
-The `primitive` source namespace projects to `pm:<name>` handles.
+The `orientation` source namespace projects to `og:<name>` handles. The
+`primitive` source namespace projects to `pm:<name>` handles.
 
 Installed Codex skills stay flat by frontmatter name. Dispatcher handles keep
 Partita's source-family semantics without requiring nested global install

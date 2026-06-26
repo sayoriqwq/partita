@@ -2,7 +2,7 @@
 
 A skill is a contextual behavior-governance unit.
 
-- [[skill/assertion]]
+- [[skill/rule]]
 - [[skill/primitive]]
 - [[skill/orchestrator]]
 - [[skill/activation]]

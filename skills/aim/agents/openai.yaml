@@ -1,6 +1,0 @@
-interface:
-  display_name: "Aim"
-  short_description: "Maintain a conversation-local aim"
-  default_prompt: "Use $aim to set, reset, sustain, or check the current conversation aim without creating formal goals."
-policy:
-  allow_implicit_invocation: false

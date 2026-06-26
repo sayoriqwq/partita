@@ -8,6 +8,7 @@ const ROUTING_TABLE_START = '<!-- partita:projection:start id="routing-table" so
 const ROUTING_TABLE_END = '<!-- partita:projection:end id="routing-table" -->'
 const FILE_COPY_PROJECTION_PATTERN = /^<!-- partita:projection:file source="([^"]+)" mode="copy" -->\r?\n/u
 const namespaceShorthands = {
+  orientation: 'og',
   primitive: 'pm',
 } as const
 

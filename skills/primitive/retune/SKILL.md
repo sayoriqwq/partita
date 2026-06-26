@@ -16,7 +16,7 @@ description: "Use when patching an existing valid Partita skill from a real case
 Use when:
 
 - 用户提供真实 case，且该 case 指向一个已有 Partita skill 的局部错误、过宽、过窄、误触发、漏触发、越权 Effects 或错误 output pattern。
-- 目标 skill 的 identity 仍然成立，只是某个局部 assertion、Pattern、Boundary、Effects、Workflow、References、Validation 或 metadata surface 已 stale。
+- 目标 skill 的 identity 仍然成立，只是某个局部 Rule、Pattern、Boundary、Effects、Workflow、References、Validation 或 metadata surface 已 stale。
 - 用户明确要求根据这次真实 case patch 目标 skill。
 
 Do not use when:
@@ -47,7 +47,7 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY show `🎼 retune`, target skill, patch case summary, stale surface, changed assertion, and verification result.
+- Conversation: MAY show `🎼 retune`, target skill, patch case summary, stale surface, changed rule, and verification result.
 - Filesystem: MAY update only the target skill, directly stale local references, `agents/openai.yaml`, and directly required generated projections.
 - External: none.
 

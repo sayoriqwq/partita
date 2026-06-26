@@ -59,7 +59,8 @@ Codex global skill installation is flat: `npx skills add ./skills --full-depth`
 discovers nested source skills, but installs them by their `name` frontmatter.
 For example, `skills/primitive/notate/SKILL.md` installs as the global skill
 `notate`. The source family remains `primitive`, and Partita's dispatcher handle
-remains `pm:notate`.
+remains `pm:notate`. `skills/orientation/argue/SKILL.md` installs as `argue`
+and projects as `og:argue`.
 
 ## Adding A Skill
 
@@ -77,6 +78,9 @@ Minimum shape:
 skills/<name>/SKILL.md
 skills/<name>/agents/openai.yaml
 skills/<name>/{scripts,references,assets}/...
+skills/orientation/<name>/SKILL.md
+skills/orientation/<name>/agents/openai.yaml
+skills/orientation/<name>/{scripts,references,assets}/...
 skills/primitive/<name>/SKILL.md
 skills/primitive/<name>/agents/openai.yaml
 skills/primitive/<name>/{scripts,references,assets}/...
@@ -91,21 +95,22 @@ Required frontmatter:
 ```yaml
 ---
 name: <name>
-description: "Use when ... Not for ..."
+description: "使用场景：... 不用于..."
 ---
 ```
 
 Description is the Codex selector surface: keep it 40-500 characters, start it
-with `Use when` or `Use for`, and include `Not for`. Partita reads only `name`
-and `description`; official optional frontmatter keys are `license`,
-`allowed-tools`, and `metadata`. Put Codex-specific UI,
+with `使用场景：`, `使用于`, `Use when`, or `Use for`, and include `不用于`,
+`不适用于`, or `Not for`. Partita reads only `name` and `description`;
+official optional frontmatter keys are `license`, `allowed-tools`, and
+`metadata`. Put Codex-specific UI,
 `policy.allow_implicit_invocation`, and tool dependencies in `agents/openai.yaml`;
 the policy key must live under the `policy` block.
 
-`partita` is the product and plugin name, not a skill prefix. The `primitive`
-source namespace is the current Partita-managed base layer and projects as
-`pm:<name>` in dispatcher and plugin-facing handles while frontmatter and
-global installed skills keep the short skill name.
+`partita` is the product and plugin name, not a skill prefix. Source namespaces
+project dispatcher handles while frontmatter and global installed skills keep
+the short skill name: `orientation` projects as `og:<name>`, and `primitive`
+projects as `pm:<name>`.
 
 `skills/DISPATCHER.md` is generated from `SKILL.md` frontmatter and
 `agents/openai.yaml`. Its routing table projects `Handle`, `Name`,
