@@ -94,6 +94,8 @@ remain strict `soft` constraints.
 - Do not invent unsupported Codex skill metadata.
 - Keep `SKILL.md` frontmatter limited to `name` and `description`; put Codex UI,
   invocation policy, and tool dependencies in `agents/openai.yaml`.
+- Every Partita skill must include `agents/openai.yaml` so invocation policy is
+  projected into a machine-checkable runtime surface.
 - Do not copy private project paths, docwarden task state, contexta export
   commands, or isomorph internals into Partita runtime instructions unless the
   user explicitly makes Partita own that dependency.
@@ -120,9 +122,9 @@ remain strict `soft` constraints.
    references only when needed.
 5. Write frontmatter `description` as activation surface: include use cases and
    exclusions, and make it broad or narrow according to the primitive.
-6. Write or update `agents/openai.yaml` when Codex-specific UI,
-   `policy.allow_implicit_invocation`, or tool dependencies are part of the
-   skill shape.
+6. Write or update `agents/openai.yaml` for the skill's Codex UI metadata and
+   `policy.allow_implicit_invocation`; keep the policy key under the `policy`
+   block.
 7. Keep namespace as optional matching or plugin projection identity, not as a
    prefix inside the skill name.
 8. If direction is clear, implement a reversible baseline and validate it.
@@ -171,5 +173,7 @@ Before calling the skill usable, verify:
   wiki nodes, generated dispatcher metadata, or verifier surfaces required by
   the task;
 - the skill directory contains only `SKILL.md` and direct supporting resources;
+- `agents/openai.yaml` exists and projects invocation through
+  `policy.allow_implicit_invocation`;
 - `pnpm generate` and `pnpm verify` pass after adding or changing Partita
   skills.

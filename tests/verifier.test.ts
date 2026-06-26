@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { assert, describe, it } from '@effect/vitest'
@@ -7,7 +7,9 @@ import { verifyRouting, verifySourceProject } from '../src/partita/verifier.ts'
 
 const marker = '🧭'
 
-const requiredWikiFiles = [
+const requiredSourceFiles = [
+  'CONTEXT.md',
+  'HARNESS.md',
   'wiki/index.md',
   'wiki/harness/index.md',
   'wiki/skill/index.md',
@@ -26,8 +28,16 @@ const requiredWikiFiles = [
   'wiki/workflow/gate/span.md',
   'wiki/projection/index.md',
   'wiki/projection/codex/index.md',
+  'wiki/projection/codex/frontmatter.md',
+  'wiki/projection/codex/openai.md',
   'wiki/projection/codex/dispatcher.md',
+  'wiki/projection/codex/references.md',
+  'wiki/projection/codex/skill-md.md',
   'wiki/projection/verifier/index.md',
+  'wiki/projection/verifier/links.md',
+  'wiki/projection/verifier/metadata.md',
+  'wiki/projection/verifier/nodes.md',
+  'wiki/projection/verifier/shape.md',
   'wiki/practice/index.md',
   'wiki/practice/create.md',
   'wiki/practice/patch.md',
@@ -110,11 +120,66 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('openai_metadata.explicit_allows_implicit'))
     }))
 
+  it.effect('reports missing OpenAI metadata for implicit skills', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      rmSync(join(root, 'skills/demo/agents/openai.yaml'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.missing'))
+    }))
+
+  it.effect('reports invocation policy outside the policy block', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/agents/openai.yaml', [
+        'interface:',
+        '  display_name: "Demo"',
+        '  short_description: "Demo skill fixture"',
+        '  default_prompt: "Use $demo for verifier tests."',
+        'allow_implicit_invocation: true',
+      ].join('\n'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.policy_location'))
+      assert.isTrue(codes.includes('openai_metadata.policy_missing'))
+      assert.isTrue(codes.includes('openai_metadata.missing_invocation_policy'))
+    }))
+
+  it.effect('reports unsupported skill directory shape', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/README.md', '# Unsupported docs\n')
+      write(root, 'skills/demo/references/nested/case.md', '# Nested case\n')
+      write(root, 'skills/demo/agents/extra.yaml', 'policy:\n  allow_implicit_invocation: true\n')
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('skill_shape.unsupported_entry'))
+      assert.isTrue(codes.includes('skill_shape.unsupported_reference'))
+      assert.isTrue(codes.includes('skill_shape.unsupported_agent_file'))
+    }))
+
   it.effect('reports removed source surfaces', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'VERSION', '0.1.0\n')
+      write(root, 'AGENTS.profile.md', '# Removed profile\n')
+      write(root, 'packaging.allowlist', 'README.md\n')
       write(root, 'skills/RESOLVER.md', '# Removed resolver\n')
+      write(root, 'src/partita/packager.ts', 'export {}\n')
+      write(root, 'src/partita/package-verify.ts', 'export {}\n')
+      write(root, 'tests/packager.test.ts', 'export {}\n')
+      write(root, 'wiki/practice/migrate.md', '# Removed migration\n')
+      write(root, 'wiki/projection/verifier/package.md', '# Removed package node\n')
       mkdirSync(join(root, 'rules'), { recursive: true })
       mkdirSync(join(root, 'theory'), { recursive: true })
 
@@ -145,11 +210,12 @@ function makeValidSourceFixture(): string {
     },
   }, null, 2))
 
-  for (const path of requiredWikiFiles) {
-    write(root, path, `# ${path}\n`)
+  for (const path of requiredSourceFiles) {
+    write(root, path, sourceFileFixture(path))
   }
 
   write(root, 'skills/demo/SKILL.md', validSkill())
+  write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata())
   write(root, 'skills/DISPATCHER.md', dispatcher())
   return root
 }
@@ -190,6 +256,24 @@ function validSkill(): string {
     '## Validation',
     '',
     'The verifier passes.',
+  ].join('\n')
+}
+
+function sourceFileFixture(path: string): string {
+  if (path === 'CONTEXT.md' || path === 'HARNESS.md') {
+    return `# ${path}\n\nRead wiki/index.md first.\n`
+  }
+  return `# ${path}\n`
+}
+
+function validOpenAiMetadata(): string {
+  return [
+    'interface:',
+    '  display_name: "Demo"',
+    '  short_description: "Demo skill fixture"',
+    '  default_prompt: "Use $demo for verifier tests."',
+    'policy:',
+    '  allow_implicit_invocation: true',
   ].join('\n')
 }
 

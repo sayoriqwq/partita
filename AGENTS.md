@@ -46,8 +46,9 @@ This repo does not own:
 - Before changing skill names, trigger policy, harness install behavior, global
   skill state, or marker conventions, use an interpretation gate if the user's
   instruction can be read more than one way.
-- If a new skill is added, create `skills/<name>/SKILL.md`, run
-  `pnpm generate`, then run `pnpm verify`.
+- If a new skill is added, create `skills/<name>/SKILL.md` and
+  `skills/<name>/agents/openai.yaml`, run `pnpm generate`, then run
+  `pnpm verify`.
 
 ## Commands
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Want"
+  short_description: "Clarify an existing vague seed idea"
+  default_prompt: "Use $want to turn this seed idea or dissatisfaction into intent, constraints, output shape, and success signal."
+policy:
+  allow_implicit_invocation: true

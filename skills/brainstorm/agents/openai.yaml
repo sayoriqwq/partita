@@ -1,0 +1,6 @@
+interface:
+  display_name: "Brainstorm"
+  short_description: "Generate bounded candidate directions"
+  default_prompt: "Use $brainstorm to generate distinct candidate directions, cluster or contrast them, and end with a narrowing step."
+policy:
+  allow_implicit_invocation: true

@@ -7,7 +7,7 @@ This file maps harness operations to the wiki. It is not a rules layer.
 | Intent | Read first | Action surface | Verify |
 | --- | --- | --- | --- |
 | Understand the harness | `wiki/harness/index.md` | `CONTEXT.md`, `HARNESS.md`, `AGENTS.md` | `pnpm verify` |
-| Create a skill | `wiki/practice/create.md` | `skills/<name>/SKILL.md`, `agents/openai.yaml` | `pnpm generate`, `pnpm verify` |
+| Create a skill | `wiki/practice/create.md` | `skills/<name>/SKILL.md`, `skills/<name>/agents/openai.yaml` | `pnpm generate`, `pnpm verify` |
 | Patch a skill | `wiki/practice/patch.md` | target skill files and direct references | `pnpm generate`, `pnpm verify` |
 | Audit skill shape | `wiki/practice/audit.md` | wiki nodes, skills, generated metadata | `pnpm verify` |
 | Check runtime projection | `wiki/projection/index.md` | `.codex-plugin/`, `skills/DISPATCHER.md` | `pnpm generate:check`, `pnpm verify` |

@@ -46,6 +46,12 @@ const stateTokens = ['`stateful`', '`stateless`'] as const
 const activationTokens = ['`activation: broad`', '`activation: narrow`'] as const
 const invocationTokens = ['`invocation: implicit`', '`invocation: explicit`'] as const
 const durationTokens = ['`duration: turn`', '`duration: task`', '`duration: topic`', '`duration: mode`'] as const
+const requiredOpenAiInterfaceFields = ['display_name', 'short_description', 'default_prompt'] as const
+
+const requiredRootMapFiles = [
+  'CONTEXT.md',
+  'HARNESS.md',
+] as const
 
 const requiredWikiFiles = [
   'wiki/index.md',
@@ -66,8 +72,16 @@ const requiredWikiFiles = [
   'wiki/workflow/gate/span.md',
   'wiki/projection/index.md',
   'wiki/projection/codex/index.md',
+  'wiki/projection/codex/frontmatter.md',
+  'wiki/projection/codex/openai.md',
   'wiki/projection/codex/dispatcher.md',
+  'wiki/projection/codex/references.md',
+  'wiki/projection/codex/skill-md.md',
   'wiki/projection/verifier/index.md',
+  'wiki/projection/verifier/links.md',
+  'wiki/projection/verifier/metadata.md',
+  'wiki/projection/verifier/nodes.md',
+  'wiki/projection/verifier/shape.md',
   'wiki/practice/index.md',
   'wiki/practice/create.md',
   'wiki/practice/patch.md',
@@ -120,6 +134,7 @@ function buildSourceReport(root: string): ValidationReport {
     ...skillResult.issues,
     ...checkPluginManifest(root),
     ...checkRouting(root, skills),
+    ...checkRootMapFiles(root),
     ...checkWikiFiles(root),
     ...checkMarkdownLinks(root),
     ...checkWikiLinks(root),
@@ -142,6 +157,8 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     if (!parsed.fields) {
       continue
     }
+
+    issues.push(...checkSkillDirectoryShape(root, path))
 
     const name = parsed.fields.name
     if (name !== basename(dirname(path))) {
@@ -214,60 +231,178 @@ function checkOpenAiMetadata(
   const metadataPath = join(dirname(skillPath), 'agents', 'openai.yaml')
   const relativeMetadataPath = relativePathFrom(root, metadataPath)
   const exists = existsSync(metadataPath)
-  if (!exists && invocation !== 'explicit') {
-    return []
-  }
-
   const issues: Array<ValidationIssue> = []
   if (!exists) {
     issues.push(issue(
       'openai_metadata.missing',
-      `${skillName} has invocation: explicit, so agents/openai.yaml must set policy.allow_implicit_invocation: false`,
+      `${skillName} must project invocation policy through agents/openai.yaml`,
       relativeMetadataPath,
     ))
     return issues
   }
 
-  const allowImplicit = parseAllowImplicitInvocation(readText(metadataPath), relativeMetadataPath)
-  issues.push(...allowImplicit.issues)
-  if (allowImplicit.value === undefined) {
+  const metadata = parseOpenAiMetadata(readText(metadataPath), relativeMetadataPath)
+  issues.push(...metadata.issues)
+
+  if (!metadata.sections.has('interface')) {
+    issues.push(issue('openai_metadata.interface_missing', 'agents/openai.yaml must declare interface metadata', relativeMetadataPath))
+  }
+  for (const field of requiredOpenAiInterfaceFields) {
+    if (!nonEmptyString(metadata.interfaceFields[field])) {
+      issues.push(issue('openai_metadata.interface_field_missing', `interface.${field} is required`, relativeMetadataPath))
+    }
+  }
+
+  if (metadata.topLevelScalars.allow_implicit_invocation !== undefined) {
+    issues.push(issue('openai_metadata.policy_location', 'allow_implicit_invocation must be nested under policy', relativeMetadataPath))
+  }
+  if (!metadata.sections.has('policy')) {
+    issues.push(issue('openai_metadata.policy_missing', 'agents/openai.yaml must declare policy metadata', relativeMetadataPath))
+  }
+  if (metadata.allowImplicitInvocation === undefined) {
     issues.push(issue('openai_metadata.missing_invocation_policy', 'agents/openai.yaml must declare policy.allow_implicit_invocation', relativeMetadataPath))
     return issues
   }
 
-  if (invocation === 'explicit' && allowImplicit.value !== false) {
+  if (invocation === 'explicit' && metadata.allowImplicitInvocation !== false) {
     issues.push(issue('openai_metadata.explicit_allows_implicit', 'invocation: explicit requires policy.allow_implicit_invocation: false', relativeMetadataPath))
   }
-  if (invocation === 'implicit' && allowImplicit.value !== true) {
+  if (invocation === 'implicit' && metadata.allowImplicitInvocation !== true) {
     issues.push(issue('openai_metadata.implicit_disallows_implicit', 'invocation: implicit must not set policy.allow_implicit_invocation: false', relativeMetadataPath))
   }
 
   return issues
 }
 
-function parseAllowImplicitInvocation(
+interface OpenAiMetadata {
+  readonly allowImplicitInvocation: boolean | undefined
+  readonly interfaceFields: Record<string, string>
+  readonly policyFields: Record<string, string>
+  readonly sections: ReadonlySet<string>
+  readonly topLevelScalars: Record<string, string>
+  readonly issues: ReadonlyArray<ValidationIssue>
+}
+
+function parseOpenAiMetadata(
   text: string,
   path: string,
-): { readonly value?: boolean, readonly issues: ReadonlyArray<ValidationIssue> } {
-  for (const rawLine of text.split(/\r?\n/u)) {
-    const line = rawLine.trim()
-    const separator = line.indexOf(':')
-    if (separator === -1 || line.slice(0, separator) !== 'allow_implicit_invocation') {
+): OpenAiMetadata {
+  const issues: Array<ValidationIssue> = []
+  const interfaceFields: Record<string, string> = {}
+  const policyFields: Record<string, string> = {}
+  const topLevelScalars: Record<string, string> = {}
+  const sections = new Set<string>()
+  let currentSection: string | undefined
+
+  for (const [index, rawLine] of text.split(/\r?\n/u).entries()) {
+    if (!rawLine.trim() || rawLine.trimStart().startsWith('#')) {
       continue
     }
 
-    const value = line.slice(separator + 1).trim()
-    if (value === 'true') {
-      return { issues: [], value: true }
+    if (rawLine.includes('\t')) {
+      issues.push(issue('openai_metadata.invalid_indent', `tabs are not allowed in YAML metadata on line ${index + 1}`, path))
+      continue
     }
-    if (value === 'false') {
-      return { issues: [], value: false }
+
+    const indent = leadingSpaceCount(rawLine)
+    const line = rawLine.trim()
+    const [key, rawValue] = splitYamlLine(line)
+    if (rawValue === undefined) {
+      issues.push(issue('openai_metadata.invalid_line', `invalid YAML metadata line ${index + 1}: ${JSON.stringify(rawLine)}`, path))
+      continue
     }
-    return {
-      issues: [issue('openai_metadata.invalid_invocation_policy', 'policy.allow_implicit_invocation must be true or false', path)],
+
+    if (indent === 0) {
+      currentSection = key
+      if (rawValue.trim()) {
+        topLevelScalars[key] = rawValue.trim()
+        if (key === 'interface' || key === 'policy') {
+          issues.push(issue('openai_metadata.invalid_section', `${key} must be a YAML mapping block`, path))
+        }
+      }
+      else {
+        sections.add(key)
+      }
+      continue
+    }
+
+    if (indent !== 2 || currentSection === undefined) {
+      issues.push(issue('openai_metadata.invalid_indent', `unsupported YAML indentation on line ${index + 1}`, path))
+      continue
+    }
+
+    const value = parseYamlScalar(rawValue, path, index + 1, issues)
+    if (value === undefined) {
+      continue
+    }
+    if (currentSection === 'interface') {
+      interfaceFields[key] = value
+    }
+    else if (currentSection === 'policy') {
+      policyFields[key] = value
     }
   }
-  return { issues: [] }
+
+  const policyValue = policyFields.allow_implicit_invocation
+  const allowImplicitInvocation = policyValue === undefined
+    ? undefined
+    : parseBooleanPolicy(policyValue, path, issues)
+
+  return {
+    allowImplicitInvocation,
+    interfaceFields,
+    issues,
+    policyFields,
+    sections,
+    topLevelScalars,
+  }
+}
+
+function leadingSpaceCount(line: string): number {
+  return line.length - line.trimStart().length
+}
+
+function splitYamlLine(line: string): readonly [string, string | undefined] {
+  const separator = line.indexOf(':')
+  if (separator === -1) {
+    return [line, undefined]
+  }
+  return [line.slice(0, separator), line.slice(separator + 1)]
+}
+
+function parseYamlScalar(
+  rawValue: string,
+  path: string,
+  line: number,
+  issues: Array<ValidationIssue>,
+): string | undefined {
+  const value = rawValue.trim()
+  if (!value) {
+    issues.push(issue('openai_metadata.empty_value', `empty YAML scalar on line ${line}`, path))
+    return undefined
+  }
+
+  if (value.startsWith('"') || value.startsWith('\'')) {
+    const parsed = parseQuotedString(value)
+    if (parsed.ok) {
+      return parsed.value
+    }
+    issues.push(issue('openai_metadata.invalid_quote', `invalid YAML quote on line ${line}: ${parsed.message}`, path))
+    return undefined
+  }
+
+  return value
+}
+
+function parseBooleanPolicy(value: string, path: string, issues: Array<ValidationIssue>): boolean | undefined {
+  if (value === 'true') {
+    return true
+  }
+  if (value === 'false') {
+    return false
+  }
+  issues.push(issue('openai_metadata.invalid_invocation_policy', 'policy.allow_implicit_invocation must be true or false', path))
+  return undefined
 }
 
 function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
@@ -543,6 +678,26 @@ function checkWikiFiles(root: string): ReadonlyArray<ValidationIssue> {
     .map(path => issue('wiki.missing_file', 'missing wiki file', path))
 }
 
+function checkRootMapFiles(root: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+  for (const path of requiredRootMapFiles) {
+    const absolutePath = join(root, path)
+    if (!existsSync(absolutePath)) {
+      issues.push(issue('root_map.missing_file', 'missing root map file', path))
+      continue
+    }
+
+    const text = readText(absolutePath)
+    if (!text.includes('wiki/')) {
+      issues.push(issue('root_map.missing_wiki_route', 'root map must route readers into wiki/', path))
+    }
+    if (text.includes('rules/') || text.includes('theory/')) {
+      issues.push(issue('root_map.old_layer_ref', 'root map must not route to removed rules/ or theory/ layers', path))
+    }
+  }
+  return issues
+}
+
 function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   for (const path of markdownFiles(root)) {
@@ -599,10 +754,19 @@ function checkWikiLinks(root: string): ReadonlyArray<ValidationIssue> {
 function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
   const removed = [
     ['VERSION', 'deprecated VERSION file must not exist'],
+    ['AGENTS.profile.md', 'removed profile file must not exist'],
+    ['packaging.allowlist', 'removed package allowlist must not exist'],
     ['rules', 'removed rules directory must not exist'],
     ['theory', 'removed theory directory must not exist'],
     ['skills/RESOLVER.md', 'removed resolver registry must not exist'],
+    ['src/partita/packager.ts', 'removed zip packager must not exist'],
+    ['src/partita/package-verify.ts', 'removed package verifier must not exist'],
+    ['tests/packager.test.ts', 'removed packager tests must not exist'],
     ['wiki/skill/design-v1.md', 'absorbed design-v1 source must not exist'],
+    ['wiki/practice/migrate.md', 'removed migration practice node must not exist'],
+    ['wiki/projection/verifier/package.md', 'removed package verifier node must not exist'],
+    ['partita.zip', 'removed zip artifact must not exist'],
+    ['dist/partita.zip', 'removed zip artifact must not exist'],
   ] as const
 
   return removed
@@ -627,6 +791,63 @@ function skillFiles(root: string): ReadonlyArray<string> {
     .map(entry => join(skillsRoot, entry.name, 'SKILL.md'))
     .filter(path => existsSync(path))
     .sort()
+}
+
+function checkSkillDirectoryShape(root: string, skillPath: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+  const skillDir = dirname(skillPath)
+  for (const entry of readdirSync(skillDir, { withFileTypes: true })) {
+    const entryPath = join(skillDir, entry.name)
+    const relativeEntryPath = relativePathFrom(root, entryPath)
+    switch (entry.name) {
+      case 'SKILL.md':
+        if (!entry.isFile()) {
+          issues.push(issue('skill_shape.invalid_skill_file', 'SKILL.md must be a file', relativeEntryPath))
+        }
+        break
+      case 'agents':
+        issues.push(...checkAgentsDirectory(root, entryPath, entry.isDirectory()))
+        break
+      case 'references':
+        issues.push(...checkReferencesDirectory(root, entryPath, entry.isDirectory()))
+        break
+      default:
+        issues.push(issue('skill_shape.unsupported_entry', 'skill directories may only contain SKILL.md, agents/openai.yaml, and references/*.md', relativeEntryPath))
+    }
+  }
+  return issues
+}
+
+function checkAgentsDirectory(root: string, path: string, isDirectory: boolean): ReadonlyArray<ValidationIssue> {
+  if (!isDirectory) {
+    return [issue('skill_shape.invalid_agents_dir', 'agents must be a directory', relativePathFrom(root, path))]
+  }
+
+  return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = join(path, entry.name)
+    const relativeEntryPath = relativePathFrom(root, entryPath)
+    if (entry.name !== 'openai.yaml') {
+      return [issue('skill_shape.unsupported_agent_file', 'agents may only contain openai.yaml', relativeEntryPath)]
+    }
+    return entry.isFile()
+      ? []
+      : [issue('skill_shape.invalid_openai_metadata', 'agents/openai.yaml must be a file', relativeEntryPath)]
+  })
+}
+
+function checkReferencesDirectory(root: string, path: string, isDirectory: boolean): ReadonlyArray<ValidationIssue> {
+  if (!isDirectory) {
+    return [issue('skill_shape.invalid_references_dir', 'references must be a directory', relativePathFrom(root, path))]
+  }
+
+  return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = join(path, entry.name)
+    const relativeEntryPath = relativePathFrom(root, entryPath)
+    if (!entry.isFile() || !entry.name.endsWith('.md')) {
+      return [issue('skill_shape.unsupported_reference', 'references must be one-level Markdown files', relativeEntryPath)]
+    }
+    return []
+  })
 }
 
 function markdownFiles(root: string): ReadonlyArray<string> {

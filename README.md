@@ -69,8 +69,8 @@ skills/<name>/SKILL.md
 skills/<name>/agents/openai.yaml
 ```
 
-`agents/openai.yaml` is required when the primitive uses
-`invocation: explicit`, and optional for Codex App UI or tool dependencies.
+`agents/openai.yaml` is required for every Partita skill because it projects
+the skill's invocation policy into runtime metadata.
 
 Required frontmatter:
 
@@ -83,7 +83,7 @@ description: "Use when ... Not for ..."
 
 Keep `SKILL.md` frontmatter to `name` and `description`. Put Codex-specific
 UI, `policy.allow_implicit_invocation`, and tool dependencies in
-`agents/openai.yaml`.
+`agents/openai.yaml`; the policy key must live under the `policy` block.
 
 After adding or changing a skill:
 

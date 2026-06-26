@@ -1,0 +1,6 @@
+interface:
+  display_name: "Land"
+  short_description: "Keep v1 from expanding before it lands"
+  default_prompt: "Use $land to block scope expansion until the active v1 topic has a concrete verified result."
+policy:
+  allow_implicit_invocation: true

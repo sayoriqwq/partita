@@ -1,0 +1,6 @@
+interface:
+  display_name: "Reconcile"
+  short_description: "Audit stale framing before repair"
+  default_prompt: "Use $reconcile to list suspicious stale or migration-era residue against the accepted frame before editing."
+policy:
+  allow_implicit_invocation: true
