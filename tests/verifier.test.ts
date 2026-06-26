@@ -78,8 +78,6 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('skill.description_too_short'))
       assert.isTrue(codes.includes('skill.missing_marker'))
       assert.isTrue(codes.includes('skill.missing_contract_sections'))
-      assert.isTrue(codes.includes('skill.missing_primitive_audit'))
-      assert.isTrue(codes.includes('skill.hard_boundary_wording'))
     }))
 
   it.effect('reports description selector contract drift', () =>
@@ -159,23 +157,17 @@ describe('Partita verifier', () => {
       assert.deepStrictEqual(report.issues, [])
     }))
 
-  it.effect('reports OpenAI invocation policy drift', () =>
+  it.effect('reports legacy skill section drift', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/demo/SKILL.md', validSkill().replace('`invocation: implicit`', '`invocation: explicit`'))
-      write(root, 'skills/demo/agents/openai.yaml', [
-        'interface:',
-        '  display_name: "Demo"',
-        '  short_description: "Demo skill fixture"',
-        'policy:',
-        '  allow_implicit_invocation: true',
-      ].join('\n'))
+      write(root, 'skills/demo/SKILL.md', validSkill().replace('## Rule', '## Capability'))
 
       const report = yield* verifySourceProject({ root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('openai_metadata.explicit_allows_implicit'))
+      assert.isTrue(codes.includes('skill.missing_contract_sections'))
+      assert.isTrue(codes.includes('skill.legacy_section'))
     }))
 
   it.effect('reports missing OpenAI metadata for implicit skills', () =>
@@ -215,7 +207,7 @@ describe('Partita verifier', () => {
       const root = makeValidSourceFixture()
       write(root, 'skills/demo/README.md', '# Unsupported docs\n')
       write(root, 'skills/demo/references/nested/case.md', '# Nested case\n')
-      write(root, 'skills/demo/agents/extra.yaml', 'policy:\n  allow_implicit_invocation: true\n')
+      write(root, 'skills/demo/scripts', '# Not a directory\n')
 
       const report = yield* verifySourceProject({ root })
       const codes = report.issues.map(issue => issue.code)
@@ -223,7 +215,21 @@ describe('Partita verifier', () => {
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('skill_shape.unsupported_entry'))
       assert.isTrue(codes.includes('skill_shape.unsupported_reference'))
-      assert.isTrue(codes.includes('skill_shape.unsupported_agent_file'))
+      assert.isTrue(codes.includes('skill_shape.invalid_scripts_dir'))
+    }))
+
+  it.effect('accepts official bundled resource directories', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/agents/custom.yaml', 'custom: true\n')
+      write(root, 'skills/demo/scripts/run.py', 'print("ok")\n')
+      write(root, 'skills/demo/references/schema.txt', 'reference\n')
+      write(root, 'skills/demo/assets/template/README.md', '[asset link](missing.md)\n')
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
     }))
 
   it.effect('reports removed source surfaces', () =>
@@ -291,31 +297,53 @@ function validSkill(): string {
     '',
     `Prefix your first user-facing line with ${marker} inline when this Partita skill is active.`,
     '',
-    '## Capability',
+    '## Rule',
     '',
-    'Verify the fixture behavior.',
+    'Facing Partita verifier fixture work, first run the local shape check, to avoid accepting invalid skill projections.',
     '',
-    'Pressure scenario: tests need a realistic skill contract.',
+    '## Pattern',
     '',
-    '## Trigger',
+    'Use when:',
     '',
-    'Use when the verifier tests need a valid skill.',
+    '- the verifier tests need a valid skill.',
     '',
-    '## Soft Boundary',
+    'Do not use when:',
     '',
-    'Primitive audit: `demo` is `stateless`, `activation: narrow`, `invocation: implicit`, and `duration: turn`.',
+    '- production routing or broad behavior is being tested.',
     '',
-    '## Hard Boundary',
+    '## Boundary',
     '',
-    'This shape has no primitive `constraint.hard` until machine-checkable enforcement exists.',
+    'Soft:',
+    '',
+    '- Keep the fixture focused on verifier behavior.',
+    '',
+    'Hard:',
+    '',
+    '- Run `partita verify` against the fixture.',
+    '',
+    '## Effects',
+    '',
+    '- Conversation: may report verifier results.',
+    '- Filesystem: none.',
+    '- External: none.',
     '',
     '## Workflow',
     '',
     '1. Run the verifier.',
     '',
+    '## References',
+    '',
+    '- No references.',
+    '',
     '## Validation',
     '',
-    'The verifier passes.',
+    'Before done:',
+    '',
+    '- the fixture pattern was matched;',
+    '- the verifier rule was applied;',
+    '- invalid skill projections were avoided;',
+    '- effects stayed at none for filesystem and external services;',
+    '- hard checks passed.',
   ].join('\n')
 }
 

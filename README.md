@@ -35,8 +35,8 @@ pnpm link:global
 
 ## Install Locally
 
-Partita's local install path syncs skills globally first, then maps this repo
-into the personal Codex plugin marketplace:
+Partita's local install path syncs skills from `./skills` globally first, then
+maps this repo into the personal Codex plugin marketplace:
 
 ```bash
 pnpm install:codex-skill
@@ -55,25 +55,35 @@ pnpm install:codex-skill
 
 `pnpm install:codex-plugin` maps the local plugin marketplace entry.
 
+Codex global skill installation is flat: `npx skills add ./skills --full-depth`
+discovers nested source skills, but installs them by their `name` frontmatter.
+For example, `skills/primitive/notate/SKILL.md` installs as the global skill
+`notate`. The source family remains `primitive`, and Partita's dispatcher handle
+remains `pm:notate`.
+
 ## Adding A Skill
 
 Only add a skill after the user defines the workflow.
 
 Read `wiki/practice/create.md` before writing a new skill. Use
 `wiki/practice/patch.md` when changing an existing skill from a real case or
-structure audit.
+structure audit. The current `SKILL.md` body shape is documented in
+`wiki/projection/codex/skill-md.md`.
 
 Minimum shape:
 
 ```text
 skills/<name>/SKILL.md
 skills/<name>/agents/openai.yaml
+skills/<name>/{scripts,references,assets}/...
 skills/primitive/<name>/SKILL.md
 skills/primitive/<name>/agents/openai.yaml
+skills/primitive/<name>/{scripts,references,assets}/...
 ```
 
 `agents/openai.yaml` is required for every Partita skill because it projects
-the skill's invocation policy into runtime metadata.
+the skill's invocation policy into runtime metadata. `scripts/`, `references/`,
+and `assets/` are optional official bundled resource directories.
 
 Required frontmatter:
 
@@ -85,14 +95,15 @@ description: "Use when ... Not for ..."
 ```
 
 Description is the Codex selector surface: keep it 40-500 characters, start it
-with `Use when` or `Use for`, and include `Not for`. Keep `SKILL.md`
-frontmatter to `name` and `description`. Put Codex-specific UI,
-`policy.allow_implicit_invocation`, and tool dependencies in
-`agents/openai.yaml`; the policy key must live under the `policy` block.
+with `Use when` or `Use for`, and include `Not for`. Partita reads only `name`
+and `description`; official optional frontmatter keys are `license`,
+`allowed-tools`, and `metadata`. Put Codex-specific UI,
+`policy.allow_implicit_invocation`, and tool dependencies in `agents/openai.yaml`;
+the policy key must live under the `policy` block.
 
 `partita` is the product and plugin name, not a skill prefix. The `primitive`
 namespace projects as `pm:<name>` in dispatcher and plugin-facing handles while
-frontmatter keeps the short skill name.
+frontmatter and global installed skills keep the short skill name.
 
 After adding or changing a skill:
 
@@ -100,6 +111,9 @@ After adding or changing a skill:
 pnpm generate
 pnpm verify
 ```
+
+`pnpm verify` includes Effect harness verification for this repo; treat that as
+a hard script check, not a prose-only boundary.
 
 ## Acknowledgement
 

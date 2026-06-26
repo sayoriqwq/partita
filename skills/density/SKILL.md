@@ -8,83 +8,75 @@ description: "Use when the user directly invokes or loads density, asks for cont
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
-Use controlled high-density Chinese: semantic invariance first, modern Chinese,
-symbols as logic skeleton, stable technical English preserved, no filler, no
-classical Chinese.
+## Rule
 
-## Capability
+Facing a request for sustained controlled high-density Chinese, first preserve
+semantic invariance while compressing filler and connective prose, to avoid
+polite padding, pseudo-classical shorthand, or compact-looking wording that
+loses structure.
 
-Turn ongoing collaboration into sustained controlled high-density Chinese.
+## Pattern
 
-Pressure scenario: the agent drifts back into polite padding, long connective
-prose, hedging, summary bloat, pseudo-classical shorthand, or compact-looking
-phrases that lose semantic structure.
+Use when:
 
-## Trigger
+- the user directly invokes, loads, or mentions `$density` as the requested
+  mode;
+- the user asks for controlled high-density Chinese, maximum language density,
+  terse Chinese, or density mode;
+- the user wants sustained compact collaboration in Chinese;
+- the user asks for fixed symbolic vocabulary or controlled natural language;
+- a previously activated `density` mode continues.
 
-Use this skill when the user asks for:
+Do not use when:
 
-- direct invocation, load, or mention of `$density` as the requested mode;
-- controlled high-density Chinese, maximum language density, terse Chinese, or
-  density mode;
-- sustained compact collaboration, especially in Chinese;
-- fixed symbolic vocabulary or controlled natural language for Chinese output;
-- continuation of a previously activated `density` mode.
+- the task is code minification or code style compression;
+- the user wants one-off article summarization;
+- the requested style is classical Chinese, primitive terse voice, or broken
+  grammar;
+- compression would hide uncertainty, risk, order, preconditions, or
+  destructive consequences.
 
-Do not use this skill for:
+## Boundary
 
-- code minification or changing code style;
-- one-off article summarization;
-- classical Chinese, primitive terse voice, or broken grammar;
-- hiding uncertainty, risk, order, preconditions, or destructive consequences.
+Soft:
 
-## Soft Boundary
-
-Primitive audit: `density` is `stateless`, `activation: narrow`, `invocation: explicit`, and
-`duration: mode`. It keeps only conversation-local calibration state and stops
-only when the user explicitly leaves the mode or a higher-priority instruction
-requires normal expression. Its constraints are model-applied `soft`
-constraints; it has no primitive `constraint.hard` until a verifier or CLI can
-enforce semantic invariance and output density.
-
-- Persist once activated. Do not offer a normal-mode exit. Calibrate density
-  inside this mode instead.
-- Semantic invariance > language density.
+- Persist once activated until the user exits the mode or higher-priority
+  instructions require normal expression.
+- Keep semantic invariance above language density.
 - If compression risks meaning loss, use safer lower-density wording or add a
   necessary low-density supplement.
-- Treat uncovered cases as gaps in the language system. Prefer clear expression
-  first, then extend the system later.
-- Adjust answer length from user feedback. Do not impose a fixed line limit.
-- Prefer one decision branch at a time when the user is being grilled or asked
-  to decide.
-- Read supporting references only when the current output needs that detail.
+- Treat uncovered cases as gaps in the language system and prefer clear
+  expression before extending symbols.
+- Adjust answer length from user feedback instead of imposing a fixed line cap.
 
-## Hard Boundary
+Hard:
 
-This section is required by the current `SKILL.md` shape. These are strict
-model-applied boundaries, not primitive `constraint.hard`, because no
-machine-checkable enforcement surface exists for them yet.
-
-- Do not let any compression change, drop, or blur core meaning.
+- Do not let compression change, drop, or blur core meaning.
 - Do not use classical Chinese as the compression strategy.
-- Do not hide uncertainty. Mark it with `(?)` or a short uncertainty sentence.
+- Do not hide uncertainty; mark it explicitly.
 - Do not compress safety warnings, destructive actions, or multi-step sequences
   so far that order or consequence becomes unclear.
-- Do not invent a new symbol when controlled Chinese is clearer.
 - Do not use `🧭` unless this Partita skill is active.
+
+## Effects
+
+- Conversation: may show the `🧭` marker and produce controlled high-density
+  Chinese output with stable terminology or symbols.
+- Filesystem: none.
+- External: none.
 
 ## Workflow
 
 1. Activate persistent mode when requested or directly invoked.
 2. If invoked with no other task, acknowledge activation in `density` output
    instead of inspecting, validating, or patching the skill.
-3. Delete filler, pleasantries, hedging, repeated summaries, and low-information
-   verbs.
+3. Delete filler, pleasantries, hedging, repeated summaries, and
+   low-information verbs.
 4. Keep structure words modern and readable.
 5. Load references only when the current output needs that detail.
 6. Format recommendations as `推荐: X`, not `我的推荐是 X`.
-7. If the user says the density is too high, too low, too broad, or too
-   strange, treat that feedback as calibration and adjust immediately.
+7. Treat user feedback about density level as calibration and adjust
+   immediately.
 
 ## References
 
@@ -97,9 +89,9 @@ machine-checkable enforcement surface exists for them yet.
 
 ## Validation
 
-Before treating output as valid `density`, check:
+Before done:
 
-- first user-facing line includes `🧭` inline;
+- the first user-facing line includes `🧭` inline;
 - direct `$density` invocation activates the mode instead of triggering skill
   audit or implementation work;
 - semantic invariance remains intact;

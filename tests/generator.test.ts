@@ -81,7 +81,29 @@ description: "Use when demo is needed. Not for unrelated work."
       })
     }))
 
-  it.effect('rejects unsupported skill frontmatter fields', () =>
+  it.effect('accepts official optional skill frontmatter fields', () =>
+    Effect.gen(function* () {
+      const fields = yield* parseSkillFrontmatter(
+        'skills/demo/SKILL.md',
+        `---
+name: demo
+description: "Use when demo is needed. Not for unrelated work."
+license: MIT
+allowed-tools:
+  - web
+metadata:
+  short-description: "Demo skill"
+---
+`,
+      )
+
+      assert.deepStrictEqual(fields, {
+        name: 'demo',
+        description: 'Use when demo is needed. Not for unrelated work.',
+      })
+    }))
+
+  it.effect('rejects non-official skill frontmatter fields', () =>
     Effect.gen(function* () {
       const error = yield* Effect.flip(parseSkillFrontmatter(
         'skills/demo/SKILL.md',
@@ -94,7 +116,7 @@ unsupported_field: Demo routing
       ))
 
       assert.strictEqual(error._tag, 'PartitaFrontmatterError')
-      assert.include(error.message, 'UNSUPPORTED FRONTMATTER FIELD')
+      assert.include(error.message, 'skill_validation.unexpected_frontmatter_key')
     }))
 
   it.effect('renders generated files for a zero-skill repo', () =>

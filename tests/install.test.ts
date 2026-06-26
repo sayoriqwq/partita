@@ -84,7 +84,7 @@ describe('Partita install', () => {
       assert.deepStrictEqual(calls, [
         {
           command: 'npx',
-          args: ['skills', 'add', '.', '-a', 'codex', '-g', '--skill', '*', '-y', '--full-depth'],
+          args: ['skills', 'add', './skills', '-a', 'codex', '-g', '--skill', '*', '-y', '--full-depth'],
           cwd: root,
         },
       ])

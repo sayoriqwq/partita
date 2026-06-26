@@ -8,36 +8,27 @@ description: "Use when the user asks to update effect-harness itself to the late
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
-Update `effect-harness` itself against official Effect source and package
-baselines without turning a recurring harness operation into an ad hoc manual
-checklist.
+## Rule
 
-## Capability
+Facing an `effect-harness` self-update request, first use or create the hard
+update mechanism, to avoid hand-edited versions, stale official source pins, or
+target repos consuming an unverified harness drift.
 
-Turn "update the harness to latest" into a reviewable mechanism-first update:
-detect official drift, decide whether the current harness has a hard update
-path, run or create that mechanism, then verify the harness and report any
-missing hard surface before target repos consume the update.
+## Pattern
 
-Pressure scenario: the agent sees `effect:status` drift, edits versions and
-docs by hand, updates a subtree in the same pass as unrelated target work, or
-claims the harness is current while the update path still depends on memory and
-prose.
+Use when:
 
-## Trigger
-
-Use this skill when the user asks to:
-
-- update `effect-harness` to the latest official Effect beta or source pin;
-- refresh `repos/effect`, `repos/effect.subtree.json`, pnpm catalog,
-  overrides, lockfile, or baseline docs inside `effect-harness`;
-- turn a repeated Effect baseline update checklist into a CLI, script,
+- the user asks to update `effect-harness` to the latest official Effect beta or
+  source pin;
+- `repos/effect`, `repos/effect.subtree.json`, pnpm catalog, overrides,
+  lockfile, or baseline docs need refresh inside `effect-harness`;
+- a repeated Effect baseline update checklist should become CLI, script,
   verifier, or test-backed harness contract;
-- decide whether a downstream target can safely update after harness drift.
+- a downstream target can update only after harness drift is resolved.
 
-Do not use this skill when:
+Do not use when:
 
-- the task is to set up, migrate, or repair a target repo; use
+- the task is setting up, migrating, or repairing a target repo; use
   `setup-effect-area`;
 - the task is generic external repo pinning; use `pin`;
 - the task is writing Effect application features or fixing target business
@@ -45,89 +36,68 @@ Do not use this skill when:
 - the user only wants to inspect official Effect docs without changing the
   harness.
 
-## Soft Boundary
+## Boundary
 
-Primitive audit: `update-effect-harness` is `stateful`,
-`activation: narrow`, `invocation: implicit`, and `duration: task`. It may write source pins,
-baseline manifests, package metadata, lockfiles, docs, verifier contracts,
-tests, or update CLI surfaces in `effect-harness`. It stops when the harness is
-verified current, or when the missing update mechanism is named as the blocker.
+Soft:
 
-Use agent judgment for:
+- Classify the task as `status-only`, `mechanism-gap`, `harness-update`, or
+  `target-blocked`.
+- Decide whether existing `effect-harness` commands are sufficient.
+- Separate official source or package drift from target repo setup and business
+  work.
+- Keep large source subtree churn reviewable and isolated.
 
-- whether the current task is a harness self-update or target setup;
-- whether existing `effect-harness` commands are sufficient, or a hard update
-  mechanism must be added before changing versions;
-- whether official API drift requires verifier/runtime contract changes;
-- whether downstream target work should wait until the harness update is
-  landed and verified;
-- how to separate reviewable commits or diffs when source subtree churn is
-  large.
-
-## Hard Boundary
-
-This section mixes model-applied boundaries with hard checks. Only items tied
-to machine-checkable surfaces such as git commands, npm dist-tags, the
-`effect-harness` CLI, pnpm lockfile validation, tests, or verifier output are
-primitive `constraint.hard`; prose-only update rules remain strict `soft`
-constraints.
+Hard:
 
 - Do not call the harness current unless `pnpm effect:status` reports every
   official row current, or reports the exact blocker.
-- Do not update `repos/effect` or package baselines with a dirty worktree unless
-  the dirty files are the current update task and the user explicitly accepts
-  that scope.
-- Do not treat a prose checklist as the hard update mechanism. If no CLI,
-  script, verifier, schema, test, or package check enforces the repeatable
-  update, first add or request that mechanism.
-- Do not mix an official Effect source/baseline update with target repo setup
-  or business feature work.
+- Do not update source pins or baselines with a dirty worktree unless the dirty
+  files are the accepted update scope.
+- Do not treat a prose checklist as the hard update mechanism.
 - Do not hand-write package versions from memory; resolve official npm
-  dist-tags and source head through `effect-harness` status/update machinery or
-  direct official commands.
-- Do not finish without `pnpm verify` and final `pnpm effect:status`, or an
-  exact machine-checkable blocker.
+  dist-tags and source head through harness status/update machinery or direct
+  official commands.
+- Finish with `pnpm verify` and `pnpm effect:status`, or an exact
+  machine-checkable blocker.
+
+## Effects
+
+- Conversation: may show the `🧭` marker, update classification, official drift,
+  changed surfaces, verification output, and target blockers.
+- Filesystem: may write source pins, baseline manifests, package metadata,
+  lockfiles, docs, verifier contracts, tests, or update CLI surfaces in
+  `effect-harness`.
+- External: may query official npm dist-tags and the official Effect source
+  remote needed to resolve the update.
 
 ## Workflow
 
-1. Confirm the repo is `effect-harness` and preflight:
-
-   ```bash
-   git status --short --branch -uall
-   pnpm effect:status
-   ```
-
-2. Classify the task:
-   - `status-only`: report drift, no writes.
-   - `mechanism-gap`: status proves drift but the repeatable update path is not
-     hard enough.
-   - `harness-update`: run the owning hard update path.
-   - `target-blocked`: downstream setup must wait for a verified harness.
-3. If classification is `mechanism-gap`, design the smallest hard surface
-   before changing the source pin or baseline.
-4. If classification is `harness-update`, update only the official source pin,
-   manifest baseline, pnpm catalog/overrides/trust policy, lockfile, baseline
-   docs, and tests directly required by the official drift.
+1. Confirm the repo is `effect-harness` and preflight git status plus
+   `pnpm effect:status`.
+2. Classify the task as `status-only`, `mechanism-gap`, `harness-update`, or
+   `target-blocked`.
+3. If classification is `mechanism-gap`, design the smallest hard surface before
+   changing source pins or baselines.
+4. If classification is `harness-update`, update only official source pin,
+   package baselines, pnpm policy/lockfile, docs, and tests directly required by
+   official drift.
 5. Read updated official guidance before changing runtime/verifier contracts.
-6. Verify:
-
-   ```bash
-   pnpm verify
-   pnpm effect:status
-   ```
-
+6. Verify with `pnpm verify` and final `pnpm effect:status`.
 7. Report changed files, official source ref, package baseline, update command,
    verify command, and any target repos still blocked.
 
+## References
+
+- No references.
+
 ## Validation
 
-Before treating output as valid `update-effect-harness`, check:
+Before done:
 
-- first user-facing line includes `🧭` inline;
-- the task is classified as `status-only`, `mechanism-gap`,
-  `harness-update`, or `target-blocked`;
-- soft judgment and deterministic hard constraints are separated;
+- the first user-facing line includes `🧭` inline;
+- the task is classified as `status-only`, `mechanism-gap`, `harness-update`, or
+  `target-blocked`;
+- no target repo setup or business work was mixed into the harness update;
 - hard constraints are backed by CLI, git, npm, package, test, or verifier
   output;
-- no target repo setup or business work was mixed into the harness update;
 - completion reports `pnpm verify` and `pnpm effect:status`, or exact blockers.

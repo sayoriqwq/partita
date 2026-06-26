@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import { PartitaError } from './errors.ts'
+import { validateSkillText } from './skill-validation.ts'
 
 export interface VerifyProjectOptions {
   readonly root: string
@@ -16,16 +17,6 @@ export interface ValidationIssue {
 
 export interface ValidationReport {
   readonly ok: boolean
-  readonly issues: ReadonlyArray<ValidationIssue>
-}
-
-interface SkillFrontmatter {
-  readonly name: string
-  readonly description: string
-}
-
-interface FrontmatterParseResult {
-  readonly fields?: SkillFrontmatter
   readonly issues: ReadonlyArray<ValidationIssue>
 }
 
@@ -48,12 +39,24 @@ interface SkillFileDescriptor {
 }
 
 const skillContractSections = [
+  '## Rule',
+  '## Pattern',
+  '## Boundary',
+  '## Effects',
+  '## Workflow',
+  '## References',
+  '## Validation',
+] as const
+const forbiddenLegacySkillSections = [
   '## Capability',
   '## Trigger',
+  '## Template',
+  '## Protocol',
+  '## Surface',
+  '## External State',
   '## Soft Boundary',
   '## Hard Boundary',
-  '## Workflow',
-  '## Validation',
+  'Primitive audit:',
 ] as const
 const descriptionMaximumLength = 500
 const descriptionSelectorPrefixPattern = /^Use (?:when|for)\b/u
@@ -64,10 +67,6 @@ const descriptionSchedulingPollution = [
   'safest',
   'recommended',
 ] as const
-const stateTokens = ['`stateful`', '`stateless`'] as const
-const activationTokens = ['`activation: broad`', '`activation: narrow`'] as const
-const invocationTokens = ['`invocation: implicit`', '`invocation: explicit`'] as const
-const durationTokens = ['`duration: turn`', '`duration: task`', '`duration: topic`', '`duration: mode`'] as const
 const requiredOpenAiInterfaceFields = ['display_name', 'short_description', 'default_prompt'] as const
 
 const requiredRootMapFiles = [
@@ -178,54 +177,28 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     const path = descriptor.path
     const relativePath = relativePathFrom(root, path)
     const text = readText(path)
-    const parsed = parseFrontmatter(text, relativePath)
-    issues.push(...parsed.issues)
+    const validation = validateSkillText(text, relativePath)
+    issues.push(...validation.issues)
 
-    if (!parsed.fields) {
+    if (!validation.fields) {
       continue
     }
 
     issues.push(...checkSkillDirectoryShape(root, path))
 
-    const name = parsed.fields.name
+    const name = validation.fields.name
     if (name !== descriptor.name) {
       issues.push(issue('skill.name_mismatch', `name=${JSON.stringify(name)} dir=${JSON.stringify(descriptor.name)}`, relativePath))
     }
 
-    const description = parsed.fields.description.trim()
+    const description = validation.fields.description.trim()
     issues.push(...checkSkillDescription(description, relativePath))
     if (!text.includes(loadedSkillMarker)) {
       issues.push(issue('skill.missing_marker', `missing ${loadedSkillMarker} marker instruction`, relativePath))
     }
 
-    const missingSections = skillContractSections.filter(section => !text.includes(section))
-    if (missingSections.length > 0) {
-      issues.push(issue('skill.missing_contract_sections', `missing sections: ${missingSections.join(', ')}`, relativePath))
-    }
-
-    const softBoundary = sectionBetween(text, '## Soft Boundary', '## Hard Boundary')
-    if (!softBoundary.includes('Primitive audit:')) {
-      issues.push(issue('skill.missing_primitive_audit', 'Soft Boundary must include Primitive audit:', relativePath))
-    }
-    if (!stateTokens.some(token => softBoundary.includes(token))) {
-      issues.push(issue('skill.primitive_state_missing', 'Primitive audit must include `stateful` or `stateless`', relativePath))
-    }
-    if (!activationTokens.some(token => softBoundary.includes(token))) {
-      issues.push(issue('skill.primitive_activation_missing', 'Primitive audit must include activation token', relativePath))
-    }
-    const invocation = primitiveInvocation(softBoundary)
-    if (!invocation) {
-      issues.push(issue('skill.primitive_invocation_missing', 'Primitive audit must include invocation token', relativePath))
-    }
-    if (!durationTokens.some(token => softBoundary.includes(token))) {
-      issues.push(issue('skill.primitive_duration_missing', 'Primitive audit must include duration token', relativePath))
-    }
-
-    const hardBoundary = sectionBetween(text, '## Hard Boundary', '## Workflow')
-    if (!hardBoundary.includes('primitive `constraint.hard`') || !hardBoundary.includes('machine-checkable')) {
-      issues.push(issue('skill.hard_boundary_wording', 'Hard Boundary must distinguish primitive `constraint.hard` from machine-checkable enforcement', relativePath))
-    }
-    issues.push(...checkOpenAiMetadata(root, name, path, invocation))
+    issues.push(...checkSkillBodyShape(text, relativePath))
+    issues.push(...checkOpenAiMetadata(root, name, path))
 
     descriptions[descriptor.handle] = description
   }
@@ -259,21 +232,65 @@ function checkSkillDescription(description: string, relativePath: string): Reado
   return issues
 }
 
-function primitiveInvocation(softBoundary: string): 'implicit' | 'explicit' | undefined {
-  if (softBoundary.includes(invocationTokens[0])) {
-    return 'implicit'
+function checkSkillBodyShape(text: string, relativePath: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+  const missingSections = skillContractSections.filter(section => !text.includes(section))
+  if (missingSections.length > 0) {
+    issues.push(issue('skill.missing_contract_sections', `missing sections: ${missingSections.join(', ')}`, relativePath))
   }
-  if (softBoundary.includes(invocationTokens[1])) {
-    return 'explicit'
+
+  let previousIndex = -1
+  for (const section of skillContractSections) {
+    const index = text.indexOf(section)
+    if (index === -1) {
+      continue
+    }
+    if (index < previousIndex) {
+      issues.push(issue('skill.section_order', `sections must appear in V1 order: ${skillContractSections.join(', ')}`, relativePath))
+      break
+    }
+    previousIndex = index
   }
-  return undefined
+
+  for (const section of forbiddenLegacySkillSections) {
+    if (text.includes(section)) {
+      issues.push(issue('skill.legacy_section', `legacy skill section or marker is not allowed: ${section}`, relativePath))
+    }
+  }
+
+  const pattern = sectionBetween(text, '## Pattern', '## Boundary')
+  if (pattern && (!pattern.includes('Use when:') || !pattern.includes('Do not use when:'))) {
+    issues.push(issue('skill.pattern_shape', 'Pattern must include Use when: and Do not use when:', relativePath))
+  }
+
+  const boundary = sectionBetween(text, '## Boundary', '## Effects')
+  if (boundary && !boundary.includes('Soft:')) {
+    issues.push(issue('skill.boundary_missing_soft', 'Boundary must include Soft:', relativePath))
+  }
+  const hardIndex = boundary.indexOf('Hard:')
+  if (hardIndex !== -1 && !boundary.slice(hardIndex + 'Hard:'.length).trim()) {
+    issues.push(issue('skill.boundary_empty_hard', 'Boundary Hard: must not be empty when present', relativePath))
+  }
+
+  const effects = sectionBetween(text, '## Effects', '## Workflow')
+  for (const effect of ['Conversation', 'Filesystem', 'External'] as const) {
+    if (effects && !effects.includes(`- ${effect}:`)) {
+      issues.push(issue('skill.effects_missing_surface', `Effects must include ${effect}`, relativePath))
+    }
+  }
+
+  const validation = sectionBetween(text, '## Validation', '')
+  if (validation && !validation.includes('Before done:')) {
+    issues.push(issue('skill.validation_shape', 'Validation must include Before done:', relativePath))
+  }
+
+  return issues
 }
 
 function checkOpenAiMetadata(
   root: string,
   skillName: string,
   skillPath: string,
-  invocation: 'implicit' | 'explicit' | undefined,
 ): ReadonlyArray<ValidationIssue> {
   const metadataPath = join(dirname(skillPath), 'agents', 'openai.yaml')
   const relativeMetadataPath = relativePathFrom(root, metadataPath)
@@ -309,13 +326,6 @@ function checkOpenAiMetadata(
   if (metadata.allowImplicitInvocation === undefined) {
     issues.push(issue('openai_metadata.missing_invocation_policy', 'agents/openai.yaml must declare policy.allow_implicit_invocation', relativeMetadataPath))
     return issues
-  }
-
-  if (invocation === 'explicit' && metadata.allowImplicitInvocation !== false) {
-    issues.push(issue('openai_metadata.explicit_allows_implicit', 'invocation: explicit requires policy.allow_implicit_invocation: false', relativeMetadataPath))
-  }
-  if (invocation === 'implicit' && metadata.allowImplicitInvocation !== true) {
-    issues.push(issue('openai_metadata.implicit_disallows_implicit', 'invocation: implicit must not set policy.allow_implicit_invocation: false', relativeMetadataPath))
   }
 
   return issues
@@ -450,110 +460,6 @@ function parseBooleanPolicy(value: string, path: string, issues: Array<Validatio
   }
   issues.push(issue('openai_metadata.invalid_invocation_policy', 'policy.allow_implicit_invocation must be true or false', path))
   return undefined
-}
-
-function parseFrontmatter(text: string, path: string): FrontmatterParseResult {
-  const issues: Array<ValidationIssue> = []
-  const lines = text.split(/\r?\n/u)
-  if (lines.length === 0 || lines[0] !== '---') {
-    return {
-      issues: [issue('frontmatter.invalid', 'frontmatter must start with ---', path)],
-    }
-  }
-
-  const end = lines.indexOf('---', 1)
-  if (end === -1) {
-    return {
-      issues: [issue('frontmatter.invalid', 'frontmatter missing closing ---', path)],
-    }
-  }
-
-  const fields: Partial<SkillFrontmatter> = {}
-  for (const rawLine of lines.slice(1, end)) {
-    if (!rawLine.trim()) {
-      continue
-    }
-
-    if (rawLine.startsWith('  ')) {
-      issues.push(issue('frontmatter.invalid_indent', `invalid frontmatter indent: ${JSON.stringify(rawLine)}`, path))
-      continue
-    }
-
-    const [key, rawValue] = splitFrontmatterLine(rawLine)
-    if (!rawValue) {
-      issues.push(issue('frontmatter.invalid_line', `invalid frontmatter line: ${JSON.stringify(rawLine)}`, path))
-      continue
-    }
-
-    const field = frontmatterFieldName(key)
-    if (field) {
-      const parsed = parseScalar(key, rawValue, path)
-      issues.push(...parsed.issues)
-      if (parsed.value) {
-        Object.assign(fields, { [field]: parsed.value })
-      }
-    }
-    else {
-      issues.push(issue('frontmatter.unsupported_field', `unsupported frontmatter field: ${key}; Codex skills use only name and description`, path))
-    }
-  }
-
-  if (!fields.name?.trim()) {
-    issues.push(issue('frontmatter.missing_name', 'missing name', path))
-  }
-  if (!fields.description?.trim()) {
-    issues.push(issue('frontmatter.missing_description', 'missing description', path))
-  }
-  if (!fields.name || !fields.description) {
-    return { issues }
-  }
-
-  return {
-    fields: {
-      description: fields.description.trim(),
-      name: fields.name.trim(),
-    },
-    issues,
-  }
-}
-
-function splitFrontmatterLine(line: string): readonly [string, string] {
-  const separator = line.indexOf(':')
-  if (separator === -1) {
-    return [line, '']
-  }
-  return [line.slice(0, separator), line.slice(separator + 1)]
-}
-
-function frontmatterFieldName(key: string): keyof SkillFrontmatter | undefined {
-  switch (key) {
-    case 'name':
-      return 'name'
-    case 'description':
-      return 'description'
-    default:
-      return undefined
-  }
-}
-
-function parseScalar(field: string, raw: string, path: string): { readonly value?: string, readonly issues: ReadonlyArray<ValidationIssue> } {
-  const value = raw.trim()
-  if (!value) {
-    return { issues: [issue('frontmatter.empty_value', `empty frontmatter value: ${field}`, path)] }
-  }
-
-  if (value.startsWith('"') || value.startsWith('\'')) {
-    const parsed = parseQuotedString(value)
-    return parsed.ok
-      ? { issues: [], value: parsed.value }
-      : { issues: [issue('frontmatter.invalid_quote', `invalid frontmatter quote in ${field}: ${parsed.message}`, path)] }
-  }
-
-  if (value.includes(': ')) {
-    return { issues: [issue('frontmatter.unquoted_colon', `quote values containing ': ' in ${field}`, path)] }
-  }
-
-  return { issues: [], value }
 }
 
 function parseQuotedString(value: string): { readonly ok: true, readonly value: string } | { readonly ok: false, readonly message: string } {
@@ -927,11 +833,17 @@ function checkSkillDirectoryShape(root: string, skillPath: string): ReadonlyArra
       case 'agents':
         issues.push(...checkAgentsDirectory(root, entryPath, entry.isDirectory()))
         break
+      case 'assets':
+        issues.push(...checkBundledResourceDirectory(root, entryPath, entry.isDirectory(), 'assets'))
+        break
       case 'references':
         issues.push(...checkReferencesDirectory(root, entryPath, entry.isDirectory()))
         break
+      case 'scripts':
+        issues.push(...checkBundledResourceDirectory(root, entryPath, entry.isDirectory(), 'scripts'))
+        break
       default:
-        issues.push(issue('skill_shape.unsupported_entry', 'skill directories may only contain SKILL.md, agents/openai.yaml, and references/*.md', relativeEntryPath))
+        issues.push(issue('skill_shape.unsupported_entry', 'skill directories may only contain SKILL.md, agents/, scripts/, references/, and assets/', relativeEntryPath))
     }
   }
   return issues
@@ -945,13 +857,22 @@ function checkAgentsDirectory(root: string, path: string, isDirectory: boolean):
   return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = join(path, entry.name)
     const relativeEntryPath = relativePathFrom(root, entryPath)
-    if (entry.name !== 'openai.yaml') {
-      return [issue('skill_shape.unsupported_agent_file', 'agents may only contain openai.yaml', relativeEntryPath)]
+    if (!entry.isFile()) {
+      return [issue('skill_shape.unsupported_agent_entry', 'agents must contain one-level config files', relativeEntryPath)]
     }
-    return entry.isFile()
-      ? []
-      : [issue('skill_shape.invalid_openai_metadata', 'agents/openai.yaml must be a file', relativeEntryPath)]
+    return []
   })
+}
+
+function checkBundledResourceDirectory(
+  root: string,
+  path: string,
+  isDirectory: boolean,
+  name: 'assets' | 'scripts',
+): ReadonlyArray<ValidationIssue> {
+  return isDirectory
+    ? []
+    : [issue(`skill_shape.invalid_${name}_dir`, `${name} must be a directory`, relativePathFrom(root, path))]
 }
 
 function checkReferencesDirectory(root: string, path: string, isDirectory: boolean): ReadonlyArray<ValidationIssue> {
@@ -962,8 +883,8 @@ function checkReferencesDirectory(root: string, path: string, isDirectory: boole
   return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = join(path, entry.name)
     const relativeEntryPath = relativePathFrom(root, entryPath)
-    if (!entry.isFile() || !entry.name.endsWith('.md')) {
-      return [issue('skill_shape.unsupported_reference', 'references must be one-level Markdown files', relativeEntryPath)]
+    if (!entry.isFile()) {
+      return [issue('skill_shape.unsupported_reference', 'references must be one-level files', relativeEntryPath)]
     }
     return []
   })
@@ -994,7 +915,7 @@ function walk(path: string, files: Array<string>) {
 }
 
 function shouldSkipPath(path: string): boolean {
-  return path.split(sep).some(part => part === '.git' || part === 'node_modules')
+  return path.split(sep).some(part => part === '.git' || part === 'assets' || part === 'node_modules')
 }
 
 function sectionBetween(text: string, start: string, end: string): string {

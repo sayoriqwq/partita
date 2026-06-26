@@ -8,83 +8,66 @@ description: "Use when an existing Partita skill needs a local correction from a
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
-Retune an existing Partita skill score from observed drift.
+## Rule
 
-## Capability
+Facing an existing Partita skill with observed drift or structure mismatch,
+first apply the smallest local correction to the stale surface, to avoid
+rewriting the whole skill, patching abstract theory only, or refusing structure
+audits that expose real shape drift.
 
-Convert concrete feedback, dogfood drift, or structure review into the smallest
-verifiable correction to an existing skill's trigger, boundary, workflow,
-references, metadata, validation, or projection.
+## Pattern
 
-Pressure scenario: the user reports a skill running too broad, too narrow, too
-heavy, or too vague, and the agent either edits abstract theory only, rewrites
-the whole skill, or refuses because the case is a structure audit rather than a
-behavior case.
-
-## Trigger
-
-Use this skill when:
+Use when:
 
 - the user names an existing Partita skill and reports a real behavior problem;
 - dogfood shows wrong routing, over-reading, under-reading, vague boundaries, or
   work outside the skill's responsibility;
 - a concrete case should enter the target skill's care loop;
 - the user asks whether a named skill preserves primitive identity, namespace,
-  constraint, state, activation, invocation, metadata, duration, gate span,
-  orchestration, or runtime shape.
+  constraint, activation, invocation metadata, duration, gate span,
+  orchestration, effects, boundary, description, validation, or runtime shape.
 
-Do not use this skill when:
+Do not use when:
 
 - creating a new behavior skill from scratch; use `notate`;
 - an existing skill needs full primitive re-foundation rather than local
   correction; use `notate`;
 - the request is ordinary code review, bug fixing, prose editing, or hard
-  verifier/schema work;
+  verifier/schema implementation;
 - the case is speculative and no structure audit was requested.
 
-## Soft Boundary
+## Boundary
 
-Primitive audit: `retune` is `stateful`, `activation: narrow`, `invocation: implicit`, and
-`duration: task`. It may update target `SKILL.md`, `agents/openai.yaml`, direct
-references, real case records, wiki nodes, generated dispatcher metadata, and
-verifier surfaces that belong to the requested retuning task. It stops when the
-local correction or structure audit is implemented, validated, and reported.
-Its constraints are mixed: routing, scope, and retuning judgment are `soft`;
-generated metadata, link checks, and test commands are primitive
-`constraint.hard` only when enforced by CLI commands, verifiers, tests, schemas,
-or package checks.
+Soft:
 
-Use agent judgment for:
+- Classify the mode as `case-retune` or `structure-retune`.
+- Preserve the target skill's primitive identity unless the case exposes a new
+  pressure that should split.
+- Choose the smallest recurrence-preventing correction.
+- Keep concrete cases and long guidance in one-level references, not the
+  every-run body.
 
-- whether the observed drift reveals a reusable skill-use failure;
-- whether the mode is `case-retune` or `structure-retune`;
-- which named skill owns the behavior when several are mentioned;
-- whether to capture the case, sanitize it, or keep it as audit-only evidence;
-- where the smallest recurrence-preventing correction belongs;
-- whether the target should be retuned, split, renamed, or re-notated.
+Hard:
 
-## Hard Boundary
-
-This section mixes model-applied boundaries with hard checks. Only items tied to
-machine-checkable surfaces such as CLI commands, verifiers, tests, schemas, or
-package validation are primitive `constraint.hard`; prose-only boundaries remain
-strict `soft` constraints.
-
-- The real user case is the source situation for `case-retune`. Preserve the
-  behavior shape when safe and allowed.
-- A `structure-retune` may correct skill shape without case capture, but must
-  not invent a case.
+- `case-retune` must come from a real user case; `structure-retune` must not
+  invent one.
 - Do not add speculative examples, style galleries, or generic answer
   templates.
 - Do not rewrite the whole skill when a local correction fixes the drift.
-- Do not re-found a broken primitive inside `retune`; route that work to
-  `notate`.
-- Keep concrete cases and long guidance in one-level references, not the
-  every-run body.
-- Do not retune generated/runtime copies when this repo has an editable source
-  skill.
-- Do not change hard verifier, CLI, schema, or package behavior from this skill
-  alone; edit those code paths separately when requested.
+- Do not retune generated/runtime copies when this repo has editable source
+  skills.
+- Generated dispatcher metadata, `partita verify`, tests, `pnpm verify`, and
+  Effect harness verification are hard script checks for this repo.
+
+## Effects
+
+- Conversation: may show the `🧭` marker, target skill, mode, retuning intent,
+  changed surface, verification result, and blockers.
+- Filesystem: may update the target `SKILL.md`, `agents/openai.yaml`,
+  `scripts/`, `references/`, `assets/`, cases, wiki nodes, generated dispatcher
+  metadata, tests, and verifier surfaces directly stale from the retune.
+- External: none unless the approved retune explicitly requires checking an
+  external harness or source authority.
 
 ## Workflow
 
@@ -94,13 +77,16 @@ strict `soft` constraints.
    only when a real case is available.
 3. For `structure-retune`, apply [audit practice](../../../wiki/practice/audit.md)
    to semantic preservation and materialized runtime shape. Do not invent cases.
-4. Name the retuning intent and smallest patch location: description, trigger,
-   boundary, workflow, references, metadata, validation, or verifier surface.
-5. Edit only the target skill and directly stale routing, metadata, references,
-   cases, or verifier surfaces.
+4. Name the retuning intent and smallest patch location: description, pattern,
+   boundary, effects, workflow, references, metadata, validation, or verifier
+   surface.
+5. Edit only the target skill and directly stale routing, metadata, resources,
+   references, cases, wiki nodes, generated metadata, or verifier surfaces.
 6. Regenerate dispatcher metadata if frontmatter, path, or description changed.
-7. Verify, then report mode, target, retuning intent, changed surface,
-   verification result, and any remaining projection loss.
+7. Run hard verification, including Effect harness verification through
+   `pnpm verify` for this repo.
+8. Report mode, target, retuning intent, changed surface, verification result,
+   and any remaining blocker.
 
 ## References
 
@@ -115,31 +101,25 @@ strict `soft` constraints.
 - Read [gate span](../../../wiki/workflow/gate/span.md) before auditing
   cross-gate duration.
 - Read [primitive](../../../wiki/skill/primitive.md) before auditing primitive
-  preservation, constraint, state, activation, invocation, duration, or
-  namespace.
+  preservation, constraint, activation, invocation, duration, or namespace.
 - Read [runtime shape](../../../wiki/projection/verifier/shape.md) before
-  auditing namespace, description, OpenAI metadata, `SKILL.md` body, references,
+  auditing namespace, description, OpenAI metadata, `SKILL.md` body, resources,
   or verifier surface.
-- Read [projection loss](../../../wiki/projection/loss.md) before auditing cases
-  or forward tests.
 - Read [cases](references/cases.md) when checking known recurrence patterns.
 
 ## Validation
 
-Before calling retuning complete, verify:
+Before done:
 
 - the first user-facing line includes `🧭` inline;
 - the target skill, mode, and retuning intent are explicit;
 - case capture happens only for real cases, and structure audits invent none;
 - primitive preservation and materialized shape are checked separately;
 - primitive and orchestrator responsibilities remain separated;
-- hard constraints without machine-checkable enforcement are reported as
-  projection loss;
-- stateful edits are limited to the target skill and directly stale metadata,
-  references, cases, wiki nodes, generated dispatcher metadata, or verifier
-  surfaces;
+- effects stay within the target skill and directly stale resources, metadata,
+  wiki nodes, generated metadata, tests, or verifier surfaces;
 - the edit is smaller than a rewrite;
 - concrete cases live in one-level references, not the every-run body;
 - generated dispatcher metadata is in sync when needed;
-- `pnpm generate` and `pnpm verify` pass after Partita skill changes, or the
-  exact environment blocker is reported.
+- `pnpm generate`, `pnpm verify`, and Effect harness verification pass, or exact
+  environment blockers are reported.

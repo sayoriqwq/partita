@@ -8,146 +8,102 @@ description: "Use when the user asks to set up, update, verify, or repair a Type
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
-Set up a target TypeScript/Effect repository against an existing
-`effect-harness` CLI and runtime contract.
+## Rule
 
-## Capability
+Facing an Effect target repo setup, update, verify, or repair request, first run
+the owning `effect-harness` contract path, to avoid hand-copied docs, target
+local dispatchers, drifted baselines, or runtime copies becoming semantic
+authority.
 
-Use Partita-owned skill guidance to drive the `effect-harness`-owned executable
-mechanism: resolve target and harness roots, run the harness setup path, inspect
-managed output, and verify the target against the harness contract.
+## Pattern
 
-Pressure scenario: the agent hand-copies Effect docs or skills, adds a
-target-local dispatcher, updates baseline versions manually, or lets
-`effect-harness` runtime copies become the source of Partita skill semantics.
-Another pressure scenario: the agent patches one target file while leaving the
-package baseline, verify chain, managed runtime, and harness manifest
-inconsistent.
+Use when:
 
-## Trigger
-
-Use this skill when the user asks to:
-
-- run, review, or repair `effect-harness init` for a target repo;
-- update a target repo after `effect-harness` baseline or runtime contract
+- the user asks to run, review, or repair `effect-harness init` for a target
+  repo;
+- a target repo must update after `effect-harness` baseline or runtime contract
   changes;
-- verify whether a target repo is compatible with the current `effect-harness`;
-- coordinate Partita skill source with `effect-harness` managed runtime copies.
+- a target repo compatibility check against the current `effect-harness` is
+  needed;
+- Partita skill source must be coordinated with `effect-harness` managed runtime
+  copies.
 
-Do not use this skill when:
+Do not use when:
 
 - the request is generic external repo pinning; use `pin`;
-- the user asks to update `effect-harness` itself, `effect-harness/repos/effect`,
-  or the official Effect source subtree; use `update-effect-harness`;
+- the user asks to update `effect-harness` itself, `repos/effect`, or the
+  official Effect source subtree; use `update-effect-harness`;
 - the user wants Effect API design or target business feature work after setup;
 - the task is to redesign Partita skill semantics inside `effect-harness`.
 
-## Soft Boundary
+## Boundary
 
-Primitive audit: `setup-effect-area` is `stateful`, `activation: narrow`, `invocation: implicit`, and
-`duration: task`. It may write target package metadata, tsconfig, `.codex`
-runtime, `.effect-harness.json`, AGENTS managed blocks, lockfiles, and managed
-runtime copies. It stops when the target verifies against `effect-harness`, or
-when missing roots, dirty worktree risk, or missing CLI support blocks setup.
-Root selection, update strategy, copy ownership review, and whether to wait for
-a harness self-update are `soft`; harness init commands, target verify, source
-status, package checks, local-dispatcher detection, and target `verify` are
-primitive `constraint.hard` only when enforced by CLI commands, scripts, git,
-grep/package checks, or package validation.
+Soft:
 
-Classify the target before editing:
+- Classify the target as `fresh-setup`, `target-update`, or
+  `blocked-by-harness`.
+- Keep ownership separated: Partita owns skill source semantics,
+  `effect-harness` owns setup CLI/runtime/verifier, targets own product code.
+- Report missing roots, dirty worktree risk, or absent harness CLI support
+  instead of hand-writing a replacement.
+- Use focused Effect subagents only through the target runtime agent config.
 
-- `fresh-setup`: no target harness contract exists.
-- `target-update`: target already has managed harness output but the harness
-  baseline or runtime contract changed.
-- `blocked-by-harness`: target cannot update until `effect-harness` exposes a
-  hard setup or update mechanism.
+Hard:
 
-Authority split:
-
-- Partita owns skill source semantics.
-- `effect-harness` owns setup CLI, verifier, runtime projection, and sync
-  mechanism.
-- Target repos own target-local product code and local verification results.
-- Any skill copy in `effect-harness` or a target repo is a managed projection,
-  not the semantic owner.
-
-## Hard Boundary
-
-This section mixes model-applied boundaries with hard checks. Only items tied
-to machine-checkable surfaces such as the `effect-harness` CLI, package scripts,
-git status, or verifier output are primitive `constraint.hard`; prose-only
-boundaries remain strict `soft` constraints.
-
-- Do not define Partita skill semantics in `effect-harness`; update Partita first,
-  then sync managed copies through an explicit mechanism.
-- Do not copy the harness repo's internal skills into a target repo. Target
-  repos receive only `harness/runtime/codex` output from `effect-harness init`.
+- Do not define Partita skill semantics in `effect-harness`.
+- Do not copy harness-internal skills into a target repo; targets receive only
+  managed runtime output from `effect-harness init`.
 - Do not add target-local effect-harness dispatcher scripts.
-- Do not hand-write Effect baseline versions; read them from
-  `<harness-root>/repos/effect.subtree.json` or let the harness CLI write them.
-- Do not run source subtree update commands for target setup.
-- Do not claim setup is complete until the relevant verifier or exact blocker
-  is reported.
+- Do not hand-write Effect baseline versions; read them from the harness
+  manifest or let the harness CLI write them.
+- Verify with target `pnpm effect:status`, `pnpm effect:verify`, and
+  `pnpm verify`, or report the exact machine-checkable blocker.
+
+## Effects
+
+- Conversation: may show the `🧭` marker, target classification, setup report,
+  verifier output, and blockers.
+- Filesystem: may update target package metadata, tsconfig, `.codex` runtime,
+  `.effect-harness.json`, managed AGENTS blocks, lockfiles, and managed runtime
+  copies through the owning harness path.
+- External: may access package registries or official sources only through
+  target package commands or effect-harness status/update machinery.
 
 ## Workflow
 
 1. Resolve `HARNESS_ROOT` and `TARGET_ROOT`. Ask one focused question if either
    root is missing or ambiguous.
-2. Preflight both repos with `git -C "$ROOT" status --short`; preserve dirty
-   user work.
+2. Preflight both repos with git status and preserve dirty user work.
 3. Read harness authority: `HARNESS.md`, `harness/target-agent-contract.md`,
    and `repos/effect.subtree.json`.
 4. Read target shape: `AGENTS.md`, `package.json`, `pnpm-workspace.yaml`,
    `tsconfig.json`, and local dispatcher scripts.
-5. Classify the target as `fresh-setup`, `target-update`, or
-   `blocked-by-harness`. If the required harness setup/update command does not
-   exist, report that blocker instead of hand-writing a replacement.
-6. Run setup or update dry-run before writing:
+5. Classify the target. If the required harness command does not exist, report
+   that blocker instead of hand-writing a replacement.
+6. Run setup or update dry-run before writing when the harness supports it.
+7. Run the owning harness command for actual setup or update.
+8. Inspect target `.effect-harness.json` after setup/update.
+9. Use `.codex/agents/effect-worker.md` for focused Effect subagents if needed.
+10. Run target package setup commands when package or lockfile surfaces changed.
+11. Verify with `pnpm effect:status`, `pnpm effect:verify`, and `pnpm verify`.
+12. Report changed files, classification, status currency, verification results,
+    and any missing harness CLI/sync mechanism.
 
-   ```bash
-   effect-harness init --target "$TARGET_ROOT" --harness "$HARNESS_ROOT" --dry-run
-   ```
+## References
 
-7. For actual setup or update, run the owning harness command without
-   `--dry-run`.
-8. Read the target `.effect-harness.json` manifest. Use it to confirm the
-   managed `commands`, `routes`, source pin, and package baseline; do not
-   reconstruct internal harness paths by hand after init.
-9. If focused Effect subagents are needed after setup, use the target runtime
-   agent config at `.codex/agents/effect-worker.md`, not an ad-hoc prompt.
-10. If package or lockfile surfaces changed, run from the target:
-
-   ```bash
-   pnpm install
-   pnpm exec effect-tsgo patch
-   ```
-
-11. Verify from the target using target scripts:
-
-   ```bash
-   pnpm effect:status
-   pnpm effect:verify
-   pnpm verify
-   ```
-
-12. Report changed files, target classification, whether `effect:status` is
-    current, verifier results, and any missing `effect-harness` CLI/sync
-    mechanism.
+- No references.
 
 ## Validation
 
-Before treating output as valid `setup-effect-area`, check:
+Before done:
 
-- first user-facing line includes `🧭` inline;
+- the first user-facing line includes `🧭` inline;
 - target root and harness root are explicit;
 - target classification is `fresh-setup`, `target-update`, or
   `blocked-by-harness`;
 - Partita skill source and `effect-harness` CLI/runtime ownership are separated;
-- setup or update dry-run happened before target writes;
+- setup or update dry-run happened before target writes when supported;
 - `.effect-harness.json` was inspected after setup/update;
-- focused Effect subagents, if used, were given `.codex/agents/effect-worker.md`;
 - no official Effect source subtree update happened for target setup;
-- target receives managed runtime output, not harness-internal skill source;
-- hard constraints are backed by CLI, package script, git, or verifier output;
-- completion reports changed files and verification results or exact blockers.
+- hard checks include target `pnpm effect:verify` and `pnpm verify`, or exact
+  blockers.

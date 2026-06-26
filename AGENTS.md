@@ -34,7 +34,8 @@ This repo does not own:
 - `CONTEXT.md` and `HARNESS.md` are root maps into `wiki/`, not separate
   durable knowledge layers.
 - Before adding or changing a skill, start from `wiki/practice/create.md` or
-  `wiki/practice/patch.md`, then follow the linked wiki nodes.
+  `wiki/practice/patch.md`, then follow `wiki/projection/codex/skill-md.md`
+  for the current V1 `SKILL.md` section shape.
 - Partita's canonical knowledge lives under `wiki/`.
 - Partita `SKILL.md` files under `skills/` are source skill runtime projections.
   Wiki nodes hold the canonical behavior language; copies installed into
@@ -42,6 +43,9 @@ This repo does not own:
   redefine the skill.
 - `partita` is the product and plugin name, not a skill prefix. The `primitive`
   namespace projects as `pm:<name>` in dispatcher and plugin-facing handles.
+  Codex global skill installation is flat by frontmatter `name`, so
+  `skills/primitive/notate/SKILL.md` installs as `notate`; the source family
+  remains in this repo and dispatcher projection.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
@@ -53,7 +57,8 @@ This repo does not own:
 - If a new primitive skill is added, create
   `skills/primitive/<name>/SKILL.md` and
   `skills/primitive/<name>/agents/openai.yaml`, run `pnpm generate`, then run
-  `pnpm verify`.
+  `pnpm verify`. Effect harness verification is part of the hard verification
+  surface when the repo uses the Effect harness.
 
 ## Commands
 

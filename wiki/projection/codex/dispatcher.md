@@ -7,3 +7,7 @@ Its generation input is direct or namespaced `SKILL.md` frontmatter under
 only exposes routing metadata.
 
 The `primitive` source namespace projects to `pm:<name>` handles.
+
+Installed Codex skills stay flat by frontmatter name. Dispatcher handles keep
+Partita's source-family semantics without requiring nested global install
+paths.

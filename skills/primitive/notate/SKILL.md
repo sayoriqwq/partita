@@ -8,81 +8,69 @@ description: "Use when creating a new Partita primitive skill or re-founding a b
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
-Notate a behavior motif into a Partita primitive skill score.
+## Rule
 
-## Capability
+Facing a real behavior motif, correction, or broken primitive-shaped source,
+first score the A/Y/X governance assertion and V1 runtime projection, to avoid
+generic scaffolding, task-category skills, or valid-looking files that cannot
+change future agent behavior.
 
-Turn a real behavior motif, correction, or primitive-shaped source into a
-legal Partita skill projection: `SKILL.md`, `agents/openai.yaml`, optional
-one-level references, dispatcher metadata, and verifier coverage.
+## Pattern
 
-Pressure scenario: the agent creates a skill from folder shape, plugin naming,
-or generic scaffolding before naming the default failure, governance action, and
-activation boundary. The resulting score looks valid but cannot reliably change
-future agent behavior.
+Use when:
 
-## Trigger
+- the user asks to create, name, design, or materialize a new Partita primitive
+  skill;
+- a workflow, correction, repeated drift, or behavior motif should become a
+  skill;
+- material must be placed in a skill, wiki node, verifier, reference, asset,
+  prompt/profile, or external harness;
+- an existing skill must be re-founded because its primitive identity is no
+  longer preserved.
 
-Use this skill when the user asks to:
+Do not use when:
 
-- create, name, design, or materialize a new Partita primitive skill;
-- turn a workflow, correction, repeated drift, or behavior motif into a skill;
-- decide whether material belongs in a skill, wiki node, verifier, reference,
-  asset, prompt/profile, or external harness;
-- re-found an existing skill whose primitive identity is no longer preserved.
-
-Do not use this skill when:
-
-- an existing skill only needs a local trigger, boundary, workflow, reference,
-  metadata, or validation correction; use `retune`;
+- an existing valid skill only needs local trigger, boundary, workflow,
+  reference, metadata, or validation correction; use `retune`;
 - the task is only to install, list, or sync skills;
 - the output is one-off docs, notes, prompts, or project instructions;
 - the user asks for hard verifier, schema, CLI, or package implementation
   without changing skill behavior.
 
-## Soft Boundary
+## Boundary
 
-Primitive audit: `notate` is `stateful`, `activation: narrow`, `invocation: implicit`, and
-`duration: task`. It may create or re-found persistent skill files, direct
-references, wiki nodes, generated dispatcher metadata, and verifier surfaces
-that belong to the requested notation task. It stops when the skill score is
-materialized, validated, and reported, or when a missing primitive decision
-blocks safe notation. Its constraints are mixed: primitive judgment is `soft`;
-frontmatter parsing, metadata generation, link checks, and verifier commands are
-primitive `constraint.hard` only when enforced by CLI commands, tests, schemas,
-or verifiers.
+Soft:
 
-Use agent judgment for:
+- Decide whether the motif is strong enough to deserve a reusable skill.
+- Preserve one pressure and one governance action.
+- Separate primitive and orchestrator responsibilities.
+- Decide whether detail belongs in every-run `SKILL.md`, references, scripts,
+  assets, wiki, verifier, or external harness.
+- Treat proposed local edits to an existing valid skill as `retune`.
 
-- whether the motif is strong enough to deserve a reusable skill;
-- the smallest governance action that prevents the default failure;
-- whether the source is a primitive skill or an orchestrator;
-- whether the skill belongs under a namespace such as `primitive`;
-- which detail belongs in every-run `SKILL.md` versus one-level references;
-- whether a proposed rewrite is local retuning or full re-notation.
+Hard:
 
-## Hard Boundary
-
-This section mixes model-applied boundaries with hard checks. Only items tied to
-machine-checkable surfaces such as CLI commands, verifiers, tests, schemas, or
-package validation are primitive `constraint.hard`; prose-only boundaries remain
-strict `soft` constraints.
-
-- Do not materialize a skill before the motif, default failure, governance
-  action, trigger, and exclusion boundary are clear enough to score.
-- Do not use `notate` for local edits to an existing valid skill; route those to
-  `retune`.
-- Do not invent unsupported Codex skill frontmatter. `SKILL.md` frontmatter is
-  only `name` and `description`.
+- Do not materialize a skill before motif, default failure, governance action,
+  pattern, and exclusion boundary are clear enough to score.
+- Do not invent unsupported Codex skill frontmatter. Partita reads `name` and
+  `description`; official optional keys are `license`, `allowed-tools`, and
+  `metadata`.
 - Do not put namespace, plugin name, area, status, or kind metadata in
-  frontmatter. Namespace comes from the source path.
-- Every Partita skill must include `agents/openai.yaml`; invocation policy must
-  live under `policy.allow_implicit_invocation`.
-- Do not put README, changelog, install guides, process notes, or unrelated docs
-  inside a skill directory.
-- Do not copy private project paths or external harness internals into Partita
-  runtime instructions unless the user explicitly makes Partita own that
-  dependency.
+  frontmatter.
+- Every Partita skill must include `agents/openai.yaml` with
+  `policy.allow_implicit_invocation`.
+- Generated dispatcher metadata, `partita verify`, tests, `pnpm verify`, and
+  Effect harness verification are hard script checks for this repo.
+
+## Effects
+
+- Conversation: may show the `🧭` marker, motif, assertion, source path,
+  projected handle, verification report, and blockers.
+- Filesystem: may create or re-found `SKILL.md`, `agents/openai.yaml`,
+  `scripts/`, `references/`, `assets/`, wiki nodes, generated dispatcher
+  metadata, tests, and verifier surfaces inside the approved skill scope.
+- External: none unless the user explicitly makes an external harness or source
+  dependency part of the skill.
 
 ## Workflow
 
@@ -92,18 +80,17 @@ strict `soft` constraints.
    avoid default failure `X`.
 3. Decide artifact layer: `skill`, `wiki`, `CLI/verifier`, `reference`, `asset`,
    `prompt/profile`, or external harness.
-4. Decide primitive versus orchestrator. If orchestration is needed, name the
-   primitive skills it calls instead of merging their actions.
+4. Decide primitive versus orchestrator.
 5. Choose source namespace and handle. For primitive skills, use
    `skills/primitive/<name>/SKILL.md`; the projected handle is `pm:<name>`.
-6. Score the runtime projection:
-   - `SKILL.md` contains every-run behavior, trigger, boundaries, workflow, and
-     validation.
-   - `agents/openai.yaml` contains UI metadata and invocation policy.
-   - `references/*.md` contains conditional cases or long guidance.
-7. Regenerate dispatcher metadata and run verification.
-8. Report the motif, assertion, source path, projected handle, changed files,
-   and verification result.
+6. Project V1 `SKILL.md`: `Rule`, `Pattern`, `Boundary`, `Effects`,
+   `Workflow`, `References`, and `Validation`.
+7. Create or update `agents/openai.yaml`, bundled resources, wiki nodes,
+   generated dispatcher metadata, tests, and verifier surfaces as needed.
+8. Run generation and hard verification, including Effect harness verification
+   through `pnpm verify` for this repo.
+9. Report the motif, assertion, source path, projected handle, changed files,
+   verification result, and blockers.
 
 ## References
 
@@ -115,29 +102,24 @@ strict `soft` constraints.
   naming a skill.
 - Read [orchestrator](../../../wiki/skill/orchestrator.md) before allowing
   workflow composition.
-- Read [runtime projection](../../../wiki/projection/runtime.md),
-  [skill-md](../../../wiki/projection/codex/skill-md.md), and
+- Read [skill-md](../../../wiki/projection/codex/skill-md.md),
+  [runtime projection](../../../wiki/projection/runtime.md), and
   [OpenAI metadata](../../../wiki/projection/codex/openai.md) before writing
   files.
-- Read [projection loss](../../../wiki/projection/loss.md) before deciding what
-  must become verifier coverage.
 
 ## Validation
 
-Before calling notation complete, verify:
+Before done:
 
 - the first user-facing line includes `🧭` inline;
-- the motif, assertion, and governance action are explicit;
+- the motif, A/Y/X assertion, and governance action are explicit;
 - skill identity follows the governance action, not task category, plugin
   namespace, gate name, or runtime file;
 - primitive and orchestrator responsibilities are separated;
-- trigger includes positive use cases and exclusions;
-- soft judgment and deterministic hard constraints are separated;
-- state, activation, invocation, duration, and gate span are explicit when they
-  affect behavior;
+- `Pattern` includes positive use cases and exclusions;
+- `Boundary`, `Effects`, `Workflow`, `References`, and `Validation` follow V1
+  shape;
 - the source path and projected handle are correct for the namespace;
-- every skill directory contains only `SKILL.md`, `agents/openai.yaml`, and
-  one-level `references/*.md`;
 - generated dispatcher metadata is in sync;
-- `pnpm generate` and `pnpm verify` pass after Partita skill changes, or the
-  exact environment blocker is reported.
+- `pnpm generate`, `pnpm verify`, and Effect harness verification pass, or exact
+  environment blockers are reported.
