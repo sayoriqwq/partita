@@ -26,9 +26,6 @@ description: "Dispatcher for user-defined Partita workflow skills. Use when a Pa
 
 # Partita Dispatcher
 
-Prefix your first user-facing line with \`🧭\` inline, not as its own paragraph
-when a Partita skill is active.
-
 Partita is a CLI-backed Codex skill harness for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 

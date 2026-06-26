@@ -2,17 +2,25 @@
 
 Use these cases to recognize recurrence patterns before changing `aim`.
 
-## Sustained Mode Without Topic
+## Agent Direction Drift
 
-Observed: the user connected `argue` to the idea of a current topic, then noted
-that `aim` only handled off-topic drift. If `argue` starts without an active or
-explicit topic, the agent has no anchor for what to challenge or when agreement
-has been reached.
+Observed: user and agent are advancing one topic, but the agent starts answering
+from a layer, direction, or detail that no longer serves the current aim.
 
-Correction: treat `aim` as the lightweight topic or target anchor for sustained
-modes. If the current request already gives the topic or tentative conclusion,
-the downstream mode may use it directly. If both active aim and explicit topic
-are missing, ask for the smallest missing unit before starting the mode.
+Correction: keep a very small sustained `🧭` handle while the aim constrains the
+conversation. When drift appears, show `Aim check` once and continue from the
+active aim.
 
-Rule: `aim` is still not a formal goal system; it provides visible alignment for
-topic, target, and drift when another mode needs that anchor.
+Rule: `Aim` maintains visible direction without repeating the full aim every
+turn.
+
+## User Baseline Drift
+
+Observed: the user continues the same topic but starts reasoning from a premise
+that contradicts a previously accepted baseline.
+
+Correction: show `Aim check` with the drift point and the current aim or
+baseline, then continue unless the missing anchor makes the next answer unsafe.
+
+Rule: `Aim check` is a soft signal. It warns without blocking a user-initiated
+topic switch.

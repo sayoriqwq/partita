@@ -627,9 +627,6 @@ function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<
     if (stale.length > 0) {
       issues.push(issue('routing.stale_skill_refs', `stale skill refs: ${stale.join(', ')}`, path))
     }
-    if (!hasLoadedSkillMarker(text)) {
-      issues.push(issue('routing.missing_marker', `missing supported marker: ${loadedSkillMarkers.join(', ')}`, path))
-    }
     if (!text.includes(routingTableStart) || !text.includes(routingTableEnd)) {
       issues.push(issue('routing.missing_projection_marker', 'dispatcher must use partita routing-table projection markers', path))
     }

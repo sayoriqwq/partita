@@ -6,6 +6,9 @@ Its generation input is direct or namespaced `SKILL.md` frontmatter under
 `skills/` plus `agents/openai.yaml` invocation policy. Skill semantics remain in
 the wiki-guided skill files; the dispatcher only exposes routing metadata.
 
+The dispatcher does not project a runtime marker. Markers belong to the active
+skill or skill family.
+
 The dispatcher table columns are:
 
 ```text

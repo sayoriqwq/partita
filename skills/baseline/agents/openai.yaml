@@ -1,0 +1,6 @@
+interface:
+  display_name: "Baseline"
+  short_description: "Record accepted consensus since the current aim began"
+  default_prompt: "Use $baseline to capture the accepted consensus since the current conversation aim began."
+policy:
+  allow_implicit_invocation: false

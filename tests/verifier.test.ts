@@ -122,8 +122,6 @@ describe('Partita verifier', () => {
       write(root, 'skills/DISPATCHER.md', [
         '# Partita Dispatcher',
         '',
-        `Prefix with ${marker}.`,
-        '',
         '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
         '| --- | --- | --- | --- | --- |',
@@ -146,8 +144,6 @@ describe('Partita verifier', () => {
       write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/DISPATCHER.md', [
         '# Partita Dispatcher',
-        '',
-        `Prefix with ${marker} when a Partita skill is active.`,
         '',
         '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
@@ -268,8 +264,6 @@ describe('Partita verifier', () => {
       const root = makeValidSourceFixture()
       write(root, 'skills/DISPATCHER.md', [
         '# Partita Dispatcher',
-        '',
-        `Prefix with ${marker} when a Partita skill is active.`,
         '',
         '<!-- routing-table:start -->',
         '| Skill | Description | File |',
@@ -413,8 +407,6 @@ function validOpenAiMetadata(): string {
 function dispatcher(): string {
   return [
     '# Partita Dispatcher',
-    '',
-    `Prefix with ${marker} when a Partita skill is active.`,
     '',
     '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
     '| Handle | Name | Invocation | Description | File |',
