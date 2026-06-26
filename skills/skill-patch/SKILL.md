@@ -1,6 +1,6 @@
 ---
 name: skill-patch
-description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, invocation, metadata, duration, or Partita skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
+description: "Use when the user reports a real skill behavior case that should change a named skill, or asks to audit primitive preservation, namespace, constraint, state, activation, invocation, metadata, duration, gate span, orchestration, or Partita skill shape. Not for creating a new skill from scratch, ordinary code review, prose editing, speculative examples, or hard CLI/schema changes."
 ---
 
 # Skill Patch
@@ -25,7 +25,7 @@ Use this skill when:
 - the user names a target skill and reports a real behavior problem;
 - a concrete case should enter the target skill's care loop;
 - the user asks whether a named skill preserves its primitive, namespace,
-  constraint, state, activation, invocation, metadata, duration, or Partita
+  constraint, state, activation, invocation, metadata, duration, gate span, orchestration, or Partita
   skill shape;
 - dogfood shows wrong routing, over-reading, under-reading, vague boundaries, or
   work outside the skill's responsibility.
@@ -100,8 +100,13 @@ remain strict `soft` constraints.
 - Read [case-pressure](../../theory/skill/case-pressure.md) and
   [gate-model](../../theory/workflow/gate-model.md) before deciding whether a
   new case corrects, narrows, expands, or splits the existing pressure.
+- Read [governance identity](../../theory/skill/governance-identity.md) and
+  [orchestration](../../theory/skill/orchestration.md) before auditing skill
+  identity, orchestrator behavior, or deciding whether a skill should split.
+- Read [gate span](../../theory/workflow/gate-span.md) before auditing
+  cross-gate duration.
 - Read [primitive](../../rules/skills/primitive.md) before auditing primitive
-  preservation, constraint, state, activation, invocation, or duration.
+  preservation, constraint, state, activation, invocation, duration, or gate span.
 - Read [shape](../../rules/skills/shape.md) before auditing namespace,
   description, OpenAI metadata, `SKILL.md` body, references, or verifier
   surface.
@@ -117,6 +122,7 @@ Before calling the improvement done, verify:
 - the target skill, mode, and patch intent are explicit;
 - case capture happens only for real cases, and structure audits invent none;
 - primitive preservation and materialized shape are checked separately;
+- primitive and orchestrator responsibilities remain separated;
 - hard constraints without machine-checkable enforcement are reported as
   projection loss;
 - stateful edits are limited to the target skill and directly stale metadata,

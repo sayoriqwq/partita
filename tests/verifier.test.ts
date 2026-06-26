@@ -20,9 +20,16 @@ const requiredRuleFiles = [
   'rules/skills/authoring.md',
   'theory/index.md',
   'theory/skill/index.md',
+  'theory/skill/assertion.md',
   'theory/skill/case-pressure.md',
+  'theory/skill/governance-identity.md',
+  'theory/skill/orchestration.md',
+  'theory/skill/projection.md',
   'theory/workflow/index.md',
+  'theory/workflow/gate-contract.md',
   'theory/workflow/gate-model.md',
+  'theory/workflow/orchestration.md',
+  'theory/workflow/gate-span.md',
 ] as const
 
 describe('Partita verifier', () => {

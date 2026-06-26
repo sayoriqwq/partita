@@ -6,10 +6,15 @@ It is not a file shape, runtime export shape, plugin namespace, command wrapper,
 or template. It names the behavior pressure, the intended agent intervention,
 and the choices that must survive materialization.
 
-Read [skill theory](../../theory/skill/index.md) and
-[case-pressure](../../theory/skill/case-pressure.md) before defining a
-primitive. A primitive is valid only when a real case exposes default agent
-behavior failure.
+Read [skill theory](../../theory/skill/index.md),
+[case-pressure](../../theory/skill/case-pressure.md),
+[skill assertion](../../theory/skill/assertion.md),
+[governance identity](../../theory/skill/governance-identity.md),
+[orchestration](../../theory/skill/orchestration.md),
+[runtime projection](../../theory/skill/projection.md),
+[gate contract](../../theory/workflow/gate-contract.md), and
+[gate span](../../theory/workflow/gate-span.md) before defining a primitive. A
+primitive is valid only when a real case exposes default agent behavior failure.
 
 ## Terms
 
@@ -19,6 +24,8 @@ behavior failure.
   from nothing.
 - `capability`: the smallest agent behavior intervention that relieves that
   pressure.
+- `pressure_family`: optional lineage label for related pressures or skills.
+  It does not decide skill identity.
 - `trigger`: the situations, user wording, or agent observations that should
   activate the skill.
 - `boundary`: what belongs to the skill and what should route elsewhere.
@@ -42,9 +49,11 @@ behavior failure.
   user opt-in.
 - `duration`: how long the skill should remain active after activation. Use
   `turn` for one response, `task` for the current task, `topic` for the current
-  discussion topic, and `mode` for a sustained collaboration mode.
+  discussion topic, and `mode` for a sustained collaboration mode. Use
+  `gate_span` when the stop condition is a workflow gate boundary.
 - `workflow`: the reviewable moves the agent performs once the skill is active.
 - `validation`: the signal that the skill was correctly triggered and used.
+  It is skill-local and does not replace a workflow gate exit condition.
 
 ## Rules
 
@@ -55,6 +64,8 @@ behavior failure.
   in this class of situation without governance.
 - Do not create a second path for positive capability enhancement. Reframe it
   as default behavior failure or do not make it a skill.
+- Decide skill identity by the minimal governance action, not by pressure
+  family, gate name, task category, or runtime file name.
 - Keep boundary and constraint separate: boundary defines scope; constraint
   defines enforcement.
 - Do not call a constraint hard unless it has a machine-checkable enforcement
@@ -65,6 +76,15 @@ behavior failure.
   implicit invocation when its description is precise enough for safe routing.
 - Keep duration explicit when the skill can outlive one response. Every duration
   needs a stop condition.
+- A cross-gate skill must keep the same governance action across its
+  `gate_span`. If different gates require different governance actions, split
+  the skill and connect the resulting skills with a `pressure_family` or tag.
+- If a skill only orchestrates workflow gates and calls other skills, model it
+  as an orchestrator skill. Do not inflate a primitive skill into a workflow
+  bundle.
 - Do not put examples, project paths, command details, or namespace mechanics in
   the primitive unless they define reusable behavior.
 - Do not treat generated shape as proof that primitive semantics survived.
+- Treat selector, marker, metadata, references, CLI, and verifier files as
+  projections. If they drift from the primitive, patch the projection rather
+  than redefining the skill from runtime shape.

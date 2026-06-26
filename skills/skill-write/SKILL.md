@@ -27,6 +27,8 @@ Pressure scenarios:
   prose;
 - a draft passes structure checks but lacks trigger boundary, pressure, review
   gate, or forward-test surface.
+- related pressures are merged into one broad skill because they share a gate,
+  pressure family, or workflow name.
 
 ## Trigger
 
@@ -69,8 +71,11 @@ Use agent judgment for:
 - where user review is needed, and the smallest semantic unit to ask about;
 - whether the draft is generic, verbose, implementation-shaped, or
   runtime-shaped;
-- whether state, activation, invocation, duration, namespace, and OpenAI
+- whether state, activation, invocation, duration, gate span, namespace, and OpenAI
   metadata are being kept in the right layer;
+- whether the draft is a primitive skill or an orchestrator skill;
+- whether skill identity follows the minimal governance action rather than a
+  pressure family, gate, task category, or runtime file;
 - whether primitive semantics survive the materialized skill.
 
 ## Hard Boundary
@@ -99,7 +104,9 @@ remain strict `soft` constraints.
 
 1. Read the real case, then build or read the skill primitive: pressure,
    capability, trigger, boundary, constraint, state, activation, invocation,
-   duration, workflow, and validation.
+   duration, optional gate span, workflow, and validation. If the draft is an
+   orchestrator, identify which primitive skills it may call instead of merging
+   their governance actions.
 2. Decide the artifact layer:
    - `skill`: behavior intervention with trigger, boundary, workflow, validation;
    - `prompt/profile`: always-on preference or collaboration style;
@@ -130,6 +137,11 @@ remain strict `soft` constraints.
   `/Users/sayori/Desktop/yume-infra/partita/theory/workflow/index.md` before
   deciding whether the case exposes default agent behavior failure and which
   workflow gate it blocks.
+- Read `/Users/sayori/Desktop/yume-infra/partita/theory/skill/governance-identity.md` and
+  `/Users/sayori/Desktop/yume-infra/partita/theory/skill/orchestration.md` before
+  deciding skill identity or distinguishing primitive from orchestrator.
+- Read `/Users/sayori/Desktop/yume-infra/partita/theory/workflow/gate-span.md` before
+  allowing a skill to persist across workflow gates.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/primitive.md` before defining
   pressure, constraint, state, activation, invocation, duration, or validation.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/shape.md` before adding
@@ -145,11 +157,17 @@ Before calling the skill usable, verify:
 - capability names a behavior intervention and pressure scenario;
 - pressure is read from a real case, not from task taxonomy or a positive
   capability wish;
+- skill identity is the minimal governance action, not the pressure family,
+  gate, task category, or runtime file;
+- primitive and orchestrator responsibilities are separated when workflow
+  composition is involved;
 - trigger includes positive use cases and exclusions;
 - soft constraints stay in model-applied instructions, and hard constraints have
   a machine-checkable enforcement surface;
-- state, activation, invocation, and duration are explicit when they affect behavior,
-  routing, or persistence;
+- state, activation, invocation, duration, and gate span are explicit when they affect
+  behavior, routing, persistence, or workflow lifecycle;
+- cross-gate duration preserves one governance action; different gate-specific
+  actions are split into separate skills linked by `pressure_family` or tag;
 - soft judgment and deterministic hard constraints are separated;
 - stateful edits are limited to the skill and directly supporting resources,
   rules, resolver metadata, or verifier surfaces required by the task;

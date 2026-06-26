@@ -17,6 +17,20 @@ Case 不是 evidence、training material、regression test 或抽象例子。证
 
 没有 case，就没有 skill。至少需要一个真实反例来暴露默认 agent 行为失败；真实正例可以帮助界定期望行为；更多真实 case 可以让 skill 的边界、命名、trigger 和 workflow 更稳定。
 
+## Case Capture
+
+Case 的定义不要被拆成字段。字段只属于记录方式。
+
+记录一个 case 时，至少保留：
+
+```text
+真实情境
+默认失败
+治理参照
+```
+
+`真实情境` 保留发生了什么。`默认失败` 保留 agent 在无治理层时自然滑向哪里。`治理参照` 保留用户认为正确的行为方向或已经接受的治理判断。
+
 ## Pressure
 
 Pressure 是从 case 中读出的默认 agent 行为失效。
@@ -24,6 +38,11 @@ Pressure 是从 case 中读出的默认 agent 行为失效。
 `pressure` 是 skill 成立的第一性条件。每个 skill 都必须能说明：如果没有这个治理层，agent 在这个情境下会自然滑向哪种默认失败。
 
 正向能力增强不是另一条成立路径。所谓能力增强，必须还原为默认能力不足或默认行为不满足约束的失败。不能还原为默认失败的能力愿望不应成为 skill。
+
+Pressure 名字不决定 skill 同一性。大范围 pressure 或 pressure family 只能说明一组失败的 lineage；具体 skill 仍然必须由最小治理动作决定。
+
+Pressure 进入 skill design 时，应被写成 [Skill Assertion](assertion.md) 中的
+`X`，再由 case pattern 和 minimal governance action 共同形成完整断言。
 
 ## Case To Pressure
 

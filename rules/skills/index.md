@@ -8,6 +8,9 @@ Use this directory when creating, auditing, or maintaining skills:
   behavior governance unit.
 - [workflow theory](../../theory/workflow/index.md): how workflow gates locate
   case and pressure before skill design.
+- [runtime projection](../../theory/skill/projection.md): how primitive
+  semantics survive selector, marker, metadata, references, CLI, and verifier
+  projection.
 - [primitive](primitive.md): what a skill is before it becomes `SKILL.md`.
 - [shape](shape.md): how primitive semantics are carried by supported skill
   files.
@@ -24,7 +27,15 @@ Skill Design Language
 |   |-- agent_behavior_governance
 |   |-- contextual_governance_unit
 |   |-- case
-|   `-- pressure
+|   |-- pressure
+|   |-- assertion
+|   |-- governance_identity
+|   |-- projection
+|   |-- orchestration
+|   |-- workflow_gate
+|   |-- gate_contract
+|   |-- workflow_orchestration
+|   `-- gate_span
 |
 |-- Primitive
 |   |-- pressure
@@ -57,6 +68,7 @@ Skill Design Language
     `-- forward_test
 ```
 
-Theory decides why a skill should exist. Primitive decides the skill semantics.
-Shape carries those semantics in a Codex-supported form. Care keeps the skill
-from drifting after use.
+Theory decides why a skill should exist, what its A/Y/X assertion is, how it
+relates to workflow gates, and whether it is a primitive or orchestrator.
+Primitive decides the skill semantics. Shape carries those semantics in a
+Codex-supported form. Care keeps the skill from drifting after use.
