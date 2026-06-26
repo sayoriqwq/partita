@@ -8,5 +8,5 @@ Collaboration nodes hold repo-local projection of agent behavior preferences.
 - [[collaboration/instructions]]
 - [[collaboration/corrections]]
 
-The source authority for user profile remains outside this repo. This wiki only
+The canonical user profile record remains outside this repo. This wiki only
 records the Partita projection.

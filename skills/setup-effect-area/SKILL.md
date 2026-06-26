@@ -70,7 +70,7 @@ Authority split:
   mechanism.
 - Target repos own target-local product code and local verification results.
 - Any skill copy in `effect-harness` or a target repo is a managed projection,
-  not source authority.
+  not the semantic owner.
 
 ## Hard Boundary
 

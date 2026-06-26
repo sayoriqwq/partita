@@ -1,29 +1,27 @@
 # Partita
 
-`partita` is a Codex plugin harness for user-defined workflow skills.
+`partita` is a CLI-backed Codex skill harness for user-defined workflow skills.
 
-It keeps the Waza-inspired skill framework shape without shipping Waza's
-predefined skill taxonomy. Zero skills remains a valid framework state, but the
-current customization defines the user's Partita skill domain.
+Zero skills remains a valid framework state, but the current customization
+defines the user's Partita skill domain.
 
 ## Current State
 
 - Codex plugin metadata: present.
 - User-defined skills: read from `skills/<name>/SKILL.md` frontmatter.
-- Waza original skills: removed.
-- Claude Code marketplace metadata: not part of this repo.
 - Executable maintenance is moving to the TypeScript/Effect `partita` CLI.
 
 ## Repository Map
 
 - `.codex-plugin/plugin.json` is the generated Codex plugin manifest.
+- `CONTEXT.md` maps the repository context to wiki nodes.
+- `HARNESS.md` maps harness operations to wiki nodes.
 - `skills/DISPATCHER.md` is the generated dispatcher reference.
 - `bin/partita.ts` is the TypeScript/Effect CLI entrypoint.
-- `src/partita/` owns generation, verification, packaging, and local install behavior.
+- `src/partita/` owns generation, verification, and local install behavior.
 - `wiki/` is the canonical Partita knowledge base for harness, skill,
   workflow, projection, practice, collaboration, documentation, and vocabulary
   nodes.
-- `packaging.allowlist` controls what ships in `dist/partita.zip`.
 
 ## Commands
 
@@ -31,7 +29,6 @@ current customization defines the user's Partita skill domain.
 pnpm generate
 pnpm generate:check
 pnpm verify
-pnpm package
 pnpm link:global
 ```
 
@@ -94,3 +91,9 @@ After adding or changing a skill:
 pnpm generate
 pnpm verify
 ```
+
+## Acknowledgement
+
+Early exploration referenced [Waza](https://github.com/tw93/Waza), published
+under the MIT License by Tw93. Partita does not ship Waza's skill taxonomy or
+skill contents.

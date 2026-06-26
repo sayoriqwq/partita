@@ -7,5 +7,4 @@ Practice nodes are operating flows for agents.
 - [[practice/audit]]
 - [[practice/capture]]
 - [[practice/gate]]
-- [[practice/migrate]]
 - [[practice/verify]]

@@ -1,7 +1,7 @@
 {
   "name": "partita",
   "version": "0.1.0",
-  "description": "Codex plugin harness for user-defined workflow skills.",
+  "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": {
     "name": "sayori"
   },
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Partita",
     "shortDescription": "A Codex skill harness for user-defined workflows",
-    "longDescription": "Partita is a Codex plugin harness for defining custom workflow skills without inheriting Waza's predefined taxonomy.",
+    "longDescription": "Partita defines user-owned Codex workflow skills with a wiki-backed CLI and skill runtime.",
     "developerName": "sayori",
     "category": "Developer Tools",
     "capabilities": [

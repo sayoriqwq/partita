@@ -2,8 +2,8 @@
 
 This wiki is the canonical knowledge base for Partita's agent harness.
 
-It replaces the old `rules/` and `theory/` layers. Do not keep parallel
-language in removed layers.
+Root files such as `CONTEXT.md` and `HARNESS.md` only map readers into this
+wiki.
 
 ## Families
 
@@ -23,5 +23,5 @@ workflow gate -> case -> pressure -> assertion -> skill -> projection
 ```
 
 The wiki is canonical. Runtime files such as `skills/*/SKILL.md`,
-`skills/DISPATCHER.md`, `.codex-plugin/plugin.json`, and package metadata are
+`skills/DISPATCHER.md`, `.codex-plugin/plugin.json`, and `package.json` metadata are
 materializations or projections.

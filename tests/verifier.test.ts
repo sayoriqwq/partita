@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import { verifyPackageStage } from '../src/partita/package-verify.ts'
 import { verifyRouting, verifySourceProject } from '../src/partita/verifier.ts'
 
 const marker = '🧭'
@@ -111,30 +110,26 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('openai_metadata.explicit_allows_implicit'))
     }))
 
-  it.effect('validates package stage boundaries', () =>
+  it.effect('reports removed source surfaces', () =>
     Effect.gen(function* () {
-      const stage = makeValidPackageStage()
-      write(stage, 'SKILL.md', '# Root skill is forbidden\n')
-      write(stage, 'skills/RESOLVER.md', '# Removed resolver\n')
-      mkdirSync(join(stage, 'rules'), { recursive: true })
-      mkdirSync(join(stage, 'theory'), { recursive: true })
-      mkdirSync(join(stage, '.claude-plugin'), { recursive: true })
+      const root = makeValidSourceFixture()
+      write(root, 'VERSION', '0.1.0\n')
+      write(root, 'skills/RESOLVER.md', '# Removed resolver\n')
+      mkdirSync(join(root, 'rules'), { recursive: true })
+      mkdirSync(join(root, 'theory'), { recursive: true })
 
-      const report = yield* verifyPackageStage({ stage })
+      const report = yield* verifySourceProject({ root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('package.root_skill_forbidden'))
-      assert.isTrue(codes.includes('package.resolver_forbidden'))
-      assert.isTrue(codes.includes('package.rules_forbidden'))
-      assert.isTrue(codes.includes('package.theory_forbidden'))
-      assert.isTrue(codes.includes('package.claude_plugin_forbidden'))
+      assert.isTrue(codes.includes('version_file.forbidden'))
+      assert.isTrue(codes.includes('surface.removed_exists'))
     }))
 })
 
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))
-  write(root, 'VERSION', '0.1.0\n')
+  write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
   write(root, '.codex-plugin/plugin.json', JSON.stringify({
     name: 'partita',
     version: '0.1.0',
@@ -157,17 +152,6 @@ function makeValidSourceFixture(): string {
   write(root, 'skills/demo/SKILL.md', validSkill())
   write(root, 'skills/DISPATCHER.md', dispatcher())
   return root
-}
-
-function makeValidPackageStage(): string {
-  const stage = mkdtempSync(join(tmpdir(), 'partita-package-'))
-  write(stage, '.codex-plugin/plugin.json', JSON.stringify({
-    name: 'partita',
-    skills: './skills/',
-  }, null, 2))
-  mkdirSync(join(stage, 'skills'), { recursive: true })
-  mkdirSync(join(stage, 'wiki'), { recursive: true })
-  return stage
 }
 
 function validSkill(): string {

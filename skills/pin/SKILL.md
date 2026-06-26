@@ -116,7 +116,7 @@ Before treating output as valid `pin`, check:
 - the upstream repo, pinned ref, local path, and owner are explicit;
 - request was classified as `source-pin`, `mechanism-audit`, `provider-setup`,
   or `unknown-pin`;
-- source authority and local projection are not confused;
+- upstream source and local projection are not confused;
 - hard constraints are backed by git, script, CLI, schema, test, or package
   output;
 - completion reports changed files, update path, verify path, and exact

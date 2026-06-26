@@ -1,14 +1,13 @@
 @/Users/sayori/.codex/RTK.md
-@/Users/sayori/Desktop/yume-infra/partita/AGENTS.profile.md
 
 # Agent Instructions
 
 ## Project
 
-`partita` is a Codex plugin harness for user-defined workflow skills.
+`partita` is a CLI-backed Codex skill harness for user-defined workflow skills.
 
-The framework started from a zero-skill baseline. The current customization
-defines user-owned Partita skills under `skills/<name>/SKILL.md`.
+The framework supports a zero-skill baseline. The current customization defines
+user-owned Partita skills under `skills/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -18,32 +17,30 @@ This repo owns:
 - skill framework shape;
 - generated dispatcher metadata;
 - canonical wiki nodes shared across future skills;
-- verifier and package skeleton;
+- verifier skeleton;
 - user-defined skills under `skills/<name>/SKILL.md`.
 
 This repo does not own:
 
-- Waza's `think/design/check/hunt/write/learn/read/health` skill contents or
-  taxonomy;
-- Claude Code plugin marketplace metadata;
+- external skill collections or their taxonomies;
+- external plugin marketplace metadata;
 - project-specific commands, private local paths, or one-off workflow history.
 
 ## Current Rule
 
 - Do not add a skill unless the user explicitly defines it.
+- `CONTEXT.md` and `HARNESS.md` are root maps into `wiki/`, not separate
+  durable knowledge layers.
 - Before adding or changing a skill, start from `wiki/practice/create.md` or
   `wiki/practice/patch.md`, then follow the linked wiki nodes.
-- Partita's canonical knowledge lives under `wiki/`. Do not recreate the old
-  `rules/` or `theory/` layers.
-- Partita `skills/<name>/SKILL.md` files are source-controlled runtime
-  materializations. Wiki nodes hold the canonical behavior language; copies
-  installed into external harnesses or target repos are managed projections and
-  must not redefine the skill.
+- Partita's canonical knowledge lives under `wiki/`.
+- Partita `skills/<name>/SKILL.md` files are source skill runtime projections.
+  Wiki nodes hold the canonical behavior language; copies installed into
+  external harnesses or target repos are managed projections and must not
+  redefine the skill.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
-- Do not reconstruct Waza's old skill taxonomy; use Waza only as mechanism
-  lineage.
 - Keep zero skills as a valid framework state.
 - Keep wiki nodes short and reusable.
 - Before changing skill names, trigger policy, harness install behavior, global
@@ -57,7 +54,6 @@ This repo does not own:
 ```bash
 pnpm generate
 pnpm generate:check
-pnpm package
 pnpm verify
 ```
 

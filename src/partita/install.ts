@@ -8,7 +8,6 @@ import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 
 const marketplaceName = 'personal'
 const pluginName = 'partita'
-const legacyPluginNames = ['mini-waza', 'craft'] as const
 
 export interface InstallCodexPluginOptions {
   readonly root?: string
@@ -18,7 +17,6 @@ export interface InstallCodexPluginOptions {
 export interface InstallCodexPluginResult {
   readonly pluginLink: string
   readonly marketplaceJson: string
-  readonly removedLegacyLinks: ReadonlyArray<string>
 }
 
 export interface InstallCommand {
@@ -43,7 +41,6 @@ export interface InstallCodexSkillOptions {
 
 export interface InstallCodexSkillResult {
   readonly commands: ReadonlyArray<InstallCommand>
-  readonly removeExitCode: number
   readonly addExitCode: number
 }
 
@@ -142,32 +139,6 @@ const ensureSymlink = Effect.fn('ensureSymlink')(
   },
 )
 
-const removeLegacySymlinks = Effect.fn('removeLegacySymlinks')(
-  function* (
-    marketplaceRoot: string,
-    target: string,
-    home: string,
-  ): Effect.fn.Return<ReadonlyArray<string>, PartitaInstallError> {
-    const removed: Array<string> = []
-
-    for (const name of legacyPluginNames) {
-      const link = path.join(marketplaceRoot, 'plugins', name)
-      const stat = yield* lstatOrNull(link)
-      if (stat === null || !stat.isSymbolicLink()) {
-        continue
-      }
-      if (!(yield* symlinkPointsTo(link, target, home))) {
-        continue
-      }
-
-      yield* tryInstallPromise(`remove legacy symlink ${link}`, () => fs.unlink(link))
-      removed.push(link)
-    }
-
-    return removed
-  },
-)
-
 function defaultMarketplace(): Record<string, unknown> {
   return {
     name: marketplaceName,
@@ -197,16 +168,6 @@ const loadMarketplaceJson = Effect.fn('loadMarketplaceJson')(
   },
 )
 
-function hasLegacyLocalMarketplaceSource(item: unknown): boolean {
-  if (!isRecord(item) || typeof item.name !== 'string' || !legacyPluginNames.includes(item.name as typeof legacyPluginNames[number])) {
-    return false
-  }
-  if (!isRecord(item.source)) {
-    return false
-  }
-  return item.source.path === `./plugins/${item.name}`
-}
-
 const ensureMarketplace = Effect.fn('ensureMarketplace')(
   function* (marketplaceJson: string): Effect.fn.Return<void, PartitaInstallError> {
     const payload = yield* loadMarketplaceJson(marketplaceJson)
@@ -218,7 +179,7 @@ const ensureMarketplace = Effect.fn('ensureMarketplace')(
       return yield* installError(`${marketplaceJson} field 'plugins' must be an array`)
     }
 
-    const plugins = payload.plugins.filter(item => !hasLegacyLocalMarketplaceSource(item))
+    const plugins = payload.plugins
     const existingIndex = plugins.findIndex(item => isRecord(item) && item.name === pluginName)
     if (existingIndex >= 0) {
       plugins[existingIndex] = partitaMarketplaceEntry
@@ -243,14 +204,12 @@ export const installCodexPlugin = Effect.fn('installCodexPlugin')(
     const pluginLink = path.join(marketplaceRoot, 'plugins', pluginName)
     const home = os.homedir()
 
-    const removedLegacyLinks = yield* removeLegacySymlinks(marketplaceRoot, root, home)
     yield* ensureSymlink(pluginLink, root, home)
     yield* ensureMarketplace(marketplaceJson)
 
     return {
       pluginLink,
       marketplaceJson,
-      removedLegacyLinks,
     }
   },
 )
@@ -298,31 +257,19 @@ export const installCodexSkill = Effect.fn('installCodexSkill')(
   function* (options: InstallCodexSkillOptions = {}): Effect.fn.Return<InstallCodexSkillResult, PartitaInstallError> {
     const root = path.resolve(options.root ?? process.cwd())
     const runCommand = options.runCommand ?? runInstallCommand
-    const removeCommand: InstallCommand = {
-      command: 'npx',
-      args: ['skills', 'remove', 'author', 'patch', '-g', '-a', 'codex', 'opencode', '-y'],
-      cwd: root,
-    }
     const addCommand: InstallCommand = {
       command: 'npx',
       args: ['skills', 'add', '.', '-a', 'codex', '-g', '--skill', '*', '-y', '--full-depth'],
       cwd: root,
     }
 
-    const removeResult = yield* runCommand(removeCommand).pipe(
-      Effect.orElseSucceed(() => ({
-        exitCode: 1,
-        output: '',
-      })),
-    )
     const addResult = yield* runCommand(addCommand)
     if (addResult.exitCode !== 0) {
       return yield* installError(`npx skills add failed with exit code ${addResult.exitCode}: ${addResult.output.trim()}`)
     }
 
     return {
-      commands: [removeCommand, addCommand],
-      removeExitCode: removeResult.exitCode,
+      commands: [addCommand],
       addExitCode: addResult.exitCode,
     }
   },

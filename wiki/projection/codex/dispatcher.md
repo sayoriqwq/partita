@@ -2,5 +2,5 @@
 
 `skills/DISPATCHER.md` is the generated routing projection.
 
-Its source is `skills/*/SKILL.md` frontmatter. There is no manual resolver
-registry in the new migration state.
+Its generation input is `skills/*/SKILL.md` frontmatter. Skill semantics remain
+in the wiki-guided skill files; the dispatcher only exposes routing metadata.

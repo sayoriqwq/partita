@@ -2,7 +2,7 @@
   "name": "partita",
   "type": "module",
   "version": "0.1.0",
-  "description": "Codex plugin harness for user-defined workflow skills.",
+  "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
   "private": true,
   "license": "MIT",
@@ -16,6 +16,8 @@
     ".codex-plugin",
     "LICENSE",
     "README.md",
+    "CONTEXT.md",
+    "HARNESS.md",
     "skills",
     "wiki"
   ],
@@ -47,7 +49,6 @@
     "link:global": "pnpm build && pnpm link --global",
     "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" --fix --no-error-on-unmatched-pattern",
-    "package": "pnpm build && node dist/bin/partita.js package --out dist/partita.zip",
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
     "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify"

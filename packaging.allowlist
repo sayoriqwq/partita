@@ -1,8 +1,0 @@
-# Allowlist for `pnpm package`. Default-deny: only paths matching one of these
-# patterns ship in partita.zip.
-
-LICENSE
-README.md
-.codex-plugin/**
-skills/**
-wiki/**

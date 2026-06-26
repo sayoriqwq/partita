@@ -8,7 +8,7 @@ description: "Dispatcher for user-defined Partita workflow skills. Use when a Pa
 Prefix your first user-facing line with `🧭` inline, not as its own paragraph
 when a Partita skill is active.
 
-Partita is a Codex plugin for user-defined workflow skills. Match only
+Partita is a CLI-backed Codex skill harness for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 
 ## Routing Table

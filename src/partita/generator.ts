@@ -17,7 +17,7 @@ description: "Dispatcher for user-defined Partita workflow skills. Use when a Pa
 Prefix your first user-facing line with \`🧭\` inline, not as its own paragraph
 when a Partita skill is active.
 
-Partita is a Codex plugin for user-defined workflow skills. Match only
+Partita is a CLI-backed Codex skill harness for user-defined workflow skills. Match only
 against skills that exist in the routing table.
 
 ## Routing Table
@@ -79,16 +79,6 @@ function requireString(value: Record<string, unknown>, path: string, field: stri
     : failGenerator(path, `INVALID EFFECT HARNESS MANIFEST: ${field} is required`)
 }
 
-const readVersion = Effect.fn('readVersion')(function* (root: string) {
-  const versionPath = joinPath(root, 'VERSION')
-  const fs = yield* FileSystem.FileSystem
-  const version = (yield* fs.readFileString(versionPath)).trim()
-  if (!version) {
-    return yield* failGenerator(versionPath, 'ERROR: VERSION is empty')
-  }
-  return version
-})
-
 export const collectSkillMetadata = Effect.fn('collectSkillMetadata')(function* (root: string) {
   const fs = yield* FileSystem.FileSystem
   const skillsDir = joinPath(root, 'skills')
@@ -121,7 +111,7 @@ function buildPluginJson(version: string): PluginManifest {
   return {
     name: 'partita',
     version,
-    description: 'Codex plugin harness for user-defined workflow skills.',
+    description: 'CLI-backed Codex skill harness for user-defined workflow skills.',
     author: { name: 'sayori' },
     license: 'MIT',
     keywords: ['codex', 'skills', 'workflow'],
@@ -129,7 +119,7 @@ function buildPluginJson(version: string): PluginManifest {
     interface: {
       displayName: 'Partita',
       shortDescription: 'A Codex skill harness for user-defined workflows',
-      longDescription: 'Partita is a Codex plugin harness for defining custom workflow skills without inheriting Waza\'s predefined taxonomy.',
+      longDescription: 'Partita defines user-owned Codex workflow skills with a wiki-backed CLI and skill runtime.',
       developerName: 'sayori',
       category: 'Developer Tools',
       capabilities: ['Interactive'],
@@ -151,6 +141,17 @@ const parseJsonObject = Effect.fn('parseJsonObject')(function* (path: string, te
   })
 
   return yield* requireRecord(parsed, path, 'manifest')
+})
+
+const readPackageVersion = Effect.fn('readPackageVersion')(function* (root: string) {
+  const packageJsonPath = joinPath(root, 'package.json')
+  const fs = yield* FileSystem.FileSystem
+  const packageJson = yield* parseJsonObject(packageJsonPath, yield* fs.readFileString(packageJsonPath))
+  const version = packageJson.version
+  if (typeof version !== 'string' || version.trim().length === 0) {
+    return yield* failGenerator(packageJsonPath, 'ERROR: package.json version is missing or empty')
+  }
+  return version.trim()
 })
 
 const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(function* (root: string) {
@@ -194,7 +195,6 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
       'link:global': 'pnpm build && pnpm link --global',
       'lint': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" --no-error-on-unmatched-pattern',
       'lint:fix': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" --fix --no-error-on-unmatched-pattern',
-      'package': 'pnpm build && node dist/bin/partita.js package --out dist/partita.zip',
       'test': 'vitest run',
       'typecheck': 'tsgo --noEmit',
       'verify': 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify',
@@ -207,7 +207,7 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
     name: 'partita',
     type: 'module',
     version,
-    description: 'Codex plugin harness for user-defined workflow skills.',
+    description: 'CLI-backed Codex skill harness for user-defined workflow skills.',
     author: 'sayori',
     private: true,
     license: 'MIT',
@@ -221,6 +221,8 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
       '.codex-plugin',
       'LICENSE',
       'README.md',
+      'CONTEXT.md',
+      'HARNESS.md',
       'skills',
       'wiki',
     ],
@@ -258,7 +260,7 @@ function markdownTableCell(value: string): string {
 }
 
 export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* (root: string) {
-  const version = yield* readVersion(root)
+  const version = yield* readPackageVersion(root)
   const skills = yield* collectSkillMetadata(root)
   const packageJson = yield* renderPackageJson(root, version)
   const dispatcher = yield* renderDispatcher(dispatcherTemplate, skills)

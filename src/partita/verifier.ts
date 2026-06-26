@@ -33,7 +33,7 @@ const skillRefPattern = /skills\/([a-z][a-z0-9_-]*)\/SKILL\.md/gu
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
-const miniWazaMarker = '🧭'
+const loadedSkillMarker = '🧭'
 const skillContractSections = [
   '## Capability',
   '## Trigger',
@@ -106,7 +106,7 @@ function formatIssue(issue: ValidationIssue): string {
   return issue.path ? `${issue.path}: ${issue.message}` : issue.message
 }
 
-export function reportFromIssues(issues: ReadonlyArray<ValidationIssue>): ValidationReport {
+function reportFromIssues(issues: ReadonlyArray<ValidationIssue>): ValidationReport {
   return {
     issues,
     ok: issues.length === 0,
@@ -156,8 +156,8 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     if (!lowered.includes('use when') || !lowered.includes('not for')) {
       issues.push(issue('skill.description_activation_surface', 'description must include Use when and Not for', relativePath))
     }
-    if (!text.includes(miniWazaMarker)) {
-      issues.push(issue('skill.missing_marker', `missing ${miniWazaMarker} marker instruction`, relativePath))
+    if (!text.includes(loadedSkillMarker)) {
+      issues.push(issue('skill.missing_marker', `missing ${loadedSkillMarker} marker instruction`, relativePath))
     }
 
     const missingSections = skillContractSections.filter(section => !text.includes(section))
@@ -418,13 +418,15 @@ function parseQuotedString(value: string): { readonly ok: true, readonly value: 
 
 function checkPluginManifest(root: string): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
-  const versionPath = join(root, 'VERSION')
+  const packageJsonPath = join(root, 'package.json')
+  const packageJsonRelPath = 'package.json'
   const manifestPath = join(root, '.codex-plugin', 'plugin.json')
   const manifestRelPath = '.codex-plugin/plugin.json'
 
-  const version = existsSync(versionPath) ? readText(versionPath).trim() : ''
-  if (!version) {
-    issues.push(issue('version.empty', 'VERSION is missing or empty', 'VERSION'))
+  const version = packageJsonVersion(packageJsonPath, packageJsonRelPath, issues)
+
+  if (existsSync(join(root, 'VERSION'))) {
+    issues.push(issue('version_file.forbidden', 'VERSION file is not used; package.json owns the version', 'VERSION'))
   }
 
   if (!existsSync(manifestPath)) {
@@ -448,7 +450,7 @@ function checkPluginManifest(root: string): ReadonlyArray<ValidationIssue> {
     issues.push(issue('plugin_manifest.name', 'name must be partita', manifestRelPath))
   }
   if (version && data.version !== version) {
-    issues.push(issue('plugin_manifest.version_drift', `plugin.json version ${stringifyField(data.version)} != VERSION ${version}`, manifestRelPath))
+    issues.push(issue('plugin_manifest.version_drift', `plugin.json version ${stringifyField(data.version)} != package.json version ${version}`, manifestRelPath))
   }
   if (data.skills !== './skills/') {
     issues.push(issue('plugin_manifest.skills_path', 'skills must be ./skills/', manifestRelPath))
@@ -476,6 +478,32 @@ function checkPluginManifest(root: string): ReadonlyArray<ValidationIssue> {
   return issues
 }
 
+function packageJsonVersion(path: string, relativePath: string, issues: Array<ValidationIssue>): string {
+  if (!existsSync(path)) {
+    issues.push(issue('package_json.missing', 'package.json missing', relativePath))
+    return ''
+  }
+
+  const parsed = parseJson(readText(path), relativePath)
+  if (!parsed.ok) {
+    issues.push(parsed.issue)
+    return ''
+  }
+
+  const data = parsed.value
+  if (!isRecord(data)) {
+    issues.push(issue('package_json.invalid', 'package.json must be a JSON object', relativePath))
+    return ''
+  }
+
+  if (!nonEmptyString(data.version)) {
+    issues.push(issue('package_json.version_missing', 'package.json version is required', relativePath))
+    return ''
+  }
+
+  return data.version.trim()
+}
+
 function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   const routingPaths = ['skills/DISPATCHER.md']
@@ -501,8 +529,8 @@ function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<
     if (stale.length > 0) {
       issues.push(issue('routing.stale_skill_refs', `stale skill refs: ${stale.join(', ')}`, path))
     }
-    if (!text.includes(miniWazaMarker)) {
-      issues.push(issue('routing.missing_marker', `missing ${miniWazaMarker} marker`, path))
+    if (!text.includes(loadedSkillMarker)) {
+      issues.push(issue('routing.missing_marker', `missing ${loadedSkillMarker} marker`, path))
     }
   }
 
@@ -570,6 +598,7 @@ function checkWikiLinks(root: string): ReadonlyArray<ValidationIssue> {
 
 function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
   const removed = [
+    ['VERSION', 'deprecated VERSION file must not exist'],
     ['rules', 'removed rules directory must not exist'],
     ['theory', 'removed theory directory must not exist'],
     ['skills/RESOLVER.md', 'removed resolver registry must not exist'],

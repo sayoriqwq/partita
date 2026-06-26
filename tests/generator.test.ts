@@ -100,7 +100,7 @@ unsupported_field: Demo routing
   it.effect('renders generated files for a zero-skill repo', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
-        'VERSION': '0.2.0\n',
+        'package.json': JSON.stringify({ version: '0.2.0' }),
         '.effect-harness.json': effectHarnessManifest,
       })
 
@@ -126,20 +126,21 @@ unsupported_field: Demo routing
         bin: { partita: string }
         dependencies: Record<string, string>
         files: ReadonlyArray<string>
-        scripts: { build: string, generate: string, verify: string }
+        scripts: { build: string, generate: string, package?: string, verify: string }
       }
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
-      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'skills', 'wiki'])
+      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'skills', 'wiki'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.build, 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
+      assert.strictEqual(packageJson.scripts.package, undefined)
       assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
   it.effect('collects skill metadata sorted by directory and rejects name drift', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
-        'VERSION': '0.2.0\n',
+        'package.json': JSON.stringify({ version: '0.2.0' }),
         'skills/bravo/SKILL.md': `---
 name: bravo
 description: "Use when bravo is needed. Not for unrelated work."
@@ -177,7 +178,7 @@ description: "Use when alpha is needed. Not for unrelated work."
   it.effect('writes skills/DISPATCHER.md as the dispatcher surface', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
-        'VERSION': '0.2.0\n',
+        'package.json': JSON.stringify({ version: '0.2.0' }),
         '.effect-harness.json': effectHarnessManifest,
         'skills/demo/SKILL.md': `---
 name: demo

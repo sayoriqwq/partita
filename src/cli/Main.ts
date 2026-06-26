@@ -6,7 +6,6 @@ import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { generateProject } from '../partita/generator.ts'
 import { installCodexPlugin, installCodexSkill } from '../partita/install.ts'
-import { packageProject } from '../partita/packager.ts'
 import { verifyProject } from '../partita/verifier.ts'
 
 export interface CliConfig {
@@ -31,11 +30,6 @@ const checkFlag = Flag.boolean('check').pipe(
   Flag.withDescription('Check generated files without writing'),
 )
 
-const outFlag = Flag.path('out').pipe(
-  Flag.withDescription('Output zip path'),
-  Flag.withDefault('dist/partita.zip'),
-)
-
 function makeCli(config: CliConfig) {
   const root = rootFlag(config.root)
 
@@ -54,15 +48,6 @@ function makeCli(config: CliConfig) {
     yield* verifyProject({ root })
   })).pipe(
     Command.withDescription('Verify Partita skill framework and generated metadata'),
-  )
-
-  const pack = Command.make('package', {
-    out: outFlag,
-    root,
-  }, Effect.fnUntraced(function* ({ out, root }) {
-    yield* packageProject({ out, root })
-  })).pipe(
-    Command.withDescription('Build the Codex plugin zip package'),
   )
 
   const installSkill = Command.make('codex-skill', {
@@ -87,20 +72,14 @@ function makeCli(config: CliConfig) {
   )
 
   return Command.make('partita').pipe(
-    Command.withDescription('Partita plugin harness CLI'),
-    Command.withSubcommands([generate, verify, pack, install]),
+    Command.withDescription('Partita skill harness CLI'),
+    Command.withSubcommands([generate, verify, install]),
   )
 }
 
 export function runCli(config: CliConfig) {
   return makeCli(config).pipe(
     Command.run({ version: config.version }),
-    Effect.provide(NodeServices.layer),
-  )
-}
-
-export function runCliWithArgs(config: CliConfig, args: ReadonlyArray<string>) {
-  return Command.runWith(makeCli(config), { version: config.version })(args).pipe(
     Effect.provide(NodeServices.layer),
   )
 }
