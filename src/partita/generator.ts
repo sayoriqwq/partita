@@ -324,8 +324,6 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
     author: 'sayori',
     private: true,
     license: 'MIT',
-    main: 'dist/src/index.js',
-    types: 'dist/src/index.d.ts',
     bin: {
       partita: 'dist/bin/partita.js',
     },

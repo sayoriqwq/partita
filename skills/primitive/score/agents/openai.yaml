@@ -1,0 +1,6 @@
+interface:
+  display_name: "Score"
+  short_description: "Apply sayoriqwq-style Markdown writing preferences"
+  default_prompt: "Use pm:score to apply sayoriqwq-style Markdown writing preferences."
+policy:
+  allow_implicit_invocation: true

@@ -1,3 +1,5 @@
+<!-- partita:projection:file source="wiki/documentation/links.md" mode="copy" -->
+
 ---
 audience: [agent, human]
 authors:
