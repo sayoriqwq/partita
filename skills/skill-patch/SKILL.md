@@ -23,7 +23,7 @@ agent refuses because no behavior case exists.
 Use this skill when:
 
 - the user names a target skill and reports a real behavior problem;
-- a concrete case should become a reusable skill example or regression pattern;
+- a concrete case should enter the target skill's care loop;
 - the user asks whether a named skill preserves its primitive, namespace,
   constraint, state, activation, invocation, metadata, duration, or Partita
   skill shape;
@@ -65,8 +65,8 @@ to machine-checkable surfaces such as CLI commands, verifiers, tests, schemas,
 or package validation are primitive `constraint.hard`; prose-only boundaries
 remain strict `soft` constraints.
 
-- The real user case is the teaching unit. If safe and allowed, capture it in
-  the target skill's references.
+- The real user case is the source situation. If safe and allowed, capture it
+  in the target skill's references.
 - A structure audit may patch skill shape without case capture, but must not
   invent a case.
 - Do not add speculative examples, style galleries, or generic answer templates.
@@ -81,9 +81,9 @@ remain strict `soft` constraints.
 ## Workflow
 
 1. Identify the target skill and mode: `case-patch` or `structure-audit`.
-2. For `case-patch`, capture what happened, what the agent must learn, and what
-   detail to omit. Apply [case capture](references/case-capture.md) only when a
-   real case is available.
+2. For `case-patch`, capture what happened, what default failure the case
+   exposes, and what detail to omit. Apply [case capture](references/case-capture.md)
+   only when a real case is available.
 3. For `structure-audit`, apply [primitive](../../rules/skills/primitive.md)
    when checking semantics, then [shape](../../rules/skills/shape.md) when
    checking materialized `SKILL.md` form. Do not invent cases.
@@ -97,6 +97,9 @@ remain strict `soft` constraints.
 
 - Read [case capture](references/case-capture.md) before adding, moving, or
   deleting examples or case patterns.
+- Read [case-pressure](../../theory/skill/case-pressure.md) and
+  [gate-model](../../theory/workflow/gate-model.md) before deciding whether a
+  new case corrects, narrows, expands, or splits the existing pressure.
 - Read [primitive](../../rules/skills/primitive.md) before auditing primitive
   preservation, constraint, state, activation, invocation, or duration.
 - Read [shape](../../rules/skills/shape.md) before auditing namespace,

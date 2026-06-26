@@ -65,7 +65,8 @@ bundled resources. Shape checks happen after the primitive is known.
 
 - Check that the capability names an agent behavior intervention, not a folder
   shape, runtime package shape, or generic scaffold.
-- Check that the pressure scenario names the repeated agent failure.
+- Check that the pressure scenario names the default agent behavior failure read
+  from a real case.
 - Check that trigger and exclusion rules are specific enough to route.
 - Check that soft agent judgment and hard deterministic constraints are
   separated.

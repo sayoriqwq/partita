@@ -62,6 +62,9 @@ pnpm install:codex-skill
 
 Only add a skill after the user defines the workflow.
 
+Read `theory/` for the agent behavior governance model, then read
+`rules/skills/` for Partita skill authoring rules.
+
 Design the skill from `rules/skills/index.md` before writing `SKILL.md`.
 
 Minimum shape:

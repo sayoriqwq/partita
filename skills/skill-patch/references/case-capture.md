@@ -1,13 +1,14 @@
 # Skill Patch Case Capture
 
-Use this reference when a real user-observed case should teach a target skill.
+Use this reference when a real user-observed case should enter a target skill's
+care loop.
 
 ## 铁律
 
-用户遇到的 case，就是要教会 agent 的 case。
+用户遇到的 case，就是需要被保留为真实情境的 case。
 
 Do not replace a real case with only an abstract rule. Preserve the behavior
-shape that would let the next agent recognize and avoid the same failure.
+shape that would let the next agent read the same default failure.
 
 ## When To Capture
 

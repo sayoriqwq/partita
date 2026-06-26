@@ -6,10 +6,17 @@ It is not a file shape, runtime export shape, plugin namespace, command wrapper,
 or template. It names the behavior pressure, the intended agent intervention,
 and the choices that must survive materialization.
 
+Read [skill theory](../../theory/skill/index.md) and
+[case-pressure](../../theory/skill/case-pressure.md) before defining a
+primitive. A primitive is valid only when a real case exposes default agent
+behavior failure.
+
 ## Terms
 
-- `pressure`: the repeated agent failure or workflow pressure that justifies a
-  skill.
+- `pressure`: the default agent behavior failure read from a real case. One
+  case can establish pressure when it exposes a default failure rather than a
+  one-off output error; additional cases refine pressure rather than creating it
+  from nothing.
 - `capability`: the smallest agent behavior intervention that relieves that
   pressure.
 - `trigger`: the situations, user wording, or agent observations that should
@@ -41,7 +48,13 @@ and the choices that must survive materialization.
 
 ## Rules
 
-- Start from pressure and capability, not folder shape or plugin export shape.
+- Start from a real case and pressure, not folder shape, plugin export shape,
+  task taxonomy, or a positive capability wish.
+- Do not require sample statistics before naming pressure. Reproducibility is
+  internal to pressure: the case must expose how the agent would naturally fail
+  in this class of situation without governance.
+- Do not create a second path for positive capability enhancement. Reframe it
+  as default behavior failure or do not make it a skill.
 - Keep boundary and constraint separate: boundary defines scope; constraint
   defines enforcement.
 - Do not call a constraint hard unless it has a machine-checkable enforcement

@@ -4,10 +4,12 @@ Workflow for turning a primitive into a Partita skill.
 
 ## Rule
 
-- Start from [primitive](primitive.md), not folder shape, runtime package shape,
-  CLI wrapper, plugin namespace, or generic scaffold.
-- Name the repeated pressure before writing a skill. If no repeatable agent
-  drift exists, do not add a skill.
+- Start from [skill theory](../../theory/skill/index.md),
+  [workflow theory](../../theory/workflow/index.md), and [primitive](primitive.md),
+  not folder shape, runtime package shape, CLI wrapper, plugin namespace, or
+  generic scaffold.
+- Read pressure from a real case before writing a skill. If the case does not
+  expose default agent behavior failure, do not add a skill.
 - Define trigger, boundary, constraint, state, activation, invocation, duration,
   workflow, and validation before materializing `SKILL.md`.
 - Use [shape](shape.md) to carry the primitive through supported files.

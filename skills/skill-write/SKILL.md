@@ -9,7 +9,7 @@ Prefix your first user-facing line with `🧭` inline, not as its own paragraph,
 when this Partita skill is active.
 
 Create or update Codex skills as agent behavior interventions. Start from the
-skill primitive: prove repeated drift and behavior pressure before
+skill primitive: read default behavior failure and behavior pressure before
 materializing `SKILL.md`.
 
 ## Capability
@@ -97,8 +97,9 @@ remain strict `soft` constraints.
 
 ## Workflow
 
-1. Build or read the skill primitive: pressure, capability, trigger, boundary,
-   constraint, state, activation, invocation, duration, workflow, and validation.
+1. Read the real case, then build or read the skill primitive: pressure,
+   capability, trigger, boundary, constraint, state, activation, invocation,
+   duration, workflow, and validation.
 2. Decide the artifact layer:
    - `skill`: behavior intervention with trigger, boundary, workflow, validation;
    - `prompt/profile`: always-on preference or collaboration style;
@@ -125,6 +126,10 @@ remain strict `soft` constraints.
 
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/index.md` before creating a
   new skill.
+- Read `/Users/sayori/Desktop/yume-infra/partita/theory/skill/index.md` and
+  `/Users/sayori/Desktop/yume-infra/partita/theory/workflow/index.md` before
+  deciding whether the case exposes default agent behavior failure and which
+  workflow gate it blocks.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/primitive.md` before defining
   pressure, constraint, state, activation, invocation, duration, or validation.
 - Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/shape.md` before adding
@@ -138,6 +143,8 @@ Before calling the skill usable, verify:
 
 - the first user-facing line includes `🧭` inline;
 - capability names a behavior intervention and pressure scenario;
+- pressure is read from a real case, not from task taxonomy or a positive
+  capability wish;
 - trigger includes positive use cases and exclusions;
 - soft constraints stay in model-applied instructions, and hard constraints have
   a machine-checkable enforcement surface;

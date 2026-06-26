@@ -17,7 +17,8 @@
     "LICENSE",
     "README.md",
     "rules",
-    "skills"
+    "skills",
+    "theory"
   ],
   "dependencies": {
     "effect": "4.0.0-beta.90",

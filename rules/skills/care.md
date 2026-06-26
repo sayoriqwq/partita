@@ -9,7 +9,8 @@ recording a real user-observed case.
 
 - `write`: creating or rewriting a skill from a primitive.
 - `patch`: changing an existing skill to prevent recurrence.
-- `case`: a real user-observed behavior pattern that teaches a skill.
+- `case`: a real situation. It is not evidence, training material, a regression
+  test, or an abstract example.
 - `audit`: checking primitive preservation or materialized shape.
 - `projection_loss`: semantic loss when a primitive becomes `SKILL.md`,
   `agents/openai.yaml`, runtime instructions, dispatcher rows, or plugin
@@ -22,7 +23,10 @@ recording a real user-observed case.
 - Patch the smallest section that prevents recurrence.
 - Keep real cases in one-level references, not in the every-use body.
 - Split content before the main skill becomes heavy.
-- Prefer one directly useful case over many invented examples.
+- Prefer one directly useful real case over many invented examples.
+- Use patching to add new real cases into the care loop and decide whether the
+  skill's pressure, trigger, boundary, workflow, validation, or projection must
+  be corrected, narrowed, expanded, or split.
 - When auditing, check primitive preservation and shape separately.
 - Treat a mismatch between primitive invocation and
   `policy.allow_implicit_invocation` as projection loss.

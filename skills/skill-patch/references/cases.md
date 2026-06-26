@@ -1,7 +1,6 @@
 # Skill Patch Cases
 
-Use these cases to recognize recurrence patterns before changing
-`skill-patch`.
+Use these cases to recognize known case shapes before changing `skill-patch`.
 
 ## Structure Audit Without Behavior Case
 

@@ -129,7 +129,7 @@ unsupported_field: Demo routing
         scripts: { build: string, generate: string, verify: string }
       }
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
-      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'rules', 'skills'])
+      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'rules', 'skills', 'theory'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.build, 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')

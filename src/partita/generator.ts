@@ -223,6 +223,7 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
       'README.md',
       'rules',
       'skills',
+      'theory',
     ],
     ...(yield* effectHarnessPackageFields(root)),
   }
