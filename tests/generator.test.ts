@@ -151,28 +151,38 @@ name: alpha
 description: "Use when alpha is needed. Not for unrelated work."
 ---
 `,
+        'skills/primitive/notate/SKILL.md': `---
+name: notate
+description: "Use when notating a skill is needed. Not for local retuning."
+---
+`,
       })
 
       const skills = yield* collectSkillMetadata(root)
       assert.deepStrictEqual(
         skills.map(skill => skill.name),
-        ['alpha', 'bravo'],
+        ['alpha', 'bravo', 'notate'],
+      )
+      assert.deepStrictEqual(
+        skills.map(skill => skill.handle),
+        ['alpha', 'bravo', 'pm:notate'],
       )
       assert.strictEqual(requireElement(skills, 0).description, 'Use when alpha is needed. Not for unrelated work.')
       assert.strictEqual(requireElement(skills, 1).description, 'Use when bravo is needed. Not for unrelated work.')
+      assert.strictEqual(requireElement(skills, 2).relativePath, 'skills/primitive/notate/SKILL.md')
 
       yield* writeFixtureFile(
         root,
-        'skills/alpha/SKILL.md',
+        'skills/primitive/notate/SKILL.md',
         `---
 name: mismatch
-description: "Use when alpha is needed. Not for unrelated work."
+description: "Use when notating a skill is needed. Not for local retuning."
 ---
 `,
       )
       const error = yield* Effect.flip(collectSkillMetadata(root))
       assert.strictEqual(error._tag, 'PartitaGeneratorError')
-      assert.include(error.message, 'frontmatter name="mismatch" != directory "alpha"')
+      assert.include(error.message, 'frontmatter name="mismatch" != directory "notate"')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
   it.effect('writes skills/DISPATCHER.md as the dispatcher surface', () =>
@@ -183,6 +193,11 @@ description: "Use when alpha is needed. Not for unrelated work."
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
+---
+`,
+        'skills/primitive/notate/SKILL.md': `---
+name: notate
+description: "Use when notating a skill is needed. Not for local retuning."
 ---
 `,
       })
@@ -200,6 +215,7 @@ description: "Use when demo is needed. Not for unrelated work."
 
       const dispatcher = yield* fs.readFileString(joinPath(root, 'skills', 'DISPATCHER.md'))
       assert.include(dispatcher, '| demo | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
+      assert.include(dispatcher, '| pm:notate | Use when notating a skill is needed. Not for local retuning. | `skills/primitive/notate/SKILL.md` |')
 
       const checks = yield* checkGeneratedFiles(root)
       assert.deepStrictEqual(

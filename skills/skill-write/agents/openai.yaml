@@ -1,6 +1,0 @@
-interface:
-  display_name: "Skill Write"
-  short_description: "Design skills from primitive behavior pressure"
-  default_prompt: "Use $skill-write to turn this workflow into a concise, validated Codex skill."
-policy:
-  allow_implicit_invocation: true

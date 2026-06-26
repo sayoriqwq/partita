@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { basename, dirname, join, relative, resolve, sep } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import { PartitaError } from './errors.ts'
@@ -29,11 +29,24 @@ interface FrontmatterParseResult {
   readonly issues: ReadonlyArray<ValidationIssue>
 }
 
-const skillRefPattern = /skills\/([a-z][a-z0-9_-]*)\/SKILL\.md/gu
+const skillRefPattern = /skills\/(?:(primitive)\/)?([a-z][a-z0-9_-]*)\/SKILL\.md/gu
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 const loadedSkillMarker = '🧭'
+const namespaceShorthands = {
+  primitive: 'pm',
+} as const
+
+type SkillNamespace = keyof typeof namespaceShorthands
+
+interface SkillFileDescriptor {
+  readonly handle: string
+  readonly name: string
+  readonly namespace: SkillNamespace | undefined
+  readonly path: string
+}
+
 const skillContractSections = [
   '## Capability',
   '## Trigger',
@@ -41,6 +54,15 @@ const skillContractSections = [
   '## Hard Boundary',
   '## Workflow',
   '## Validation',
+] as const
+const descriptionMaximumLength = 500
+const descriptionSelectorPrefixPattern = /^Use (?:when|for)\b/u
+const descriptionSchedulingPollution = [
+  'always use',
+  'use for all',
+  'best',
+  'safest',
+  'recommended',
 ] as const
 const stateTokens = ['`stateful`', '`stateless`'] as const
 const activationTokens = ['`activation: broad`', '`activation: narrow`'] as const
@@ -72,12 +94,14 @@ const requiredWikiFiles = [
   'wiki/workflow/gate/span.md',
   'wiki/projection/index.md',
   'wiki/projection/codex/index.md',
+  'wiki/projection/codex/description.md',
   'wiki/projection/codex/frontmatter.md',
   'wiki/projection/codex/openai.md',
   'wiki/projection/codex/dispatcher.md',
   'wiki/projection/codex/references.md',
   'wiki/projection/codex/skill-md.md',
   'wiki/projection/verifier/index.md',
+  'wiki/projection/verifier/description.md',
   'wiki/projection/verifier/links.md',
   'wiki/projection/verifier/metadata.md',
   'wiki/projection/verifier/nodes.md',
@@ -98,7 +122,7 @@ export const verifySourceProject = Effect.fn('verifySourceProject')(function* (o
 export const verifyRouting = Effect.fn('verifyRouting')(function* (options: VerifyProjectOptions) {
   return yield* Effect.sync(() => {
     const root = resolve(options.root)
-    const skills = skillFiles(root).map(path => basename(dirname(path)))
+    const skills = skillFiles(root).map(skill => skill.handle)
     return reportFromIssues(checkRouting(root, new Set(skills)))
   })
 })
@@ -148,7 +172,10 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
   const descriptions: Record<string, string> = {}
   const issues: Array<ValidationIssue> = []
 
-  for (const path of skillFiles(root)) {
+  issues.push(...checkSkillsRootShape(root))
+
+  for (const descriptor of skillFiles(root)) {
+    const path = descriptor.path
     const relativePath = relativePathFrom(root, path)
     const text = readText(path)
     const parsed = parseFrontmatter(text, relativePath)
@@ -161,18 +188,12 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     issues.push(...checkSkillDirectoryShape(root, path))
 
     const name = parsed.fields.name
-    if (name !== basename(dirname(path))) {
-      issues.push(issue('skill.name_mismatch', `name=${JSON.stringify(name)} dir=${JSON.stringify(basename(dirname(path)))}`, relativePath))
+    if (name !== descriptor.name) {
+      issues.push(issue('skill.name_mismatch', `name=${JSON.stringify(name)} dir=${JSON.stringify(descriptor.name)}`, relativePath))
     }
 
     const description = parsed.fields.description.trim()
-    if (description.length < 40) {
-      issues.push(issue('skill.description_too_short', 'description must be at least 40 characters', relativePath))
-    }
-    const lowered = description.toLowerCase()
-    if (!lowered.includes('use when') || !lowered.includes('not for')) {
-      issues.push(issue('skill.description_activation_surface', 'description must include Use when and Not for', relativePath))
-    }
+    issues.push(...checkSkillDescription(description, relativePath))
     if (!text.includes(loadedSkillMarker)) {
       issues.push(issue('skill.missing_marker', `missing ${loadedSkillMarker} marker instruction`, relativePath))
     }
@@ -206,10 +227,36 @@ function checkSkillFiles(root: string): { readonly descriptions: Record<string, 
     }
     issues.push(...checkOpenAiMetadata(root, name, path, invocation))
 
-    descriptions[name] = description
+    descriptions[descriptor.handle] = description
   }
 
   return { descriptions, issues }
+}
+
+function checkSkillDescription(description: string, relativePath: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+
+  if (description.length < 40) {
+    issues.push(issue('skill.description_too_short', 'description must be at least 40 characters', relativePath))
+  }
+  if (description.length > descriptionMaximumLength) {
+    issues.push(issue('skill.description_too_long', `description must be at most ${descriptionMaximumLength} characters`, relativePath))
+  }
+  if (!descriptionSelectorPrefixPattern.test(description)) {
+    issues.push(issue('skill.description_selector_prefix', 'description must start with Use when or Use for', relativePath))
+  }
+  if (!description.includes('Not for')) {
+    issues.push(issue('skill.description_activation_surface', 'description must include Not for', relativePath))
+  }
+
+  const lowered = description.toLowerCase()
+  for (const term of descriptionSchedulingPollution) {
+    if (lowered.includes(term)) {
+      issues.push(issue('skill.description_scheduling_pollution', `description must not include scheduling claim: ${term}`, relativePath))
+    }
+  }
+
+  return issues
 }
 
 function primitiveInvocation(softBoundary: string): 'implicit' | 'explicit' | undefined {
@@ -759,6 +806,8 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
     ['rules', 'removed rules directory must not exist'],
     ['theory', 'removed theory directory must not exist'],
     ['skills/RESOLVER.md', 'removed resolver registry must not exist'],
+    ['skills/skill-write', 'removed skill-write path must not exist; use skills/primitive/notate'],
+    ['skills/skill-patch', 'removed skill-patch path must not exist; use skills/primitive/retune'],
     ['src/partita/packager.ts', 'removed zip packager must not exist'],
     ['src/partita/package-verify.ts', 'removed package verifier must not exist'],
     ['tests/packager.test.ts', 'removed packager tests must not exist'],
@@ -780,17 +829,87 @@ function checkNoRootSkill(root: string): ReadonlyArray<ValidationIssue> {
     : []
 }
 
-function skillFiles(root: string): ReadonlyArray<string> {
+function skillFiles(root: string): ReadonlyArray<SkillFileDescriptor> {
   const skillsRoot = join(root, 'skills')
   if (!existsSync(skillsRoot)) {
     return []
   }
 
-  return readdirSync(skillsRoot, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => join(skillsRoot, entry.name, 'SKILL.md'))
-    .filter(path => existsSync(path))
-    .sort()
+  const descriptors: Array<SkillFileDescriptor> = []
+  for (const entry of readdirSync(skillsRoot, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    const directSkillPath = join(skillsRoot, entry.name, 'SKILL.md')
+    if (existsSync(directSkillPath)) {
+      descriptors.push({
+        handle: skillHandle(undefined, entry.name),
+        name: entry.name,
+        namespace: undefined,
+        path: directSkillPath,
+      })
+      continue
+    }
+
+    if (!isSkillNamespace(entry.name)) {
+      continue
+    }
+
+    const namespaceRoot = join(skillsRoot, entry.name)
+    for (const skillEntry of readdirSync(namespaceRoot, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+      if (!skillEntry.isDirectory()) {
+        continue
+      }
+
+      const skillPath = join(namespaceRoot, skillEntry.name, 'SKILL.md')
+      if (!existsSync(skillPath)) {
+        continue
+      }
+      descriptors.push({
+        handle: skillHandle(entry.name, skillEntry.name),
+        name: skillEntry.name,
+        namespace: entry.name,
+        path: skillPath,
+      })
+    }
+  }
+
+  return descriptors
+}
+
+function skillHandle(namespace: SkillNamespace | undefined, name: string): string {
+  return namespace === undefined ? name : `${namespaceShorthands[namespace]}:${name}`
+}
+
+function isSkillNamespace(value: string): value is SkillNamespace {
+  return Object.hasOwn(namespaceShorthands, value)
+}
+
+function checkSkillsRootShape(root: string): ReadonlyArray<ValidationIssue> {
+  const skillsRoot = join(root, 'skills')
+  if (!existsSync(skillsRoot)) {
+    return []
+  }
+
+  const issues: Array<ValidationIssue> = []
+  for (const entry of readdirSync(skillsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    const directSkillPath = join(skillsRoot, entry.name, 'SKILL.md')
+    if (existsSync(directSkillPath) || isSkillNamespace(entry.name)) {
+      continue
+    }
+
+    issues.push(issue(
+      'skills_root.unsupported_directory',
+      'skills directories must be direct skills or supported namespaces',
+      relativePathFrom(root, join(skillsRoot, entry.name)),
+    ))
+  }
+  return issues
 }
 
 function checkSkillDirectoryShape(root: string, skillPath: string): ReadonlyArray<ValidationIssue> {
@@ -892,9 +1011,10 @@ function sectionBetween(text: string, start: string, end: string): string {
 function skillRefs(text: string): ReadonlySet<string> {
   const refs: Array<string> = []
   for (const match of text.matchAll(skillRefPattern)) {
-    const skill = match[1]
+    const namespace = match[1]
+    const skill = match[2]
     if (skill !== undefined) {
-      refs.push(skill)
+      refs.push(skillHandle(namespace === undefined || !isSkillNamespace(namespace) ? undefined : namespace, skill))
     }
   }
   return new Set(refs)

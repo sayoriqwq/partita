@@ -28,12 +28,14 @@ const requiredSourceFiles = [
   'wiki/workflow/gate/span.md',
   'wiki/projection/index.md',
   'wiki/projection/codex/index.md',
+  'wiki/projection/codex/description.md',
   'wiki/projection/codex/frontmatter.md',
   'wiki/projection/codex/openai.md',
   'wiki/projection/codex/dispatcher.md',
   'wiki/projection/codex/references.md',
   'wiki/projection/codex/skill-md.md',
   'wiki/projection/verifier/index.md',
+  'wiki/projection/verifier/description.md',
   'wiki/projection/verifier/links.md',
   'wiki/projection/verifier/metadata.md',
   'wiki/projection/verifier/nodes.md',
@@ -80,6 +82,40 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('skill.hard_boundary_wording'))
     }))
 
+  it.effect('reports description selector contract drift', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/SKILL.md', validSkill().replace(
+        'Use when verifying Partita skill shape in tests. Not for production routing or broad behavior.',
+        'Demo verifies Partita skill shape in tests. This is useful for routing fixtures.',
+      ))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('skill.description_selector_prefix'))
+      assert.isTrue(codes.includes('skill.description_activation_surface'))
+    }))
+
+  it.effect('reports long or polluted skill descriptions', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      const repeatedSelector = 'a precise selector phrase '.repeat(20)
+      const longDescription = `Use when ${repeatedSelector}requires verifier coverage. Not for unrelated routing. Always use the best recommended path.`
+      write(root, 'skills/demo/SKILL.md', validSkill().replace(
+        'Use when verifying Partita skill shape in tests. Not for production routing or broad behavior.',
+        longDescription,
+      ))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('skill.description_too_long'))
+      assert.isTrue(codes.includes('skill.description_scheduling_pollution'))
+    }))
+
   it.effect('reports dispatcher routing drift', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
@@ -99,6 +135,28 @@ describe('Partita verifier', () => {
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('routing.missing_skill_refs'))
       assert.isTrue(codes.includes('routing.stale_skill_refs'))
+    }))
+
+  it.effect('accepts primitive namespace skill handles', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
+      write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
+      write(root, 'skills/DISPATCHER.md', [
+        '# Partita Dispatcher',
+        '',
+        `Prefix with ${marker} when a Partita skill is active.`,
+        '',
+        '| Skill | Description | File |',
+        '| --- | --- | --- |',
+        '| demo | Demo skill fixture | `skills/demo/SKILL.md` |',
+        '| pm:notate | Notate skill fixture | `skills/primitive/notate/SKILL.md` |',
+      ].join('\n'))
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
     }))
 
   it.effect('reports OpenAI invocation policy drift', () =>
@@ -175,6 +233,8 @@ describe('Partita verifier', () => {
       write(root, 'AGENTS.profile.md', '# Removed profile\n')
       write(root, 'packaging.allowlist', 'README.md\n')
       write(root, 'skills/RESOLVER.md', '# Removed resolver\n')
+      write(root, 'skills/skill-write/SKILL.md', validSkill().replace('name: demo', 'name: skill-write'))
+      write(root, 'skills/skill-patch/SKILL.md', validSkill().replace('name: demo', 'name: skill-patch'))
       write(root, 'src/partita/packager.ts', 'export {}\n')
       write(root, 'src/partita/package-verify.ts', 'export {}\n')
       write(root, 'tests/packager.test.ts', 'export {}\n')

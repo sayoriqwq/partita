@@ -7,7 +7,8 @@
 `partita` is a CLI-backed Codex skill harness for user-defined workflow skills.
 
 The framework supports a zero-skill baseline. The current customization defines
-user-owned Partita skills under `skills/<name>/SKILL.md`.
+user-owned Partita skills under direct skill paths and supported namespace paths
+such as `skills/primitive/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -18,7 +19,8 @@ This repo owns:
 - generated dispatcher metadata;
 - canonical wiki nodes shared across future skills;
 - verifier skeleton;
-- user-defined skills under `skills/<name>/SKILL.md`.
+- user-defined skills under direct skill paths and supported namespace paths
+  such as `skills/primitive/<name>/SKILL.md`.
 
 This repo does not own:
 
@@ -34,10 +36,12 @@ This repo does not own:
 - Before adding or changing a skill, start from `wiki/practice/create.md` or
   `wiki/practice/patch.md`, then follow the linked wiki nodes.
 - Partita's canonical knowledge lives under `wiki/`.
-- Partita `skills/<name>/SKILL.md` files are source skill runtime projections.
+- Partita `SKILL.md` files under `skills/` are source skill runtime projections.
   Wiki nodes hold the canonical behavior language; copies installed into
   external harnesses or target repos are managed projections and must not
   redefine the skill.
+- `partita` is the product and plugin name, not a skill prefix. The `primitive`
+  namespace projects as `pm:<name>` in dispatcher and plugin-facing handles.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
@@ -46,8 +50,9 @@ This repo does not own:
 - Before changing skill names, trigger policy, harness install behavior, global
   skill state, or marker conventions, use an interpretation gate if the user's
   instruction can be read more than one way.
-- If a new skill is added, create `skills/<name>/SKILL.md` and
-  `skills/<name>/agents/openai.yaml`, run `pnpm generate`, then run
+- If a new primitive skill is added, create
+  `skills/primitive/<name>/SKILL.md` and
+  `skills/primitive/<name>/agents/openai.yaml`, run `pnpm generate`, then run
   `pnpm verify`.
 
 ## Commands

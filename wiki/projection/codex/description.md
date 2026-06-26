@@ -1,13 +1,16 @@
 # Description
 
-Description is the runtime selector surface.
+Description is the Codex selector surface.
 
-It should summarize positive case shapes and negative exclusions:
+Codex sees a skill's `name`, `description`, and path before loading the full
+`SKILL.md`. This makes description the trigger contract and semantic index, not
+the workflow body.
+
+Minimum shape:
 
 ```text
-Use when ...
-Not for ...
+Use when <trigger intent or artifact> requires <specific skill action or result>. Not for <nearest non-target cases>.
 ```
 
-Pattern-to-description generation is future work until the verifier implements
-it.
+Keep it concise and front-loaded. Put workflow, protocol, validation, examples,
+references, and long rationale in `SKILL.md`, reference files, or wiki nodes.

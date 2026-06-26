@@ -6,6 +6,16 @@ import { PartitaGeneratorError } from './model.ts'
 
 const ROUTING_TABLE_START = '<!-- routing-table:start -->'
 const ROUTING_TABLE_END = '<!-- routing-table:end -->'
+const namespaceShorthands = {
+  primitive: 'pm',
+} as const
+
+type SkillNamespace = keyof typeof namespaceShorthands
+
+export interface SourceSkillMetadata extends SkillMetadata {
+  readonly handle: string
+  readonly relativePath: string
+}
 
 const dispatcherTemplate = `---
 name: partita
@@ -67,6 +77,14 @@ function pathExists(fs: FileSystem.FileSystem, path: string) {
   )
 }
 
+function skillHandle(namespace: SkillNamespace | undefined, name: string): string {
+  return namespace === undefined ? name : `${namespaceShorthands[namespace]}:${name}`
+}
+
+function isSkillNamespace(value: string): value is SkillNamespace {
+  return Object.hasOwn(namespaceShorthands, value)
+}
+
 function requireRecord(value: unknown, path: string, field: string) {
   return isRecord(value)
     ? Effect.succeed(value)
@@ -84,25 +102,55 @@ export const collectSkillMetadata = Effect.fn('collectSkillMetadata')(function* 
   const skillsDir = joinPath(root, 'skills')
   const skillsDirExists = yield* pathExists(fs, skillsDir)
   if (!skillsDirExists) {
-    return [] satisfies Array<SkillMetadata>
+    return [] satisfies Array<SourceSkillMetadata>
   }
 
   const entries = [...(yield* fs.readDirectory(skillsDir))].sort()
-  const skills: Array<SkillMetadata> = []
+  const skills: Array<SourceSkillMetadata> = []
   for (const entry of entries) {
     const skillPath = joinPath(skillsDir, entry, 'SKILL.md')
     const skillExists = yield* pathExists(fs, skillPath)
-    if (!skillExists) {
+    if (skillExists) {
+      const fields = yield* readSkillFrontmatter(skillPath)
+      if (fields.name !== entry) {
+        return yield* failGenerator(
+          skillPath,
+          `ERROR: ${skillPath} frontmatter name=${JSON.stringify(fields.name)} != directory ${JSON.stringify(entry)}`,
+        )
+      }
+      skills.push({
+        ...fields,
+        handle: skillHandle(undefined, fields.name),
+        relativePath: `skills/${entry}/SKILL.md`,
+      })
       continue
     }
-    const fields = yield* readSkillFrontmatter(skillPath)
-    if (fields.name !== entry) {
-      return yield* failGenerator(
-        skillPath,
-        `ERROR: ${skillPath} frontmatter name=${JSON.stringify(fields.name)} != directory ${JSON.stringify(entry)}`,
-      )
+
+    if (!isSkillNamespace(entry)) {
+      continue
     }
-    skills.push(fields)
+
+    const namespaceDir = joinPath(skillsDir, entry)
+    const namespaceEntries = [...(yield* fs.readDirectory(namespaceDir))].sort()
+    for (const skillName of namespaceEntries) {
+      const namespacedSkillPath = joinPath(namespaceDir, skillName, 'SKILL.md')
+      const namespacedSkillExists = yield* pathExists(fs, namespacedSkillPath)
+      if (!namespacedSkillExists) {
+        continue
+      }
+      const fields = yield* readSkillFrontmatter(namespacedSkillPath)
+      if (fields.name !== skillName) {
+        return yield* failGenerator(
+          namespacedSkillPath,
+          `ERROR: ${namespacedSkillPath} frontmatter name=${JSON.stringify(fields.name)} != directory ${JSON.stringify(skillName)}`,
+        )
+      }
+      skills.push({
+        ...fields,
+        handle: skillHandle(entry, fields.name),
+        relativePath: `skills/${entry}/${skillName}/SKILL.md`,
+      })
+    }
   }
   return skills
 })
@@ -238,7 +286,7 @@ const renderPackageJson = Effect.fn('renderPackageJson')(function* (root: string
 
 const renderDispatcher = Effect.fn('renderDispatcher')(function* (
   template: string,
-  skills: ReadonlyArray<SkillMetadata>,
+  skills: ReadonlyArray<SourceSkillMetadata>,
 ) {
   const start = template.indexOf(ROUTING_TABLE_START)
   const end = template.indexOf(ROUTING_TABLE_END, start + ROUTING_TABLE_START.length)
@@ -247,8 +295,8 @@ const renderDispatcher = Effect.fn('renderDispatcher')(function* (
   }
 
   const rows = ['| Skill | Description | File |', '|-------|-------------|------|']
-  for (const skill of [...skills].sort((left, right) => left.name.localeCompare(right.name))) {
-    rows.push(`| ${skill.name} | ${markdownTableCell(skill.description)} | \`skills/${skill.name}/SKILL.md\` |`)
+  for (const skill of [...skills].sort((left, right) => left.handle.localeCompare(right.handle))) {
+    rows.push(`| ${skill.handle} | ${markdownTableCell(skill.description)} | \`${skill.relativePath}\` |`)
   }
 
   const block = `${ROUTING_TABLE_START}\n${rows.join('\n')}\n${ROUTING_TABLE_END}`

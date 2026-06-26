@@ -8,7 +8,8 @@ defines the user's Partita skill domain.
 ## Current State
 
 - Codex plugin metadata: present.
-- User-defined skills: read from `skills/<name>/SKILL.md` frontmatter.
+- User-defined skills: read from direct or namespaced `SKILL.md` frontmatter
+  under `skills/`.
 - Executable maintenance is moving to the TypeScript/Effect `partita` CLI.
 
 ## Repository Map
@@ -67,6 +68,8 @@ Minimum shape:
 ```text
 skills/<name>/SKILL.md
 skills/<name>/agents/openai.yaml
+skills/primitive/<name>/SKILL.md
+skills/primitive/<name>/agents/openai.yaml
 ```
 
 `agents/openai.yaml` is required for every Partita skill because it projects
@@ -81,9 +84,15 @@ description: "Use when ... Not for ..."
 ---
 ```
 
-Keep `SKILL.md` frontmatter to `name` and `description`. Put Codex-specific
-UI, `policy.allow_implicit_invocation`, and tool dependencies in
+Description is the Codex selector surface: keep it 40-500 characters, start it
+with `Use when` or `Use for`, and include `Not for`. Keep `SKILL.md`
+frontmatter to `name` and `description`. Put Codex-specific UI,
+`policy.allow_implicit_invocation`, and tool dependencies in
 `agents/openai.yaml`; the policy key must live under the `policy` block.
+
+`partita` is the product and plugin name, not a skill prefix. The `primitive`
+namespace projects as `pm:<name>` in dispatcher and plugin-facing handles while
+frontmatter keeps the short skill name.
 
 After adding or changing a skill:
 

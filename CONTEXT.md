@@ -10,7 +10,8 @@ Partita is a CLI-backed Codex skill harness for user-defined workflow skills.
 The repository owns:
 
 - Codex plugin metadata under `.codex-plugin/plugin.json`;
-- source skill files under `skills/<name>/SKILL.md`;
+- source skill files under direct skill paths and supported namespace paths such
+  as `skills/primitive/<name>/SKILL.md`;
 - generated dispatcher metadata under `skills/DISPATCHER.md`;
 - TypeScript/Effect generation, verification, and install code under
   `src/partita/`;
