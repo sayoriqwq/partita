@@ -54,7 +54,7 @@ Do not use this skill when:
 
 Primitive audit: `skill-write` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may create or update persistent skill files, direct
-supporting resources, rules, resolver metadata, and verifier surfaces that
+supporting resources, wiki nodes, generated dispatcher metadata, and verifier surfaces that
 belong to the requested skill-writing task. It stops when the skill baseline is
 materialized, validated, and reported, or when the missing primitive choice
 blocks safe authoring. Its constraints are mixed: design judgment is `soft`;
@@ -114,8 +114,8 @@ remain strict `soft` constraints.
    - `CLI/verifier`: deterministic, repeated, or fragile operation;
    - `reference`: conditional detail loaded only when needed;
    - `asset`: material used in final output.
-3. Preserve layer boundaries: primitive decides semantics, shape carries them,
-   and care tracks projection loss.
+3. Preserve layer boundaries: wiki nodes define semantics, `SKILL.md` carries
+   runtime materialization, and projection checks track projection loss.
 4. Draft only the every-use skill body. Move optional detail to one-layer
    references only when needed.
 5. Write frontmatter `description` as activation surface: include use cases and
@@ -131,23 +131,21 @@ remain strict `soft` constraints.
 
 ## References
 
-- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/index.md` before creating a
-  new skill.
-- Read `/Users/sayori/Desktop/yume-infra/partita/theory/skill/index.md` and
-  `/Users/sayori/Desktop/yume-infra/partita/theory/workflow/index.md` before
+- Read [create practice](../../wiki/practice/create.md) before creating a new
+  skill.
+- Read [skill](../../wiki/skill/index.md) and
+  [workflow](../../wiki/workflow/index.md) before
   deciding whether the case exposes default agent behavior failure and which
   workflow gate it blocks.
-- Read `/Users/sayori/Desktop/yume-infra/partita/theory/skill/governance-identity.md` and
-  `/Users/sayori/Desktop/yume-infra/partita/theory/skill/orchestration.md` before
+- Read [governance identity](../../wiki/skill/governance/identity.md) and
+  [orchestrator](../../wiki/skill/orchestrator.md) before
   deciding skill identity or distinguishing primitive from orchestrator.
-- Read `/Users/sayori/Desktop/yume-infra/partita/theory/workflow/gate-span.md` before
+- Read [gate span](../../wiki/workflow/gate/span.md) before
   allowing a skill to persist across workflow gates.
-- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/primitive.md` before defining
-  pressure, constraint, state, activation, invocation, duration, or validation.
-- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/shape.md` before adding
-  namespace or writing the materialized `SKILL.md`.
-- Read `/Users/sayori/Desktop/yume-infra/partita/rules/skills/care.md` before checking
-  projection loss or future patch surfaces.
+- Read [runtime projection](../../wiki/projection/runtime.md) before writing
+  the materialized `SKILL.md`.
+- Read [projection loss](../../wiki/projection/loss.md) before checking future
+  patch surfaces.
 
 ## Validation
 
@@ -170,7 +168,8 @@ Before calling the skill usable, verify:
   actions are split into separate skills linked by `pressure_family` or tag;
 - soft judgment and deterministic hard constraints are separated;
 - stateful edits are limited to the skill and directly supporting resources,
-  rules, resolver metadata, or verifier surfaces required by the task;
+  wiki nodes, generated dispatcher metadata, or verifier surfaces required by
+  the task;
 - the skill directory contains only `SKILL.md` and direct supporting resources;
 - `pnpm generate` and `pnpm verify` pass after adding or changing Partita
   skills.

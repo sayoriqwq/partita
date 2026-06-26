@@ -74,11 +74,11 @@ const seedPackageRepo = Effect.fn('seedPackageRepo')(
       'README.md',
       'LICENSE',
       '.codex-plugin/**',
-      'rules/**',
       'skills/**',
+      'wiki/**',
       '',
     ].join('\n'))
-    yield* writeText(path.join(root, '.gitignore'), 'rules/ignored.md\n')
+    yield* writeText(path.join(root, '.gitignore'), 'wiki/ignored.md\n')
     yield* writeText(path.join(root, '.codex-plugin', 'plugin.json'), JSON.stringify({
       name: 'partita',
       skills: './skills/',
@@ -86,9 +86,9 @@ const seedPackageRepo = Effect.fn('seedPackageRepo')(
     yield* writeText(path.join(root, 'README.md'), 'readme')
     yield* writeText(path.join(root, 'LICENSE'), 'license')
     yield* writeText(path.join(root, 'skills', 'foo', 'SKILL.md'), '# Foo\n')
-    yield* writeText(path.join(root, 'rules', 'tracked.md'), 'tracked')
-    yield* writeText(path.join(root, 'rules', 'untracked.md'), 'untracked')
-    yield* writeText(path.join(root, 'rules', 'ignored.md'), 'ignored')
+    yield* writeText(path.join(root, 'wiki', 'tracked.md'), 'tracked')
+    yield* writeText(path.join(root, 'wiki', 'untracked.md'), 'untracked')
+    yield* writeText(path.join(root, 'wiki', 'ignored.md'), 'ignored')
     yield* writeText(path.join(root, 'notes', 'excluded.txt'), 'excluded\n')
     yield* writeText(path.join(root, 'skills', 'foo', '__pycache__', 'bad.pyc'), 'bad')
     yield* writeText(path.join(root, 'skills', 'foo', '.DS_Store'), 'bad')
@@ -99,7 +99,7 @@ const seedPackageRepo = Effect.fn('seedPackageRepo')(
       'README.md',
       'LICENSE',
       'skills/foo/SKILL.md',
-      'rules/tracked.md',
+      'wiki/tracked.md',
     ], root)
   },
 )
@@ -113,13 +113,13 @@ describe('Partita packager', () => {
         'skills/foo/SKILL.md',
         'skills/foo/__pycache__/bad.pyc',
         'skills/foo/.DS_Store',
-        'rules/shape.md',
-      ], ['README.md', 'skills/**', 'rules/**'])
+        'wiki/shape.md',
+      ], ['README.md', 'skills/**', 'wiki/**'])
 
       assert.deepStrictEqual(filtered, [
         'README.md',
         'skills/foo/SKILL.md',
-        'rules/shape.md',
+        'wiki/shape.md',
       ])
     }))
 
@@ -131,6 +131,7 @@ describe('Partita packager', () => {
         skills: './skills/',
       }))
       yield* writeText(path.join(stage, 'skills', 'foo', 'SKILL.md'), '# Foo\n')
+      yield* writeText(path.join(stage, 'wiki', 'index.md'), '# Wiki\n')
 
       const validation = yield* validatePackageStage(stage)
 
@@ -154,12 +155,12 @@ describe('Partita packager', () => {
         '.codex-plugin/plugin.json',
         'LICENSE',
         'README.md',
-        'rules/tracked.md',
-        'rules/untracked.md',
         'skills/foo/SKILL.md',
+        'wiki/tracked.md',
+        'wiki/untracked.md',
       ])
-      assert.isTrue(result.files.includes('rules/untracked.md'))
-      assert.isFalse(result.files.includes('rules/ignored.md'))
+      assert.isTrue(result.files.includes('wiki/untracked.md'))
+      assert.isFalse(result.files.includes('wiki/ignored.md'))
       assert.isFalse(result.files.includes('notes/excluded.txt'))
       assert.isFalse(result.files.includes('skills/foo/__pycache__/bad.pyc'))
       assert.isFalse(result.files.includes('skills/foo/.DS_Store'))

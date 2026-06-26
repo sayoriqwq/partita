@@ -9,21 +9,20 @@ current customization defines the user's Partita skill domain.
 ## Current State
 
 - Codex plugin metadata: present.
-- User-defined skills: recorded in `skills/RESOLVER.md`.
+- User-defined skills: read from `skills/<name>/SKILL.md` frontmatter.
 - Waza original skills: removed.
 - Claude Code marketplace metadata: not part of this repo.
 - Executable maintenance is moving to the TypeScript/Effect `partita` CLI.
 
 ## Repository Map
 
-- `skills/RESOLVER.md` records the current skill registry.
 - `.codex-plugin/plugin.json` is the generated Codex plugin manifest.
 - `skills/DISPATCHER.md` is the generated dispatcher reference.
 - `bin/partita.ts` is the TypeScript/Effect CLI entrypoint.
 - `src/partita/` owns generation, verification, packaging, and local install behavior.
-- `rules/` contains shared behavior rules that future skills may reference.
-- `rules/skills/` is the harness entrypoint for Partita skill design language:
-  primitive, shape, care, and authoring.
+- `wiki/` is the canonical Partita knowledge base for harness, skill,
+  workflow, projection, practice, collaboration, documentation, and vocabulary
+  nodes.
 - `packaging.allowlist` controls what ships in `dist/partita.zip`.
 
 ## Commands
@@ -62,10 +61,9 @@ pnpm install:codex-skill
 
 Only add a skill after the user defines the workflow.
 
-Read `theory/` for the agent behavior governance model, then read
-`rules/skills/` for Partita skill authoring rules.
-
-Design the skill from `rules/skills/index.md` before writing `SKILL.md`.
+Read `wiki/practice/create.md` before writing a new skill. Use
+`wiki/practice/patch.md` when changing an existing skill from a real case or
+structure audit.
 
 Minimum shape:
 

@@ -55,12 +55,14 @@ plugin package，也不是共享 skill rule。
 
 ## Partita 默认值
 
-- 优先使用 Waza 的 mechanism：skill source、resolver、dispatcher、verifier 和 packaging projection。
+- 优先使用 Waza 的 mechanism：skill source、dispatcher、verifier 和 packaging projection。
 - 不继承 Waza 原有 skill taxonomy 或 skill contents。
 - 不为了保存 profile、task 或 project-specific context 而新增 repo layer。
 - User profile content 的 source authority 在 canon；本文件只保留当前 harness projection。
-  只有抽象为可复用 skill-design rule 后才进入共享规则。
-- 未来 skill 应从 `rules/skills/` 开始：primitive、shape、care 和 authoring。
-- Partita skill 文件是 source authority。其它 repo 的 runtime copies 是 projection；
-  CLI/verifier implementation 属于拥有该 mechanism 的 repo。
+  只有抽象为可复用 harness wiki node 后才进入 `wiki/`。
+- 未来 skill 应从 `wiki/practice/create.md` 或 `wiki/practice/patch.md` 开始，
+  再按链接进入 skill、workflow、projection 等节点。
+- Partita wiki 是 canonical knowledge。`skills/<name>/SKILL.md` 是
+  source-controlled runtime materialization；其它 repo 的 runtime copies 是
+  projection；CLI/verifier implementation 属于拥有该 mechanism 的 repo。
 - 当前 loaded-skill marker 是 `🧭`。未来 skill families 可以使用 family-specific marker。

@@ -4,6 +4,5 @@
 LICENSE
 README.md
 .codex-plugin/**
-rules/**
 skills/**
-theory/**
+wiki/**

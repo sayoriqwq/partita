@@ -31,6 +31,7 @@ interface FrontmatterParseResult {
 
 const skillRefPattern = /skills\/([a-z][a-z0-9_-]*)\/SKILL\.md/gu
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
+const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 const miniWazaMarker = '🧭'
 const skillContractSections = [
@@ -46,28 +47,34 @@ const activationTokens = ['`activation: broad`', '`activation: narrow`'] as cons
 const invocationTokens = ['`invocation: implicit`', '`invocation: explicit`'] as const
 const durationTokens = ['`duration: turn`', '`duration: task`', '`duration: topic`', '`duration: mode`'] as const
 
-const requiredRuleFiles = [
-  'rules/anti-patterns.md',
-  'rules/chinese.md',
-  'rules/durable-context.md',
-  'rules/routing.md',
-  'rules/skills/index.md',
-  'rules/skills/primitive.md',
-  'rules/skills/shape.md',
-  'rules/skills/care.md',
-  'rules/skills/authoring.md',
-  'theory/index.md',
-  'theory/skill/index.md',
-  'theory/skill/assertion.md',
-  'theory/skill/case-pressure.md',
-  'theory/skill/governance-identity.md',
-  'theory/skill/orchestration.md',
-  'theory/skill/projection.md',
-  'theory/workflow/index.md',
-  'theory/workflow/gate-contract.md',
-  'theory/workflow/gate-model.md',
-  'theory/workflow/orchestration.md',
-  'theory/workflow/gate-span.md',
+const requiredWikiFiles = [
+  'wiki/index.md',
+  'wiki/harness/index.md',
+  'wiki/skill/index.md',
+  'wiki/skill/assertion.md',
+  'wiki/skill/primitive.md',
+  'wiki/skill/orchestrator.md',
+  'wiki/skill/case/index.md',
+  'wiki/skill/case/pattern.md',
+  'wiki/skill/case/pressure.md',
+  'wiki/skill/governance/index.md',
+  'wiki/skill/governance/identity.md',
+  'wiki/skill/lifecycle/index.md',
+  'wiki/workflow/index.md',
+  'wiki/workflow/gate/index.md',
+  'wiki/workflow/gate/contract.md',
+  'wiki/workflow/gate/span.md',
+  'wiki/projection/index.md',
+  'wiki/projection/codex/index.md',
+  'wiki/projection/codex/dispatcher.md',
+  'wiki/projection/verifier/index.md',
+  'wiki/practice/index.md',
+  'wiki/practice/create.md',
+  'wiki/practice/patch.md',
+  'wiki/practice/audit.md',
+  'wiki/collaboration/index.md',
+  'wiki/documentation/index.md',
+  'wiki/vocabulary/index.md',
 ] as const
 
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {
@@ -113,8 +120,10 @@ function buildSourceReport(root: string): ValidationReport {
     ...skillResult.issues,
     ...checkPluginManifest(root),
     ...checkRouting(root, skills),
-    ...checkRuleFiles(root),
+    ...checkWikiFiles(root),
     ...checkMarkdownLinks(root),
+    ...checkWikiLinks(root),
+    ...checkRemovedSurfaces(root),
     ...checkNoRootSkill(root),
   ]
   return reportFromIssues(issues)
@@ -469,13 +478,9 @@ function checkPluginManifest(root: string): ReadonlyArray<ValidationIssue> {
 
 function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
-  const dispatcherPaths = ['skills/DISPATCHER.md']
-  const routingPaths = [
-    ...dispatcherPaths.filter(path => existsSync(join(root, path))),
-    'skills/RESOLVER.md',
-  ]
+  const routingPaths = ['skills/DISPATCHER.md']
 
-  if (!dispatcherPaths.some(path => existsSync(join(root, path)))) {
+  if (!existsSync(join(root, 'skills/DISPATCHER.md'))) {
     issues.push(issue('routing.dispatcher_missing', 'missing dispatcher routing file: skills/DISPATCHER.md'))
   }
 
@@ -504,10 +509,10 @@ function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<
   return issues
 }
 
-function checkRuleFiles(root: string): ReadonlyArray<ValidationIssue> {
-  return requiredRuleFiles
+function checkWikiFiles(root: string): ReadonlyArray<ValidationIssue> {
+  return requiredWikiFiles
     .filter(path => !existsSync(join(root, path)))
-    .map(path => issue('rules.missing_file', 'missing rule file', path))
+    .map(path => issue('wiki.missing_file', 'missing wiki file', path))
 }
 
 function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
@@ -535,6 +540,45 @@ function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
     }
   }
   return issues
+}
+
+function checkWikiLinks(root: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+  const wikiRoot = join(root, 'wiki')
+  for (const path of markdownFiles(root)) {
+    const relativePath = relativePathFrom(root, path)
+    const text = readText(path)
+    for (const match of text.matchAll(wikiLinkPattern)) {
+      const target = match[1]
+      if (target === undefined) {
+        continue
+      }
+
+      const clean = cleanWikiTarget(target)
+      if (!clean) {
+        continue
+      }
+
+      const targetPath = clean.endsWith('.md') ? clean : `${clean}.md`
+      if (!existsSync(join(wikiRoot, targetPath))) {
+        issues.push(issue('wiki.broken_link', `broken wiki link: ${target}`, relativePath))
+      }
+    }
+  }
+  return issues
+}
+
+function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
+  const removed = [
+    ['rules', 'removed rules directory must not exist'],
+    ['theory', 'removed theory directory must not exist'],
+    ['skills/RESOLVER.md', 'removed resolver registry must not exist'],
+    ['wiki/skill/design-v1.md', 'absorbed design-v1 source must not exist'],
+  ] as const
+
+  return removed
+    .filter(([path]) => existsSync(join(root, path)))
+    .map(([path, message]) => issue('surface.removed_exists', message, path))
 }
 
 function checkNoRootSkill(root: string): ReadonlyArray<ValidationIssue> {
@@ -608,6 +652,14 @@ function skillRefs(text: string): ReadonlySet<string> {
 
 function isExternalLink(target: string): boolean {
   return urlPrefixes.some(prefix => target.startsWith(prefix))
+}
+
+function cleanWikiTarget(target: string): string {
+  const aliasIndex = target.indexOf('|')
+  const withoutAlias = aliasIndex === -1 ? target : target.slice(0, aliasIndex)
+  const hashIndex = withoutAlias.indexOf('#')
+  const withoutHash = hashIndex === -1 ? withoutAlias : withoutAlias.slice(0, hashIndex)
+  return withoutHash.trim().replace(/^\/+|\/+$/g, '')
 }
 
 function readText(path: string): string {

@@ -8,28 +8,34 @@ import { verifyRouting, verifySourceProject } from '../src/partita/verifier.ts'
 
 const marker = '🧭'
 
-const requiredRuleFiles = [
-  'rules/anti-patterns.md',
-  'rules/chinese.md',
-  'rules/durable-context.md',
-  'rules/routing.md',
-  'rules/skills/index.md',
-  'rules/skills/primitive.md',
-  'rules/skills/shape.md',
-  'rules/skills/care.md',
-  'rules/skills/authoring.md',
-  'theory/index.md',
-  'theory/skill/index.md',
-  'theory/skill/assertion.md',
-  'theory/skill/case-pressure.md',
-  'theory/skill/governance-identity.md',
-  'theory/skill/orchestration.md',
-  'theory/skill/projection.md',
-  'theory/workflow/index.md',
-  'theory/workflow/gate-contract.md',
-  'theory/workflow/gate-model.md',
-  'theory/workflow/orchestration.md',
-  'theory/workflow/gate-span.md',
+const requiredWikiFiles = [
+  'wiki/index.md',
+  'wiki/harness/index.md',
+  'wiki/skill/index.md',
+  'wiki/skill/assertion.md',
+  'wiki/skill/primitive.md',
+  'wiki/skill/orchestrator.md',
+  'wiki/skill/case/index.md',
+  'wiki/skill/case/pattern.md',
+  'wiki/skill/case/pressure.md',
+  'wiki/skill/governance/index.md',
+  'wiki/skill/governance/identity.md',
+  'wiki/skill/lifecycle/index.md',
+  'wiki/workflow/index.md',
+  'wiki/workflow/gate/index.md',
+  'wiki/workflow/gate/contract.md',
+  'wiki/workflow/gate/span.md',
+  'wiki/projection/index.md',
+  'wiki/projection/codex/index.md',
+  'wiki/projection/codex/dispatcher.md',
+  'wiki/projection/verifier/index.md',
+  'wiki/practice/index.md',
+  'wiki/practice/create.md',
+  'wiki/practice/patch.md',
+  'wiki/practice/audit.md',
+  'wiki/collaboration/index.md',
+  'wiki/documentation/index.md',
+  'wiki/vocabulary/index.md',
 ] as const
 
 describe('Partita verifier', () => {
@@ -109,6 +115,9 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const stage = makeValidPackageStage()
       write(stage, 'SKILL.md', '# Root skill is forbidden\n')
+      write(stage, 'skills/RESOLVER.md', '# Removed resolver\n')
+      mkdirSync(join(stage, 'rules'), { recursive: true })
+      mkdirSync(join(stage, 'theory'), { recursive: true })
       mkdirSync(join(stage, '.claude-plugin'), { recursive: true })
 
       const report = yield* verifyPackageStage({ stage })
@@ -116,6 +125,9 @@ describe('Partita verifier', () => {
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('package.root_skill_forbidden'))
+      assert.isTrue(codes.includes('package.resolver_forbidden'))
+      assert.isTrue(codes.includes('package.rules_forbidden'))
+      assert.isTrue(codes.includes('package.theory_forbidden'))
       assert.isTrue(codes.includes('package.claude_plugin_forbidden'))
     }))
 })
@@ -138,12 +150,11 @@ function makeValidSourceFixture(): string {
     },
   }, null, 2))
 
-  for (const path of requiredRuleFiles) {
+  for (const path of requiredWikiFiles) {
     write(root, path, `# ${path}\n`)
   }
 
   write(root, 'skills/demo/SKILL.md', validSkill())
-  write(root, 'skills/RESOLVER.md', resolver())
   write(root, 'skills/DISPATCHER.md', dispatcher())
   return root
 }
@@ -155,6 +166,7 @@ function makeValidPackageStage(): string {
     skills: './skills/',
   }, null, 2))
   mkdirSync(join(stage, 'skills'), { recursive: true })
+  mkdirSync(join(stage, 'wiki'), { recursive: true })
   return stage
 }
 
@@ -194,18 +206,6 @@ function validSkill(): string {
     '## Validation',
     '',
     'The verifier passes.',
-  ].join('\n')
-}
-
-function resolver(): string {
-  return [
-    '# Partita Skill Resolver',
-    '',
-    `All Partita skills use ${marker} as the visible loaded-skill signal.`,
-    '',
-    '| Skill | Description | File |',
-    '| --- | --- | --- |',
-    '| `demo` | Demo skill fixture | `skills/demo/SKILL.md` |',
   ].join('\n')
 }
 

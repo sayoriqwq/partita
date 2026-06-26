@@ -41,8 +41,20 @@ function buildPackageStageReport(stage: string): ValidationReport {
   if (!existsSync(join(stage, 'skills'))) {
     issues.push(issue('package.skills_missing', 'skills directory missing', 'skills'))
   }
+  if (!existsSync(join(stage, 'wiki'))) {
+    issues.push(issue('package.wiki_missing', 'wiki directory missing', 'wiki'))
+  }
   if (existsSync(join(stage, 'SKILL.md'))) {
     issues.push(issue('package.root_skill_forbidden', 'root SKILL.md is not part of the Codex plugin', 'SKILL.md'))
+  }
+  if (existsSync(join(stage, 'rules'))) {
+    issues.push(issue('package.rules_forbidden', 'removed rules directory must not be packaged', 'rules'))
+  }
+  if (existsSync(join(stage, 'theory'))) {
+    issues.push(issue('package.theory_forbidden', 'removed theory directory must not be packaged', 'theory'))
+  }
+  if (existsSync(join(stage, 'skills', 'RESOLVER.md'))) {
+    issues.push(issue('package.resolver_forbidden', 'removed resolver registry must not be packaged', 'skills/RESOLVER.md'))
   }
   if (existsSync(join(stage, '.claude-plugin'))) {
     issues.push(issue('package.claude_plugin_forbidden', '.claude-plugin must not be packaged', '.claude-plugin'))

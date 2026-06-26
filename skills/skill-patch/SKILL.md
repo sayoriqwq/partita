@@ -41,7 +41,7 @@ Do not use this skill when:
 
 Primitive audit: `skill-patch` is `stateful`, `activation: narrow`, `invocation: implicit`, and
 `duration: task`. It may write or update `SKILL.md`, references, real case
-records, resolver metadata, and verifier surfaces that belong to the requested
+records, wiki nodes, generated dispatcher metadata, and verifier surfaces that belong to the requested
 skill patch. It stops when the requested case patch or structure audit is
 implemented, validated, and reported. Its constraints are mixed: routing,
 scope, and patch judgment are `soft`; generated metadata, link checks, package
@@ -84,9 +84,9 @@ remain strict `soft` constraints.
 2. For `case-patch`, capture what happened, what default failure the case
    exposes, and what detail to omit. Apply [case capture](references/case-capture.md)
    only when a real case is available.
-3. For `structure-audit`, apply [primitive](../../rules/skills/primitive.md)
-   when checking semantics, then [shape](../../rules/skills/shape.md) when
-   checking materialized `SKILL.md` form. Do not invent cases.
+3. For `structure-audit`, apply [audit practice](../../wiki/practice/audit.md)
+   when checking semantics and materialized `SKILL.md` form. Do not invent
+   cases.
 4. Name the patch intent and smallest patch location: description, trigger,
    boundary, workflow, references, validation, or case file.
 5. Edit only the target skill and directly stale routing or metadata surfaces.
@@ -97,20 +97,20 @@ remain strict `soft` constraints.
 
 - Read [case capture](references/case-capture.md) before adding, moving, or
   deleting examples or case patterns.
-- Read [case-pressure](../../theory/skill/case-pressure.md) and
-  [gate-model](../../theory/workflow/gate-model.md) before deciding whether a
+- Read [pressure](../../wiki/skill/case/pressure.md) and
+  [gate case](../../wiki/workflow/gate/case.md) before deciding whether a
   new case corrects, narrows, expands, or splits the existing pressure.
-- Read [governance identity](../../theory/skill/governance-identity.md) and
-  [orchestration](../../theory/skill/orchestration.md) before auditing skill
+- Read [governance identity](../../wiki/skill/governance/identity.md) and
+  [orchestrator](../../wiki/skill/orchestrator.md) before auditing skill
   identity, orchestrator behavior, or deciding whether a skill should split.
-- Read [gate span](../../theory/workflow/gate-span.md) before auditing
+- Read [gate span](../../wiki/workflow/gate/span.md) before auditing
   cross-gate duration.
-- Read [primitive](../../rules/skills/primitive.md) before auditing primitive
+- Read [primitive](../../wiki/skill/primitive.md) before auditing primitive
   preservation, constraint, state, activation, invocation, duration, or gate span.
-- Read [shape](../../rules/skills/shape.md) before auditing namespace,
+- Read [runtime shape](../../wiki/projection/verifier/shape.md) before auditing namespace,
   description, OpenAI metadata, `SKILL.md` body, references, or verifier
   surface.
-- Read [care](../../rules/skills/care.md) before auditing projection loss,
+- Read [projection loss](../../wiki/projection/loss.md) before auditing projection loss,
   cases, or forward tests.
 - Read [cases](references/cases.md) when checking known recurrence patterns.
 
@@ -129,5 +129,5 @@ Before calling the improvement done, verify:
   references, cases, or verifier surfaces;
 - the edit is smaller than a rewrite;
 - concrete cases live in one-level references, not the every-use body;
-- generated dispatcher/resolver metadata is in sync when needed;
+- generated dispatcher metadata is in sync when needed;
 - `pnpm generate` and `pnpm verify` pass after Partita skill changes.
