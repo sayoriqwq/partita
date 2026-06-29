@@ -2,7 +2,7 @@
 
 ## Definition
 
-Partita `dispatcher` 是 Partita-managed source skills 的 generated routing table。
+Partita `dispatcher` 是 Partita harness 从 Partita-managed source skills 生成的 routing index。
 
 ## Role
 
@@ -11,10 +11,12 @@ dispatcher 将 source skills 映射到 runtime handles：
 - `skills/primitive/<name>/` 映射到 `pm:<name>`。
 - `skills/orientation/<name>/` 映射到 `og:<name>`。
 - direct `skills/<name>/` 映射到 `<name>`。
+- generated output 是 `harness/skills/dispatcher.md`。
 
 ## Rules
 
 - dispatcher 是 Partita harness routing mechanism。
+- dispatcher 不属于 `skills/` 内容。
 - dispatcher 不是 OpenAI skill target requirement。
 - dispatcher 不定义 portable skill。
 - dispatcher 暴露 skill name、handle、invocation policy、description 和 source file。

@@ -10,6 +10,7 @@ defines the user's Partita skill domain.
 - Codex plugin metadata: present.
 - User-defined skills: read from direct or namespaced `SKILL.md` frontmatter
   under `skills/`.
+- Dispatcher: generated as a harness-owned routing index, not as skill content.
 - Executable maintenance is moving to the TypeScript/Effect `partita` CLI.
 
 ## Repository Map
@@ -17,7 +18,7 @@ defines the user's Partita skill domain.
 - `.codex-plugin/plugin.json` is the generated Codex plugin manifest.
 - `CONTEXT.md` maps the repository context to wiki nodes.
 - `HARNESS.md` maps harness operations to wiki nodes.
-- `skills/DISPATCHER.md` is the generated dispatcher reference.
+- `harness/skills/dispatcher.md` is the generated harness dispatcher reference.
 - `bin/partita.ts` is the TypeScript/Effect CLI entrypoint.
 - `src/partita/` owns generation, verification, and local install behavior.
 - `wiki/` is the canonical Partita knowledge base for harness, skill,
@@ -61,6 +62,9 @@ For example, `skills/primitive/notate/SKILL.md` installs as the global skill
 `notate`. The source family remains `primitive`, and Partita's dispatcher handle
 remains `pm:notate`. `skills/orientation/argue/SKILL.md` installs as `argue`
 and projects as `og:argue`.
+
+`skills/` 是 skill source input。它后续可以被拆成独立 skill 族再 pin 回
+Partita；dispatcher 仍由 Partita harness 生成在 `harness/skills/dispatcher.md`。
 
 ## Adding A Skill
 
@@ -112,9 +116,9 @@ project dispatcher handles while frontmatter and global installed skills keep
 the short skill name: `orientation` projects as `og:<name>`, and `primitive`
 projects as `pm:<name>`.
 
-`skills/DISPATCHER.md` is generated from `SKILL.md` frontmatter and
-`agents/openai.yaml`. Its routing table projects `Handle`, `Name`,
-`Invocation`, `Description`, and `File`.
+`harness/skills/dispatcher.md` is generated from `skills/` source
+`SKILL.md` frontmatter and `agents/openai.yaml`. Its routing table projects
+`Handle`, `Name`, `Invocation`, `Description`, and `File`.
 
 After adding or changing a skill:
 

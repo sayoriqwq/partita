@@ -120,8 +120,8 @@ describe('Partita verifier', () => {
   it.effect('reports dispatcher routing drift', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/DISPATCHER.md', [
-        '# Partita Dispatcher',
+      write(root, 'harness/skills/dispatcher.md', [
+        '# Dispatcher',
         '',
         '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
@@ -138,6 +138,18 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('routing.stale_skill_refs'))
     }))
 
+  it.effect('rejects dispatcher under skills', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/DISPATCHER.md', dispatcher())
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('routing.legacy_dispatcher_path'))
+    }))
+
   it.effect('accepts supported namespace skill handles', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
@@ -145,8 +157,8 @@ describe('Partita verifier', () => {
       write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
       write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
-      write(root, 'skills/DISPATCHER.md', [
-        '# Partita Dispatcher',
+      write(root, 'harness/skills/dispatcher.md', [
+        '# Dispatcher',
         '',
         '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
@@ -266,8 +278,8 @@ describe('Partita verifier', () => {
   it.effect('reports legacy projection markers', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/DISPATCHER.md', [
-        '# Partita Dispatcher',
+      write(root, 'harness/skills/dispatcher.md', [
+        '# Dispatcher',
         '',
         '<!-- routing-table:start -->',
         '| Skill | Description | File |',
@@ -325,7 +337,7 @@ function makeValidSourceFixture(): string {
 
   write(root, 'skills/demo/SKILL.md', validSkill())
   write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata())
-  write(root, 'skills/DISPATCHER.md', dispatcher())
+  write(root, 'harness/skills/dispatcher.md', dispatcher())
   return root
 }
 
@@ -410,7 +422,7 @@ function validOpenAiMetadata(): string {
 
 function dispatcher(): string {
   return [
-    '# Partita Dispatcher',
+    '# Dispatcher',
     '',
     '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
     '| Handle | Name | Invocation | Description | File |',

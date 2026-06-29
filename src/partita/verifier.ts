@@ -25,6 +25,8 @@ const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 const loadedSkillMarkers = ['🧭', '🎼'] as const
+const dispatcherRelativePath = 'harness/skills/dispatcher.md'
+const legacyDispatcherRelativePath = 'skills/DISPATCHER.md'
 const routingTableStart = '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->'
 const routingTableEnd = '<!-- partita:projection:end id="routing-table" -->'
 const legacyRoutingTableStart = '<!-- routing-table:start -->'
@@ -606,10 +608,14 @@ function packageJsonVersion(path: string, relativePath: string, issues: Array<Va
 
 function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
-  const routingPaths = ['skills/DISPATCHER.md']
+  const routingPaths = [dispatcherRelativePath]
 
-  if (!existsSync(join(root, 'skills/DISPATCHER.md'))) {
-    issues.push(issue('routing.dispatcher_missing', 'missing dispatcher routing file: skills/DISPATCHER.md'))
+  if (existsSync(join(root, legacyDispatcherRelativePath))) {
+    issues.push(issue('routing.legacy_dispatcher_path', `dispatcher must live at ${dispatcherRelativePath}`, legacyDispatcherRelativePath))
+  }
+
+  if (!existsSync(join(root, dispatcherRelativePath))) {
+    issues.push(issue('routing.dispatcher_missing', `missing dispatcher routing file: ${dispatcherRelativePath}`))
   }
 
   for (const path of routingPaths) {

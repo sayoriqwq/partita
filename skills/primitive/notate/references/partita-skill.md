@@ -46,6 +46,8 @@ dispatcher 将 Partita source skills 映射到 runtime handles：
 - `skills/orientation/<name>/` 映射到 `og:<name>`。
 - direct `skills/<name>/` 映射到 `<name>`。
 
+dispatcher generated output 位于 `harness/skills/dispatcher.md`，不是 `skills/` 内容。
+
 dispatcher 不是 OpenAI skill target requirement。
 
 installed global Codex skills 通过各自的 `description` 触发，不通过 Partita dispatcher。

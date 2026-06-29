@@ -1,12 +1,8 @@
----
-name: partita
-description: "Dispatcher for user-defined Partita workflow skills. Use when a Partita skill exists for the user's request. Not for generic work when no matching skill has been defined."
----
+# Dispatcher
 
-# Partita Dispatcher
+Dispatcher 是 Partita harness 从当前 `skills/` source 生成的 routing index。
 
-Partita is a CLI-backed Codex skill harness for user-defined workflow skills. Match only
-against skills that exist in the routing table.
+它不是 skill content，不放在 `skills/` 目录，也不定义 portable skill。只根据 routing table 中实际存在的 skill 进行匹配。
 
 ## Routing Table
 
@@ -24,14 +20,12 @@ against skills that exist in the routing table.
 | pm:retune | retune | false | Use when patching an existing identity-valid OpenAI/Codex skill from a real recurrence case that exposes a stale local surface. In Partita landing, patches an existing valid Partita source skill. Not for creating new skills, structure audits without a patch case, identity-invalid skills, external skill migration, ordinary code review, or prose cleanup. | `skills/primitive/retune/SKILL.md` |
 | pm:score | score | true | Use when creating or modifying Markdown docs that should follow sayoriqwq-style Markdown writing preferences. Not for non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching. | `skills/primitive/score/SKILL.md` |
 | reconcile | reconcile | true | Use when the user has finished a task phase and wants a semantic residue audit against the current topic, source document, or accepted framing. Lists suspicious stale or migration-era code/docs before repair. Not for general cleanup, formatting, ordinary code review, bug finding, or unapproved deletion. | `skills/reconcile/SKILL.md` |
-| setup-effect-area | setup-effect-area | true | Use when the user asks to set up, update, verify, or repair a TypeScript/Effect target repository against effect-harness runtime and CLI contracts. Not for updating effect-harness itself, generic repo pinning, writing Effect business features, or defining Partita skill semantics. | `skills/setup-effect-area/SKILL.md` |
-| update-effect-harness | update-effect-harness | true | Use when the user asks to update effect-harness itself to the latest official Effect source pin, package baseline, or self-update workflow. Not for setting up an Effect target repo, generic repo pinning, writing Effect application code, or one-off dependency bumps outside effect-harness. | `skills/update-effect-harness/SKILL.md` |
 <!-- partita:projection:end id="routing-table" -->
 
 ## How This Works
 
-1. Read the user's message.
-2. If the routing table has a matching skill, read that skill file.
-3. If no skill matches, do normal agent work and do not invent a skill.
+1. 读取用户消息。
+2. 如果 routing table 有匹配 skill，读取该 skill file。
+3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
 
-Skills chain manually, not automatically.
+Skills 只手动串联，不自动链式触发。

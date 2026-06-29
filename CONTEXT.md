@@ -12,7 +12,7 @@ The repository owns:
 - Codex plugin metadata under `.codex-plugin/plugin.json`;
 - source skill files under direct skill paths and supported namespace paths such
   as `skills/primitive/<name>/SKILL.md`;
-- generated dispatcher metadata under `skills/DISPATCHER.md`;
+- generated dispatcher metadata under `harness/skills/dispatcher.md`;
 - TypeScript/Effect generation, verification, and install code under
   `src/partita/`;
 - canonical harness, skill, workflow, projection, practice, collaboration,
@@ -20,6 +20,9 @@ The repository owns:
 
 The repository does not own external skill collections, user profile canon,
 project-specific workflow state, or target-repo runtime copies.
+
+`skills/` 是当前 skill source input。它可以后续拆到独立 skill 族并 pin 回
+Partita；dispatcher 由 Partita harness 生成，不属于 `skills/` 内容。
 
 ## Wiki Routes
 

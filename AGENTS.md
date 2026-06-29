@@ -17,7 +17,7 @@ This repo owns:
 
 - Codex plugin metadata under `.codex-plugin/plugin.json`;
 - skill framework shape;
-- generated dispatcher metadata;
+- generated dispatcher metadata under `harness/skills/dispatcher.md`;
 - canonical wiki nodes shared across future skills;
 - verifier skeleton;
 - user-defined skills under direct skill paths and supported namespace paths
@@ -43,6 +43,8 @@ This repo does not own:
   Wiki nodes hold the canonical behavior language; copies installed into
   external harnesses or target repos are managed projections and must not
   redefine the skill.
+- `skills/` is skill source input. Dispatcher output belongs to the harness at
+  `harness/skills/dispatcher.md`, not under `skills/`.
 - `partita` is the product and plugin name, not a skill prefix. Source
   namespaces project dispatcher handles while frontmatter and global Codex
   installation stay flat: `orientation` projects as `og:<name>`, and

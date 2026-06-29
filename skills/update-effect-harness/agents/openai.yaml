@@ -1,6 +1,0 @@
-interface:
-  display_name: "Update Effect Harness"
-  short_description: "Update effect-harness source and baselines"
-  default_prompt: "Use $update-effect-harness to update effect-harness through its hard status, update, and verify surfaces."
-policy:
-  allow_implicit_invocation: true

@@ -7,6 +7,7 @@ import { PartitaGeneratorError } from './model.ts'
 const ROUTING_TABLE_START = '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->'
 const ROUTING_TABLE_END = '<!-- partita:projection:end id="routing-table" -->'
 const FILE_COPY_PROJECTION_PATTERN = /^<!-- partita:projection:file source="([^"]+)" mode="copy" -->\r?\n/u
+const DISPATCHER_RELATIVE_PATH = 'harness/skills/dispatcher.md'
 const namespaceShorthands = {
   orientation: 'og',
   primitive: 'pm',
@@ -20,15 +21,11 @@ export interface SourceSkillMetadata extends SkillMetadata {
   readonly relativePath: string
 }
 
-const dispatcherTemplate = `---
-name: partita
-description: "Dispatcher for user-defined Partita workflow skills. Use when a Partita skill exists for the user's request. Not for generic work when no matching skill has been defined."
----
+const dispatcherTemplate = `# Dispatcher
 
-# Partita Dispatcher
+Dispatcher 是 Partita harness 从当前 \`skills/\` source 生成的 routing index。
 
-Partita is a CLI-backed Codex skill harness for user-defined workflow skills. Match only
-against skills that exist in the routing table.
+它不是 skill content，不放在 \`skills/\` 目录，也不定义 portable skill。只根据 routing table 中实际存在的 skill 进行匹配。
 
 ## Routing Table
 
@@ -37,11 +34,11 @@ ${ROUTING_TABLE_END}
 
 ## How This Works
 
-1. Read the user's message.
-2. If the routing table has a matching skill, read that skill file.
-3. If no skill matches, do normal agent work and do not invent a skill.
+1. 读取用户消息。
+2. 如果 routing table 有匹配 skill，读取该 skill file。
+3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
 
-Skills chain manually, not automatically.
+Skills 只手动串联，不自动链式触发。
 `
 
 function failGenerator(path: string, message: string) {
@@ -334,6 +331,7 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
       'README.md',
       'CONTEXT.md',
       'HARNESS.md',
+      'harness',
       'skills',
       'wiki',
     ],
@@ -354,7 +352,7 @@ const renderDispatcher = Effect.fn('renderDispatcher')(function* (
   const start = template.indexOf(ROUTING_TABLE_START)
   const end = template.indexOf(ROUTING_TABLE_END, start + ROUTING_TABLE_START.length)
   if (start === -1 || end === -1) {
-    return yield* failGenerator('skills/DISPATCHER.md', 'ERROR: dispatcher template is missing routing-table markers')
+    return yield* failGenerator(DISPATCHER_RELATIVE_PATH, 'ERROR: dispatcher template is missing routing-table markers')
   }
 
   const rows = ['| Handle | Name | Invocation | Description | File |', '|--------|------|------------|-------------|------|']
@@ -447,8 +445,8 @@ export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* 
       content: packageJson,
     },
     {
-      relativePath: 'skills/DISPATCHER.md',
-      path: joinPath(root, 'skills', 'DISPATCHER.md'),
+      relativePath: DISPATCHER_RELATIVE_PATH,
+      path: joinPath(root, DISPATCHER_RELATIVE_PATH),
       content: dispatcher,
     },
     ...projectedReferences,

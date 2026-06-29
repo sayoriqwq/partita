@@ -131,7 +131,7 @@ unsupported_field: Demo routing
 
       assert.deepStrictEqual(
         files.map(file => file.relativePath),
-        ['.codex-plugin/plugin.json', 'package.json', 'skills/DISPATCHER.md'],
+        ['.codex-plugin/plugin.json', 'package.json', 'harness/skills/dispatcher.md'],
       )
       const pluginFile = requireElement(files, 0)
       const packageFile = requireElement(files, 1)
@@ -151,7 +151,7 @@ unsupported_field: Demo routing
         scripts: { build: string, generate: string, package?: string, verify: string }
       }
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
-      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'skills', 'wiki'])
+      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'harness', 'skills', 'wiki'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.build, 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
@@ -221,7 +221,7 @@ description: "Use when notating a skill is needed. Not for local retuning."
       assert.include(error.message, 'frontmatter name="mismatch" != directory "notate"')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
-  it.effect('writes skills/DISPATCHER.md as the dispatcher surface', () =>
+  it.effect('writes harness/skills/dispatcher.md as the dispatcher surface', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
@@ -253,11 +253,11 @@ description: "Use when notating a skill is needed. Not for local retuning."
         [
           ['.codex-plugin/plugin.json', 'written'],
           ['package.json', 'written'],
-          ['skills/DISPATCHER.md', 'written'],
+          ['harness/skills/dispatcher.md', 'written'],
         ],
       )
 
-      const dispatcher = yield* fs.readFileString(joinPath(root, 'skills', 'DISPATCHER.md'))
+      const dispatcher = yield* fs.readFileString(joinPath(root, 'harness', 'skills', 'dispatcher.md'))
       assert.include(dispatcher, '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->')
       assert.include(dispatcher, '| demo | demo | true | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
       assert.include(dispatcher, '| og:argue | argue | false | Use when arguing is needed. Not for settled decisions. | `skills/orientation/argue/SKILL.md` |')
@@ -301,7 +301,7 @@ description: "Use when demo is needed. Not for unrelated work."
         [
           ['.codex-plugin/plugin.json', 'written'],
           ['package.json', 'written'],
-          ['skills/DISPATCHER.md', 'written'],
+          ['harness/skills/dispatcher.md', 'written'],
           ['skills/demo/references/insufficient-material.md', 'written'],
         ],
       )

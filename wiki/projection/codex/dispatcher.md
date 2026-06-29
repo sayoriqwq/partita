@@ -1,13 +1,17 @@
 # Dispatcher
 
-`skills/DISPATCHER.md` is the generated routing projection.
+`harness/skills/dispatcher.md` 是 Partita harness 生成的 routing index。
 
-Its generation input is direct or namespaced `SKILL.md` frontmatter under
-`skills/` plus `agents/openai.yaml` invocation policy. Skill semantics remain in
-the wiki-guided skill files; the dispatcher only exposes routing metadata.
+它的输入是 `skills/` 下 direct 或 namespaced `SKILL.md` frontmatter，以及
+`agents/openai.yaml` 中的 invocation policy。
 
-The dispatcher does not project a runtime marker. Markers belong to the active
-skill or skill family.
+dispatcher 不属于 `skills/` 内容，不定义 portable skill，也不是 OpenAI
+target requirement。
+
+Skill semantics 保留在 wiki-guided skill files。dispatcher 只暴露 routing
+metadata。
+
+dispatcher 不投影 runtime marker。marker 属于 active skill 或 skill family。
 
 The dispatcher table columns are:
 
@@ -20,8 +24,7 @@ Handle | Name | Invocation | Description | File
 The `orientation` source namespace projects to `og:<name>` handles. The
 `primitive` source namespace projects to `pm:<name>` handles.
 
-Installed Codex skills stay flat by frontmatter name. Dispatcher handles keep
-Partita's source-family semantics without requiring nested global install
-paths.
+Installed Codex skills 按 frontmatter name 保持 flat。dispatcher handles 保留
+Partita source-family semantics，不要求 global install paths 嵌套。
 
 See [[projection/codex/projection-marker]].

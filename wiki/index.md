@@ -22,6 +22,7 @@ wiki.
 workflow gate -> case -> pressure -> rule -> skill -> projection
 ```
 
-The wiki is canonical. Runtime files such as `SKILL.md` files under `skills/`,
-`skills/DISPATCHER.md`, `.codex-plugin/plugin.json`, and `package.json` metadata
-are materializations or projections.
+The wiki is canonical. Runtime files such as `SKILL.md` files under `skills/`
+and harness files such as `harness/skills/dispatcher.md`,
+`.codex-plugin/plugin.json`, and `package.json` metadata are materializations or
+projections.

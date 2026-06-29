@@ -1,6 +1,0 @@
-interface:
-  display_name: "Setup Effect Area"
-  short_description: "Set up an Effect target against effect-harness"
-  default_prompt: "Use $setup-effect-area to run or repair an Effect target setup through the effect-harness contract."
-policy:
-  allow_implicit_invocation: true

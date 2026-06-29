@@ -39,6 +39,8 @@ dispatcher 是 Partita harness routing mechanism。
 
 frontmatter 或 metadata 变化时，dispatcher input 可能需要 regeneration。
 
+dispatcher generated output 位于 `harness/skills/dispatcher.md`，不是 `skills/` 内容。
+
 dispatcher 不是 OpenAI skill target requirement。
 
 ## Checks

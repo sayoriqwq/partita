@@ -25,7 +25,7 @@ V1 支持两类 projection：
 <!-- partita:projection:end id="routing-table" -->
 ```
 
-`block-table` 用于 `skills/DISPATCHER.md` routing table。
+`block-table` 用于 `harness/skills/dispatcher.md` routing table。
 
 ## File Projection
 

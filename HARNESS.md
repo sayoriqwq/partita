@@ -10,7 +10,7 @@ This file maps harness operations to the wiki. It is not a rules layer.
 | Create internal primitive skill | `skills/primitive/notate/SKILL.md` | `skills/primitive/<name>/SKILL.md`, `skills/primitive/<name>/agents/openai.yaml` | `pnpm generate`, `pnpm verify` |
 | Create public workflow skill | `skills/primitive/conduct/SKILL.md` | `skills/<name>/SKILL.md`, `skills/<name>/agents/openai.yaml` | `pnpm generate`, `pnpm verify` |
 | Patch existing skill from case | `skills/primitive/retune/SKILL.md` | target skill files and direct references | `pnpm generate`, `pnpm verify` |
-| Check runtime projection | `wiki/projection/index.md` | `.codex-plugin/`, `skills/DISPATCHER.md`, projected references | `pnpm generate:check`, `pnpm verify` |
+| Check runtime projection | `wiki/projection/index.md` | `.codex-plugin/`, `harness/skills/dispatcher.md`, projected references | `pnpm generate:check`, `pnpm verify` |
 | Maintain docs | `wiki/documentation/index.md` | `wiki/`, root mapping files | `pnpm verify` |
 
 ## Boundaries
@@ -18,6 +18,8 @@ This file maps harness operations to the wiki. It is not a rules layer.
 - Do not create a second durable knowledge layer in root files.
 - Do not duplicate wiki definitions in root mapping files.
 - Do not let generated runtime metadata redefine skill semantics.
+- Do not put dispatcher output under `skills/`; it belongs to
+  `harness/skills/dispatcher.md`.
 - Do not add a skill unless the user defines the behavior.
 - Keep profile canon outside this repository; only Partita-specific projections
   belong here.

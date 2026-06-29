@@ -27,8 +27,7 @@ Use when:
 
 Do not use when:
 
-- the task is specifically to set up Effect harness runtime; use
-  `setup-effect-area`;
+- the task is specifically to set up Effect harness runtime;
 - the request only pins npm, pnpm, Docker, or tool versions without a repo
   source surface;
 - "pin" refers to UI items, notes, threads, tasks, or local workflow state;
