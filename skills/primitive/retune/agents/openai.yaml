@@ -1,6 +1,6 @@
 interface:
   display_name: "Retune"
   short_description: "Patch an existing skill from a real case"
-  default_prompt: "Use pm:retune to patch this existing Partita skill from the real case."
+  default_prompt: "Use pm:retune to patch this existing skill from the real case."
 policy:
   allow_implicit_invocation: false

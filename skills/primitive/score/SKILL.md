@@ -25,7 +25,7 @@ Do not use when:
 - 目标不是 Markdown。
 - 用户要普通润色、去 AI 味、产品文案、release notes、社交文案、翻译或本地化文案。
 - 用户要写代码注释、commit message、PR 描述或 issue 回复。
-- 用户要创建 internal primitive skill；使用 `notate`。
+- 用户要创建 case-rooted skill；使用 `notate`。
 - 用户要创建 public workflow skill；使用 `conduct`。
 - 用户要 patch 已有且 identity 成立的 skill；使用 `retune`。
 
@@ -46,7 +46,7 @@ Soft:
 
 Hard:
 
-- When: 修改 projected references、dispatcher 输入、generated projection target 或 skill metadata。
+- When: 修改 local references、dispatcher 输入、generated files 或 skill metadata。
   Do: MUST 运行 `pnpm generate:check`。
 
 - When: 完成 repo 变更前。
@@ -55,7 +55,7 @@ Hard:
 ## Effects
 
 - Conversation: MAY 展示已应用的 preference blocks、preference conflict 和验证结果。
-- Filesystem: MAY 创建或更新 Markdown docs、wiki documentation nodes、skill-local projected references 和直接需要的 generated projections。
+- Filesystem: MAY 创建或更新 Markdown docs、wiki documentation nodes、skill-local references 和直接需要的 generated files。
 - External: none.
 
 ## Workflow

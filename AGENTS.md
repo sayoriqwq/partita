@@ -83,13 +83,14 @@ Before writing non-trivial Effect code, read:
 - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`
 - `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`
 - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect.subtree.json`
-- `.effect-harness.json`
+- `.prelude/providers/effect-harness/provider.json` when this target is prelude-managed
+- `.effect-harness.json` only for standalone CLI compatibility
 
 Runtime skills and agents installed by the harness:
 
-- Use `.codex/skills/effect-code/SKILL.md` for Effect implementation and review.
-- Use `.codex/skills/effect-feedback/SKILL.md` for reusable target feedback.
-- Use `.codex/agents/effect-worker.md` when delegating focused Effect subagent work.
+- Use `.codex/skills/effect-harness/effect-code/SKILL.md` for Effect implementation and review.
+- Use `.codex/skills/effect-harness/effect-feedback/SKILL.md` for reusable target feedback.
+- Use `.codex/agents/effect-harness/effect-worker.md` when delegating focused Effect subagent work.
 
 Use:
 
