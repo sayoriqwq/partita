@@ -5,6 +5,8 @@
 Partita family 是 source 组织方式和 routing 约定。
 
 - `skills/primitive/<name>/` 存放 Partita-managed primitive source skills。
+- `skills/expression/<name>/` 存放 expression protocol source skills。
+- `skills/link/<name>/` 存放 external authority link source skills。
 - `skills/orientation/<name>/` 存放 Partita-managed orientation source skills。
 - `skills/maintenance/<name>/` 存放 Partita-managed maintenance source skills。
 - direct `skills/<name>/` 存放 supported public 或 standalone source skills。
@@ -44,6 +46,8 @@ dispatcher 是 Partita harness routing mechanism。
 dispatcher 将 Partita source skills 映射到 runtime handles：
 
 - `skills/primitive/<name>/` 映射到 `pm:<name>`。
+- `skills/expression/<name>/` 映射到 `ex:<name>`。
+- `skills/link/<name>/` 映射到 `lk:<name>`。
 - `skills/orientation/<name>/` 映射到 `og:<name>`。
 - `skills/maintenance/<name>/` 映射到 `mt:<name>`。
 - direct `skills/<name>/` 映射到 `<name>`。

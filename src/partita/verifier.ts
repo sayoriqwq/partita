@@ -20,11 +20,11 @@ export interface ValidationReport {
   readonly issues: ReadonlyArray<ValidationIssue>
 }
 
-const skillRefPattern = /skills\/(?:(maintenance|orientation|primitive)\/)?([a-z][a-z0-9_-]*)\/SKILL\.md/gu
+const skillRefPattern = /skills\/(?:(expression|link|maintenance|orientation|primitive)\/)?([a-z][a-z0-9_-]*)\/SKILL\.md/gu
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
-const loadedSkillMarkers = ['🧭', '🎼', '🧹'] as const
+const loadedSkillMarkers = ['💬', '🔗', '🧭', '🎼', '🧹'] as const
 const dispatcherRelativePath = 'harness/skills/dispatcher.md'
 const legacyDispatcherRelativePath = 'skills/DISPATCHER.md'
 const routingTableStart = '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->'
@@ -35,6 +35,8 @@ const fileProjectionPrefix = '<!-- partita:projection:file '
 const blockProjectionStartPrefix = '<!-- partita:projection:start '
 const blockProjectionEndPrefix = '<!-- partita:projection:end '
 const namespaceShorthands = {
+  expression: 'ex',
+  link: 'lk',
   maintenance: 'mt',
   orientation: 'og',
   primitive: 'pm',

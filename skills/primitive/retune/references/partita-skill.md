@@ -4,7 +4,7 @@
 
 Partita family 是 source 组织方式和 routing 约定。
 
-- target skill 可以是 direct、primitive、orientation 或 maintenance source skill。
+- target skill 可以是 direct、expression、link、primitive、orientation 或 maintenance source skill。
 - source family 决定 dispatcher handle。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。

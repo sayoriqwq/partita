@@ -1,6 +1,0 @@
-interface:
-  display_name: "Pin"
-  short_description: "Pin an upstream repo source with provenance"
-  default_prompt: "Use $pin to materialize or audit a repo-source pin with locator, pinned ref, update path, and verification."
-policy:
-  allow_implicit_invocation: true

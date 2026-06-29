@@ -58,11 +58,11 @@ Hard:
 ## Workflow
 
 1. 读取真实 case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
-2. 读取 [skill creation](references/skill-creation.md)，确定 default failure、pressure 和 governance action。
+2. 读取 [skill creation](references/skill-creation.md)，按 information collection flow 补齐 creation fields。
 3. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
 4. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy、dispatcher 和 checks。
 5. 确认目标不是 public workflow skill 或已有 skill patch；否则路由到 `conduct` 或 `retune`。
-6. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
+6. 使用 [skill creation](references/skill-creation.md) 中的可复制模板创建 `SKILL.md`；创建可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 7. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 
 ## References
@@ -77,7 +77,8 @@ Hard:
 Before done:
 
 - 输入是真实 case，或材料不足已被打回；
-- 创建文件前，default failure、pressure、governance action、target runtime shape 和本地概念定义已明确；
+- 创建文件前，default failure、pressure、governance action、target runtime shape、本地概念定义、trigger/use boundary/effects/workflow/validation 已明确；
+- `SKILL.md` 使用了本地可复制模板，且 marker 没有被写成 Conversation effect 的 optional display；
 - 创建的 OpenAI/Codex skill 满足 target shape；
 - Partita landing 中创建的是 `policy.allow_implicit_invocation: false` 的 primitive source skill；
 - `notate` 没有创建 public workflow skill、已有 skill patch、无真实 case 的外部迁移或 verifier implementation；

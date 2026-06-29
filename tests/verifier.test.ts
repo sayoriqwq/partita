@@ -153,6 +153,10 @@ describe('Partita verifier', () => {
   it.effect('accepts supported namespace skill handles', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
+      write(root, 'skills/expression/density/SKILL.md', validSkill().replace('name: demo', 'name: density').replace('🧭', '💬'))
+      write(root, 'skills/expression/density/agents/openai.yaml', validOpenAiMetadata())
+      write(root, 'skills/link/pin/SKILL.md', validSkill().replace('name: demo', 'name: pin').replace('🧭', '🔗'))
+      write(root, 'skills/link/pin/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/orientation/argue/SKILL.md', validSkill().replace('name: demo', 'name: argue'))
       write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/maintenance/reconcile/SKILL.md', validSkill().replace('name: demo', 'name: reconcile'))
@@ -166,6 +170,8 @@ describe('Partita verifier', () => {
         '| Handle | Name | Invocation | Description | File |',
         '| --- | --- | --- | --- | --- |',
         '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
+        '| ex:density | density | true | Demo skill fixture | `skills/expression/density/SKILL.md` |',
+        '| lk:pin | pin | true | Demo skill fixture | `skills/link/pin/SKILL.md` |',
         '| mt:reconcile | reconcile | true | Demo skill fixture | `skills/maintenance/reconcile/SKILL.md` |',
         '| og:argue | argue | true | Argue skill fixture | `skills/orientation/argue/SKILL.md` |',
         '| pm:notate | notate | true | Notate skill fixture | `skills/primitive/notate/SKILL.md` |',

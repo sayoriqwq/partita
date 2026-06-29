@@ -1,0 +1,6 @@
+interface:
+  display_name: "Density"
+  short_description: "使用受控高密度中文表达协议"
+  default_prompt: "使用 density 进入受控高密度中文协作，保持语义不变，并应用稳定分行、标签、术语和符号词表。"
+policy:
+  allow_implicit_invocation: false

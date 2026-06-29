@@ -9,6 +9,8 @@ const ROUTING_TABLE_END = '<!-- partita:projection:end id="routing-table" -->'
 const FILE_COPY_PROJECTION_PATTERN = /^<!-- partita:projection:file source="([^"]+)" mode="copy" -->\r?\n/u
 const DISPATCHER_RELATIVE_PATH = 'harness/skills/dispatcher.md'
 const namespaceShorthands = {
+  expression: 'ex',
+  link: 'lk',
   maintenance: 'mt',
   orientation: 'og',
   primitive: 'pm',

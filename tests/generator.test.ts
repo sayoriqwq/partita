@@ -175,6 +175,18 @@ description: "Use when alpha is needed. Not for unrelated work."
 ---
 `,
         'skills/alpha/agents/openai.yaml': openAiMetadata(false),
+        'skills/expression/density/SKILL.md': `---
+name: density
+description: "Use when density is needed. Not for unrelated prose."
+---
+`,
+        'skills/expression/density/agents/openai.yaml': openAiMetadata(false),
+        'skills/link/pin/SKILL.md': `---
+name: pin
+description: "Use when pinning external authority is needed. Not for unrelated links."
+---
+`,
+        'skills/link/pin/agents/openai.yaml': openAiMetadata(false),
         'skills/orientation/argue/SKILL.md': `---
 name: argue
 description: "Use when arguing is needed. Not for settled decisions."
@@ -198,21 +210,23 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const skills = yield* collectSkillMetadata(root)
       assert.deepStrictEqual(
         skills.map(skill => skill.name),
-        ['alpha', 'bravo', 'reconcile', 'argue', 'notate'],
+        ['alpha', 'bravo', 'density', 'pin', 'reconcile', 'argue', 'notate'],
       )
       assert.deepStrictEqual(
         skills.map(skill => skill.handle),
-        ['alpha', 'bravo', 'mt:reconcile', 'og:argue', 'pm:notate'],
+        ['alpha', 'bravo', 'ex:density', 'lk:pin', 'mt:reconcile', 'og:argue', 'pm:notate'],
       )
       assert.deepStrictEqual(
         skills.map(skill => skill.allowImplicitInvocation),
-        [false, true, false, false, false],
+        [false, true, false, false, false, false, false],
       )
       assert.strictEqual(requireElement(skills, 0).description, 'Use when alpha is needed. Not for unrelated work.')
       assert.strictEqual(requireElement(skills, 1).description, 'Use when bravo is needed. Not for unrelated work.')
-      assert.strictEqual(requireElement(skills, 2).relativePath, 'skills/maintenance/reconcile/SKILL.md')
-      assert.strictEqual(requireElement(skills, 3).relativePath, 'skills/orientation/argue/SKILL.md')
-      assert.strictEqual(requireElement(skills, 4).relativePath, 'skills/primitive/notate/SKILL.md')
+      assert.strictEqual(requireElement(skills, 2).relativePath, 'skills/expression/density/SKILL.md')
+      assert.strictEqual(requireElement(skills, 3).relativePath, 'skills/link/pin/SKILL.md')
+      assert.strictEqual(requireElement(skills, 4).relativePath, 'skills/maintenance/reconcile/SKILL.md')
+      assert.strictEqual(requireElement(skills, 5).relativePath, 'skills/orientation/argue/SKILL.md')
+      assert.strictEqual(requireElement(skills, 6).relativePath, 'skills/primitive/notate/SKILL.md')
 
       yield* writeFixtureFile(
         root,
@@ -239,6 +253,18 @@ description: "Use when demo is needed. Not for unrelated work."
 ---
 `,
         'skills/demo/agents/openai.yaml': openAiMetadata(true),
+        'skills/expression/density/SKILL.md': `---
+name: density
+description: "Use when density is needed. Not for unrelated prose."
+---
+`,
+        'skills/expression/density/agents/openai.yaml': openAiMetadata(false),
+        'skills/link/pin/SKILL.md': `---
+name: pin
+description: "Use when pinning external authority is needed. Not for unrelated links."
+---
+`,
+        'skills/link/pin/agents/openai.yaml': openAiMetadata(false),
         'skills/orientation/argue/SKILL.md': `---
 name: argue
 description: "Use when arguing is needed. Not for settled decisions."
@@ -273,6 +299,8 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const dispatcher = yield* fs.readFileString(joinPath(root, 'harness', 'skills', 'dispatcher.md'))
       assert.include(dispatcher, '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->')
       assert.include(dispatcher, '| demo | demo | true | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
+      assert.include(dispatcher, '| ex:density | density | false | Use when density is needed. Not for unrelated prose. | `skills/expression/density/SKILL.md` |')
+      assert.include(dispatcher, '| lk:pin | pin | false | Use when pinning external authority is needed. Not for unrelated links. | `skills/link/pin/SKILL.md` |')
       assert.include(dispatcher, '| mt:reconcile | reconcile | false | Use when reconciling completed work is needed. Not for ordinary review. | `skills/maintenance/reconcile/SKILL.md` |')
       assert.include(dispatcher, '| og:argue | argue | false | Use when arguing is needed. Not for settled decisions. | `skills/orientation/argue/SKILL.md` |')
       assert.include(dispatcher, '| pm:notate | notate | false | Use when notating a skill is needed. Not for local retuning. | `skills/primitive/notate/SKILL.md` |')

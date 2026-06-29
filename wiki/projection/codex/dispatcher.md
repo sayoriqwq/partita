@@ -21,6 +21,8 @@ Handle | Name | Invocation | Description | File
 
 `Invocation` projects `policy.allow_implicit_invocation` as `true` or `false`.
 
+The `expression` source namespace projects to `ex:<name>` handles.
+The `link` source namespace projects to `lk:<name>` handles.
 The `orientation` source namespace projects to `og:<name>` handles.
 The `maintenance` source namespace projects to `mt:<name>` handles.
 The `primitive` source namespace projects to `pm:<name>` handles.

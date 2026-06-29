@@ -27,7 +27,9 @@ discoverable from `SKILL.md`. `scripts/` and `assets/` are bundled resources and
 may contain implementation or output files.
 
 Supported namespace roots under `skills/` are verifier-owned. Current
-namespaces: `orientation`, the request-orientation source family projected as
+namespaces: `expression`, the expression protocol source family projected as
+`ex:<name>`; `link`, the external authority link source family projected as
+`lk:<name>`; `orientation`, the request-orientation source family projected as
 `og:<name>`; `maintenance`, the cleanup and residue source family projected as
 `mt:<name>`; and `primitive`, the Partita-managed base source family projected
 as `pm:<name>`.

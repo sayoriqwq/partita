@@ -8,8 +8,9 @@
 
 The framework supports a zero-skill baseline. The current customization defines
 user-owned Partita skills under direct skill paths and supported namespace paths
-such as `skills/orientation/<name>/SKILL.md` and
-`skills/maintenance/<name>/SKILL.md`, and `skills/primitive/<name>/SKILL.md`.
+such as `skills/expression/<name>/SKILL.md`, `skills/link/<name>/SKILL.md`,
+`skills/orientation/<name>/SKILL.md`, `skills/maintenance/<name>/SKILL.md`, and
+`skills/primitive/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -21,8 +22,9 @@ This repo owns:
 - canonical wiki nodes shared across future skills;
 - verifier skeleton;
 - user-defined skills under direct skill paths and supported namespace paths
-  such as `skills/orientation/<name>/SKILL.md` and
-  `skills/maintenance/<name>/SKILL.md`, and `skills/primitive/<name>/SKILL.md`.
+  such as `skills/expression/<name>/SKILL.md`, `skills/link/<name>/SKILL.md`,
+  `skills/orientation/<name>/SKILL.md`, `skills/maintenance/<name>/SKILL.md`,
+  and `skills/primitive/<name>/SKILL.md`.
 
 This repo does not own:
 
@@ -47,8 +49,10 @@ This repo does not own:
   `harness/skills/dispatcher.md`, not under `skills/`.
 - `partita` is the product and plugin name, not a skill prefix. Source
   namespaces project dispatcher handles while frontmatter and global Codex
-  installation stay flat: `orientation` projects as `og:<name>`, `maintenance`
-  projects as `mt:<name>`, and `primitive` projects as `pm:<name>`.
+  installation stay flat: `expression` projects as `ex:<name>`, `link`
+  projects as `lk:<name>`, `orientation` projects as `og:<name>`,
+  `maintenance` projects as `mt:<name>`, and `primitive` projects as
+  `pm:<name>`.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
@@ -61,6 +65,13 @@ This repo does not own:
   `skills/orientation/<name>/SKILL.md` and
   `skills/orientation/<name>/agents/openai.yaml`, run `pnpm generate`, then run
   `pnpm verify`.
+- If a new expression protocol skill is added, create
+  `skills/expression/<name>/SKILL.md` and
+  `skills/expression/<name>/agents/openai.yaml`, run `pnpm generate`, then run
+  `pnpm verify`.
+- If a new external authority link skill is added, create
+  `skills/link/<name>/SKILL.md` and `skills/link/<name>/agents/openai.yaml`,
+  run `pnpm generate`, then run `pnpm verify`.
 - If a new maintenance skill is added, create
   `skills/maintenance/<name>/SKILL.md` and
   `skills/maintenance/<name>/agents/openai.yaml`, run `pnpm generate`, then run

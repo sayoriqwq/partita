@@ -6,6 +6,8 @@ Partita family 是 source 组织方式和 routing 约定。
 
 - public workflow skills 使用 `skills/` 下受支持的 direct skill path。
 - internal primitive skills 使用 `skills/primitive/<name>/`。
+- expression protocol skills 使用 `skills/expression/<name>/`。
+- external authority link skills 使用 `skills/link/<name>/`。
 - orientation skills 使用 `skills/orientation/<name>/`。
 - maintenance skills 使用 `skills/maintenance/<name>/`。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
@@ -40,6 +42,10 @@ side-effect risk 高的 workflow skill SHOULD 默认使用 `false`。
 dispatcher 是 Partita harness routing mechanism。
 
 dispatcher 将 Partita source skills 映射到 runtime handles，并暴露 invocation policy。
+
+expression source skills 映射到 `ex:<name>`。
+
+link source skills 映射到 `lk:<name>`。
 
 maintenance source skills 映射到 `mt:<name>`。
 
