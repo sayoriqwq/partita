@@ -7,7 +7,7 @@ Use this worker configuration when delegating focused Effect implementation or r
 - Target repo instructions and current task.
 - `.prelude/providers/effect-harness/provider.json` for prelude-managed targets.
 - `.effect-harness.json` only for standalone CLI compatibility.
-- `.codex/skills/effect-harness/effect-code/SKILL.md`.
+- `.codex/skills/effect-code/SKILL.md`.
 - `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`.
 - `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`.
 - Patched `tsgo --noEmit` diagnostics.
@@ -17,7 +17,7 @@ Use this worker configuration when delegating focused Effect implementation or r
 - Implement or review Effect code against the pinned official guide.
 - Prefer official source and diagnostics over memory.
 - Keep target business logic in the target repo.
-- Report reusable harness gaps through `.codex/skills/effect-harness/effect-feedback`.
+- Report reusable harness gaps through `.codex/skills/effect-feedback`.
 - Report changed files and verification output to the parent agent.
 
 ## Hard Stops

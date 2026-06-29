@@ -11,7 +11,9 @@ The repository owns:
 
 - Codex plugin metadata under `.codex-plugin/plugin.json`;
 - source skill files under direct skill paths and supported namespace paths such
-  as `skills/primitive/<name>/SKILL.md`;
+  as `skills/orientation/<name>/SKILL.md`,
+  `skills/maintenance/<name>/SKILL.md`, and
+  `skills/primitive/<name>/SKILL.md`;
 - generated dispatcher metadata under `harness/skills/dispatcher.md`;
 - TypeScript/Effect generation, verification, and install code under
   `src/partita/`;

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Land"
+  short_description: "阻断 v1 落地前的 scope expansion"
+  default_prompt: "使用 og:land 维持当前 v1 landing gate，先阻断 expand 或 switch，再让用户选择。"
+policy:
+  allow_implicit_invocation: false

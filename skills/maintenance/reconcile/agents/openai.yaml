@@ -1,0 +1,6 @@
+interface:
+  display_name: "Reconcile"
+  short_description: "清理阶段结束后的 garbage state"
+  default_prompt: "使用 mt:reconcile 在阶段验证闭环后先审计 residue 和 garbage state，再按批准范围清理。"
+policy:
+  allow_implicit_invocation: false

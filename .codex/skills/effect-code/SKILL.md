@@ -28,8 +28,7 @@ business decisions that do not require Effect guidance.
 
 - Target repo instructions and current code shape come first.
 - Official pinned source beats local memory.
-- Delegate focused Effect implementation or review with `.codex/agents/effect-harness/effect-worker.md`
-  when a subagent is useful.
+- Delegate focused Effect implementation or review with `.codex/agents/effect-worker.md` when a subagent is useful.
 - Keep target business logic in the target repo; only reusable harness gaps go to feedback.
 
 ## Hard Boundary
@@ -56,8 +55,8 @@ business decisions that do not require Effect guidance.
    `Effect.satisfiesSuccessType`, or `Function.satisfies`.
 6. Pass `Effect.fn` transforms as extra arguments to `Effect.fn(...)`; do not `.pipe(...)` transforms onto
    an `Effect.fn` declaration.
-7. If delegating to an Effect subagent, give it `.codex/agents/effect-harness/effect-worker.md`, the
-   target task, and the relevant files/tests; require it to report changed files and verification.
+7. If delegating to an Effect subagent, give it `.codex/agents/effect-worker.md`, the target task, and the
+   relevant files/tests; require it to report changed files and verification.
 
 ## Validation
 

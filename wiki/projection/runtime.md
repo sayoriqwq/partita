@@ -9,8 +9,9 @@ Partita harness projection surfaces include `harness/skills/dispatcher.md`,
 `.codex-plugin/plugin.json`, `package.json` metadata, and the Partita verifier.
 
 Runtime installation may flatten skill directories by frontmatter name. Source
-families such as `skills/orientation/<name>` and `skills/primitive/<name>` are
-maintained in the repository and harness dispatcher projection; they are not required to
-appear as nested global install paths.
+families such as `skills/orientation/<name>`, `skills/maintenance/<name>`, and
+`skills/primitive/<name>` are maintained in the repository and harness
+dispatcher projection; they are not required to appear as nested global install
+paths.
 
 See [[projection/codex/index]].

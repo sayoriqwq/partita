@@ -10,6 +10,7 @@ dispatcher 将 source skills 映射到 runtime handles：
 
 - `skills/primitive/<name>/` 映射到 `pm:<name>`。
 - `skills/orientation/<name>/` 映射到 `og:<name>`。
+- `skills/maintenance/<name>/` 映射到 `mt:<name>`。
 - direct `skills/<name>/` 映射到 `<name>`。
 - generated output 是 `harness/skills/dispatcher.md`。
 

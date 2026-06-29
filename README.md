@@ -61,7 +61,8 @@ discovers nested source skills, but installs them by their `name` frontmatter.
 For example, `skills/primitive/notate/SKILL.md` installs as the global skill
 `notate`. The source family remains `primitive`, and Partita's dispatcher handle
 remains `pm:notate`. `skills/orientation/argue/SKILL.md` installs as `argue`
-and projects as `og:argue`.
+and projects as `og:argue`. `skills/maintenance/reconcile/SKILL.md` installs as
+`reconcile` and projects as `mt:reconcile`.
 
 `skills/` 是 skill source input。它后续可以被拆成独立 skill 族再 pin 回
 Partita；dispatcher 仍由 Partita harness 生成在 `harness/skills/dispatcher.md`。
@@ -85,6 +86,9 @@ skills/<name>/{scripts,references,assets}/...
 skills/orientation/<name>/SKILL.md
 skills/orientation/<name>/agents/openai.yaml
 skills/orientation/<name>/{scripts,references,assets}/...
+skills/maintenance/<name>/SKILL.md
+skills/maintenance/<name>/agents/openai.yaml
+skills/maintenance/<name>/{scripts,references,assets}/...
 skills/primitive/<name>/SKILL.md
 skills/primitive/<name>/agents/openai.yaml
 skills/primitive/<name>/{scripts,references,assets}/...
@@ -113,8 +117,8 @@ the policy key must live under the `policy` block.
 
 `partita` is the product and plugin name, not a skill prefix. Source namespaces
 project dispatcher handles while frontmatter and global installed skills keep
-the short skill name: `orientation` projects as `og:<name>`, and `primitive`
-projects as `pm:<name>`.
+the short skill name: `orientation` projects as `og:<name>`, `maintenance`
+projects as `mt:<name>`, and `primitive` projects as `pm:<name>`.
 
 `harness/skills/dispatcher.md` is generated from `skills/` source
 `SKILL.md` frontmatter and `agents/openai.yaml`. Its routing table projects

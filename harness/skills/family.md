@@ -8,6 +8,7 @@ Partita `skill family` 是 Partita-managed skills 的 source 组织方式和 rou
 
 - `skills/primitive/<name>/` 存放 Partita-managed primitive source skills。
 - `skills/orientation/<name>/` 存放 Partita-managed orientation source skills。
+- `skills/maintenance/<name>/` 存放 Partita-managed maintenance source skills。
 - direct `skills/<name>/` 存放 supported public 或 standalone source skills。
 
 ## Rules
@@ -16,6 +17,7 @@ Partita `skill family` 是 Partita-managed skills 的 source 组织方式和 rou
 - `skills/` 后续可以拆成独立 skill 族并 pin 回 Partita。
 - `skills/primitive/*` 是 Partita source family，不是 primitive skill 的 portable 定义。
 - `skills/orientation/*` 是 Partita source family，不是 OpenAI target requirement。
+- `skills/maintenance/*` 是 Partita source family，不是 OpenAI target requirement。
 - source family 决定 dispatcher handle prefix。
 - global Codex 安装是扁平目录；family folders 只是 Partita source 组织方式。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。

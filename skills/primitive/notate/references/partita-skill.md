@@ -6,6 +6,7 @@ Partita family 是 source 组织方式和 routing 约定。
 
 - `skills/primitive/<name>/` 存放 Partita-managed primitive source skills。
 - `skills/orientation/<name>/` 存放 Partita-managed orientation source skills。
+- `skills/maintenance/<name>/` 存放 Partita-managed maintenance source skills。
 - direct `skills/<name>/` 存放 supported public 或 standalone source skills。
 - `skills/primitive/*` 是 Partita source family，不是 primitive skill 的 portable 定义。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。
@@ -44,6 +45,7 @@ dispatcher 将 Partita source skills 映射到 runtime handles：
 
 - `skills/primitive/<name>/` 映射到 `pm:<name>`。
 - `skills/orientation/<name>/` 映射到 `og:<name>`。
+- `skills/maintenance/<name>/` 映射到 `mt:<name>`。
 - direct `skills/<name>/` 映射到 `<name>`。
 
 dispatcher generated output 位于 `harness/skills/dispatcher.md`，不是 `skills/` 内容。

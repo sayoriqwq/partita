@@ -19,9 +19,10 @@ V1 body section order is:
 
 Source namespaces come from path structure, not frontmatter. For example,
 `skills/orientation/argue/SKILL.md` keeps `name: argue` and projects to
-`og:argue`; `skills/primitive/notate/SKILL.md` keeps `name: notate` and
-projects to `pm:notate`.
+`og:argue`; `skills/maintenance/reconcile/SKILL.md` keeps `name: reconcile`
+and projects to `mt:reconcile`; `skills/primitive/notate/SKILL.md` keeps
+`name: notate` and projects to `pm:notate`.
 
 Codex global skill installation is flat. The same source skill installs as
-`argue` or `notate`; `orientation` and `primitive` remain Partita source
-families, not global install directories.
+`argue`, `reconcile`, or `notate`; `orientation`, `maintenance`, and
+`primitive` remain Partita source families, not global install directories.

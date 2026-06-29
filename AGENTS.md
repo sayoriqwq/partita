@@ -9,7 +9,7 @@
 The framework supports a zero-skill baseline. The current customization defines
 user-owned Partita skills under direct skill paths and supported namespace paths
 such as `skills/orientation/<name>/SKILL.md` and
-`skills/primitive/<name>/SKILL.md`.
+`skills/maintenance/<name>/SKILL.md`, and `skills/primitive/<name>/SKILL.md`.
 
 ## Boundaries
 
@@ -22,7 +22,7 @@ This repo owns:
 - verifier skeleton;
 - user-defined skills under direct skill paths and supported namespace paths
   such as `skills/orientation/<name>/SKILL.md` and
-  `skills/primitive/<name>/SKILL.md`.
+  `skills/maintenance/<name>/SKILL.md`, and `skills/primitive/<name>/SKILL.md`.
 
 This repo does not own:
 
@@ -47,8 +47,8 @@ This repo does not own:
   `harness/skills/dispatcher.md`, not under `skills/`.
 - `partita` is the product and plugin name, not a skill prefix. Source
   namespaces project dispatcher handles while frontmatter and global Codex
-  installation stay flat: `orientation` projects as `og:<name>`, and
-  `primitive` projects as `pm:<name>`.
+  installation stay flat: `orientation` projects as `og:<name>`, `maintenance`
+  projects as `mt:<name>`, and `primitive` projects as `pm:<name>`.
 - Executable setup, sync, and verification mechanisms belong to the owning
   harness or CLI repo. Partita skills may call those mechanisms, but should not
   reimplement them as prose.
@@ -60,6 +60,10 @@ This repo does not own:
 - If a new request-orientation skill is added, create
   `skills/orientation/<name>/SKILL.md` and
   `skills/orientation/<name>/agents/openai.yaml`, run `pnpm generate`, then run
+  `pnpm verify`.
+- If a new maintenance skill is added, create
+  `skills/maintenance/<name>/SKILL.md` and
+  `skills/maintenance/<name>/agents/openai.yaml`, run `pnpm generate`, then run
   `pnpm verify`.
 - If a new Partita-managed base skill is added, create
   `skills/primitive/<name>/SKILL.md` and
@@ -90,9 +94,9 @@ Before writing non-trivial Effect code, read:
 
 Runtime skills and agents installed by the harness:
 
-- Use `.codex/skills/effect-harness/effect-code/SKILL.md` for Effect implementation and review.
-- Use `.codex/skills/effect-harness/effect-feedback/SKILL.md` for reusable target feedback.
-- Use `.codex/agents/effect-harness/effect-worker.md` when delegating focused Effect subagent work.
+- Use `.codex/skills/effect-code/SKILL.md` for Effect implementation and review.
+- Use `.codex/skills/effect-feedback/SKILL.md` for reusable target feedback.
+- Use `.codex/agents/effect-worker.md` when delegating focused Effect subagent work.
 
 Use:
 

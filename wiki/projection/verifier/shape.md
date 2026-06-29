@@ -28,7 +28,8 @@ may contain implementation or output files.
 
 Supported namespace roots under `skills/` are verifier-owned. Current
 namespaces: `orientation`, the request-orientation source family projected as
-`og:<name>`, and `primitive`, the Partita-managed base source family projected
+`og:<name>`; `maintenance`, the cleanup and residue source family projected as
+`mt:<name>`; and `primitive`, the Partita-managed base source family projected
 as `pm:<name>`.
 
 Hard verification surfaces include generated-file checks, `partita verify`,
