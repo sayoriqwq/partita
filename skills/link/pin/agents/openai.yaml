@@ -1,6 +1,6 @@
 interface:
   display_name: "Pin"
-  short_description: "把外部 authority 以可溯源 link 接入项目"
-  default_prompt: "使用 pin 建立外部 authority 的 link contract，明确 locator、version anchor 或 unlocked、local path、update path、verify path，并只通过脚本或 CLI materialize。"
+  short_description: "把外部仓库接入为 agent 可读取 source-entry 真源"
+  default_prompt: "使用 pin 建立 source-entry contract，明确 upstream repo/branch/ref、local prefix、anchor、agent route、editor policy、ownership、update/verify command 和 import block，并通过 partita source 或 owning wrapper 验证。"
 policy:
   allow_implicit_invocation: false

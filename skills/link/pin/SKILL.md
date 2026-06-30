@@ -1,6 +1,6 @@
 ---
 name: pin
-description: "Use when the user explicitly asks to pin or link external authority or external content into the current project with provenance, version anchor or unlocked marker, update path, verify path, and script-backed materialization. Not for one-off web reading, package version pin only, UI/thread pinning, projection distribution, or copying content without a link script."
+description: "Use when the user explicitly asks to pin an external repository as a source-entry truth source for agents with upstream ref, local prefix, route, editor policy, update path, verify path, and import block. Not for temporary clones, web fetches, node_modules lookup, package-version pins, or UI/thread pinning."
 ---
 
 # Pin
@@ -9,84 +9,94 @@ description: "Use when the user explicitly asks to pin or link external authorit
 
 ## Rule
 
-面对用户要把外部 authority 或外部内容 link 进当前项目时，MUST 先建立可溯源、可更新、可验证的 link contract，并且只通过脚本或 CLI materialize、update 和 verify，避免把外部真源降级成一次性 web fetch、临时 clone 或无法维护的 copied material。
+面对用户要 `pin` 外部 repository 时，MUST 把它收敛为 source-entry pin：外部仓库是当前 repo 中 agent 可读取的真源入口，有可验证 upstream ref、本地 prefix、anchor、agent route、editor policy、update command、verify command、ownership mode 和 read-only/import block。
+
+`pin` 不是临时 clone、一次性 web fetch、`node_modules` 猜测、普通 package version pin，也不是把外部内容复制进当前项目后失去 provenance。
 
 ## Pattern
 
 Use when:
 
-- 用户显式要求 `pin` 或 link 外部项目、文档、wiki、规范、package、archive、dataset 或 source bundle。
-- 外部内容需要作为当前项目可长期引用的 authority。
-- 当前项目需要记录 upstream locator、version anchor 或 `unlocked`、local path、update path、verify path 和 ownership。
-- 已有临时 clone、下载件、URL 记录或 copied material 需要改造成可维护 link。
+- 用户显式要求 `pin`、link 或接入外部 repository 作为长期 agent source。
+- 当前项目需要把外部仓库放到本地 prefix，例如 `repos/<name>`，并让 agent 从 anchor/LLM doc 读取它。
+- 已有临时 clone、下载件、copied material 或 URL 记录需要升级为可更新、可验证的 source-entry contract。
+- 需要约束应用/测试代码不得从 source prefix import。
+- 需要把 editor auto-import、watch/search 和隐藏策略明确成 project decision。
 
 Do not use when:
 
 - 用户只是要一次性读取、比较或总结外部内容，不需要接入当前项目。
-- 请求只是 pin npm、pnpm、Docker、toolchain version，不涉及外部内容 authority。
+- 请求只是 pin npm、pnpm、Docker、toolchain 或 package version。
+- 用户要求从 `node_modules`、web cache、临时 clone 或粘贴内容推断真源。
 - `pin` 指 UI 项、线程、笔记、任务或本地工作状态。
-- 用户要做 projection 分发或 runtime copy 管理；这属于外部 projection 机制，不属于 `pin`。
-- 用户要求在没有脚本或 CLI 的情况下手工复制外部内容并宣称完成。
+- 用户要做 projection 分发或 runtime copy 管理；这属于 owning projection mechanism。
 
 ## Boundary
 
 Soft:
 
-- MUST 将 external authority 分类为 `repo`、`docs`、`package`、`archive`、`dataset`、`source-bundle` 或 `unknown`。
-- MUST 区分 external authority、local link 和 projection/copy。
-- SHOULD 优先使用当前项目已有脚本、CLI、manifest schema 或 documented update command。
-- SHOULD 只 link 外部真源和必要 metadata，不顺手整理、改写或吸收外部内容语义。
-- SHOULD 保留外部项目自己的 ownership，不把外部材料改写成当前项目原创材料。
+- SHOULD 优先使用 `partita source plan`、`partita source status` 和 `partita source verify` 表达通用 source-entry contract。
+- SHOULD 让 target repo 的脚本保持短，只调用 Partita CLI 或 owning domain wrapper。
+- SHOULD 将 domain-specific 语义留给 owning harness；Partita 只表达通用 source-entry 字段和 hard blocks。
+- SHOULD 检测现有 `.vscode/` 和 `.zed/`，存在什么维护什么；两者 settings shape 分开处理。
+- SHOULD 把 watch/search exclude 作为明确 decision；大仓库通常选择启用或保留为推荐状态。
+- SHOULD 把 `files.exclude` 或 Zed file-scan 隐藏视为偏好项，不默认写入。
 
 Hard:
 
-- When: 开始 `pin` 一个 external authority。
-  Do: MUST 明确 authority type、upstream locator、version anchor 或 `unlocked`、local path、ownership、materialization path、update path 和 verify path。
+- When: 开始 source-entry pin。
+  Do: MUST 明确 upstream repository、branch/ref、local prefix、mechanism、anchor/LLM doc、update command、verify command、agent route、editor policy、ownership mode、read-only/import block。
 
-- When: 外部 authority 没有稳定 version anchor、release id、content hash 或 pinned ref。
-  Do: MUST 标注 `unlocked`，并说明无法锁定带来的更新和复现风险。
+- When: materialization mechanism 未由项目定义。
+  Do: MUST 首选 `git-subtree`，并记录可验证 pinned ref 或 `git-subtree-split` trailer。
 
-- When: 需要 materialize、update 或 verify 外部 authority。
-  Do: MUST 使用当前项目已有脚本或 CLI；如果缺失，MUST 报告 `script-missing` blocker，并在内容 mutation 前停止。
+- When: 只有 web fetch、临时 clone、`node_modules` lookup、下载件或复制粘贴内容。
+  Do: MUST NOT 称其为 source-entry pin。
 
-- When: 当前 repo 或外部 checkout 存在 dirty state。
-  Do: MUST NOT 在未报告并获得批准前修改相关工作树。
+- When: editor policy 未决。
+  Do: MUST 默认阻断 auto-import；MUST 把 watch/search exclude 作为明确 decision；MUST NOT 默认隐藏 repo。
 
-- When: 只有一次性 web fetch、临时下载、临时 clone 或复制粘贴内容。
-  Do: MUST NOT 称其为 `pin`。
+- When: 需要 materialize、update 或 verify source entry。
+  Do: MUST 使用 Partita CLI、当前项目已有 wrapper 或 owning harness command；MUST NOT 把大段脚本塞进 target repo。
 
-- When: projection/copy 从 local link 派生。
-  Do: MUST NOT 让 projection/copy 反向成为真源。
+- When: 当前 repo 是 prelude-managed target。
+  Do: MUST NOT direct write 绕过 prelude lifecycle；使用 provider/prelude-maintain ownership mode 或停止报告 blocker。
+
+- When: 应用或测试代码从 source prefix import。
+  Do: MUST hard block；source entry 是 agent reference，不是 application dependency。
 
 ## Effects
 
-- Conversation: MAY 展示 authority type、link contract、`unlocked` 风险、`script-missing` blocker 和验证结果。
-- Filesystem: MAY 在批准 scope 内写入 link contract、manifest 或由脚本/CLI materialize 的内容；MUST NOT 手工复制外部内容来绕过脚本要求。
-- External: MAY 通过 git、HTTP 或官方 source command 读取外部 authority 的 locator、version anchor 和 metadata；materialize、update 和 verify MUST 走脚本或 CLI。
+- Conversation: MAY 展示 source-entry contract、缺失 decisions、hard block issue codes、editor policy decisions 和验证结果。
+- Filesystem: MAY 在批准 scope 内写入 source-entry contract 或由 owning command materialize 的 source prefix；MUST NOT 手工复制外部 source 来绕过 command。
+- External: MAY 通过 git 或 official upstream locator 读取 ref/trailer metadata；materialize、update 和 verify MUST 走 Partita CLI 或 owning command。
 
 ## Workflow
 
-1. 解析 external authority type、upstream locator、目标 local path、ownership 和用户期望的 link 目的。
-2. 解析 version anchor；无法锁定时，MUST 标注 `unlocked`。
-3. 检查当前 repo 和相关外部 checkout 的 dirty state。
-4. 查找当前项目已有 materialize、update 和 verify 脚本或 CLI。
-5. 如果脚本或 CLI 缺失，报告 `script-missing` blocker，给出最小 link contract，并停止在内容 mutation 前。
-6. 如果脚本或 CLI 存在，记录 link contract，并通过脚本或 CLI 执行 materialize、update 和 verify。
-7. 汇报 changed files、authority type、locator、version anchor 或 `unlocked`、local path、update path、verify path 和 blocker。
+1. 确认请求是 external repository source-entry pin，而不是 temporary clone、web fetch、`node_modules` lookup 或 package version pin。
+2. 收集 upstream repository、branch/ref、local prefix、mechanism、anchor/LLM doc、agent route、ownership mode、update command 和 verify command。
+3. 决定 editor policy：auto-import exclude 默认 block；watch/search exclude 明确选择；files/repo hide 只有用户选择时启用；VSCode 和 Zed 分开处理。
+4. 运行 `partita source plan` 生成只读 contract 和 editor settings shape。
+5. 如果 target 是 prelude-managed，确认 ownership 是 `provider` 或 `prelude-maintain`，不要 direct write managed surfaces。
+6. 使用 `partita source status` 检查当前 source prefix、anchor、route、pin 和 editor state。
+7. 使用 `partita source verify` hard block source 缺失、gitlink/submodule、缺 pin ref/trailer、错误 import、缺 anchor/route 和 prelude direct write。
+8. 汇报 changed files、contract path、CLI commands、hard block 覆盖点和验证结果。
 
 ## References
 
-- 无 references。
+- `partita source plan`
+- `partita source status`
+- `partita source verify`
 
 ## Validation
 
 Before done:
 
 - 第一条用户可见行包含内联 `🔗`；
-- external authority type 已明确，或已报告材料不足；
-- upstream locator、local path、ownership、update path 和 verify path 已明确；
-- version anchor 已明确，或已标注 `unlocked`；
-- external authority、local link 和 projection/copy 没有混淆；
-- materialize、update 和 verify 使用了脚本或 CLI，或已报告 `script-missing` blocker；
-- 没有把一次性 web fetch、临时 clone、下载件或 copied material 称为 `pin`；
-- completion 报告 changed files、update path、verify path、验证结果和准确 blocker。
+- source-entry contract 明确 upstream repository、branch/ref、local prefix、mechanism、anchor/LLM doc、update command、verify command、agent route、editor policy、ownership mode 和 read-only/import block；
+- 没有把 web fetch、临时 clone、`node_modules` lookup、下载件或 copied material 称为 pin；
+- editor policy 默认阻断 auto-import，watch/search exclude 有明确 decision，files/repo hide 没有默认启用；
+- VSCode 和 Zed settings shape 已分开处理；
+- prelude-managed target 没有被 direct write 绕过；
+- 应用和测试代码没有从 source prefix import；
+- `partita source status` 或 `partita source verify` 的结果已报告，或已说明具体 blocker。
