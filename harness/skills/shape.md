@@ -2,7 +2,7 @@
 
 ## Definition
 
-Partita `SKILL.md` shape 是 Partita-managed runtime skills 的本地 section contract。
+Partita `SKILL.md` shape 是 Partita-managed runtime skills 的 local section contract。
 
 ## Sections
 

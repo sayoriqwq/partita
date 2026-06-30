@@ -10,46 +10,47 @@ const marker = '🧭'
 const requiredSourceFiles = [
   'CONTEXT.md',
   'HARNESS.md',
-  'wiki/index.md',
-  'wiki/harness/index.md',
-  'wiki/skill/index.md',
-  'wiki/skill/rule.md',
-  'wiki/skill/primitive.md',
-  'wiki/skill/orchestrator.md',
-  'wiki/skill/case/index.md',
-  'wiki/skill/case/insufficient-material.md',
-  'wiki/skill/case/pattern.md',
-  'wiki/skill/case/pressure.md',
-  'wiki/skill/governance/index.md',
-  'wiki/skill/governance/identity.md',
-  'wiki/skill/lifecycle/index.md',
-  'wiki/workflow/index.md',
-  'wiki/workflow/gate/index.md',
-  'wiki/workflow/gate/contract.md',
-  'wiki/workflow/gate/span.md',
-  'wiki/projection/index.md',
-  'wiki/projection/codex/index.md',
-  'wiki/projection/codex/description.md',
-  'wiki/projection/codex/frontmatter.md',
-  'wiki/projection/codex/openai.md',
-  'wiki/projection/codex/dispatcher.md',
-  'wiki/projection/codex/projection-marker.md',
-  'wiki/projection/codex/references.md',
-  'wiki/projection/codex/skill-md.md',
-  'wiki/projection/verifier/index.md',
-  'wiki/projection/verifier/description.md',
-  'wiki/projection/verifier/links.md',
-  'wiki/projection/verifier/metadata.md',
-  'wiki/projection/verifier/nodes.md',
-  'wiki/projection/verifier/shape.md',
-  'wiki/practice/index.md',
-  'wiki/practice/create.md',
-  'wiki/practice/patch.md',
-  'wiki/practice/audit.md',
-  'wiki/collaboration/index.md',
-  'wiki/documentation/index.md',
-  'wiki/vocabulary/index.md',
-  'wiki/vocabulary/assertion.md',
+  'packages/wiki/index.md',
+  'packages/wiki/harness/index.md',
+  'packages/wiki/skill/index.md',
+  'packages/wiki/skill/rule.md',
+  'packages/wiki/skill/primitive.md',
+  'packages/wiki/skill/orchestrator.md',
+  'packages/wiki/skill/case/index.md',
+  'packages/wiki/skill/case/insufficient-material.md',
+  'packages/wiki/skill/case/pattern.md',
+  'packages/wiki/skill/case/pressure.md',
+  'packages/wiki/skill/governance/index.md',
+  'packages/wiki/skill/governance/identity.md',
+  'packages/wiki/skill/lifecycle/index.md',
+  'packages/wiki/workflow/index.md',
+  'packages/wiki/workflow/gate/index.md',
+  'packages/wiki/workflow/gate/contract.md',
+  'packages/wiki/workflow/gate/span.md',
+  'packages/wiki/projection/index.md',
+  'packages/wiki/projection/generic.md',
+  'packages/wiki/projection/codex/index.md',
+  'packages/wiki/projection/codex/description.md',
+  'packages/wiki/projection/codex/frontmatter.md',
+  'packages/wiki/projection/codex/openai.md',
+  'packages/wiki/projection/codex/dispatcher.md',
+  'packages/wiki/projection/codex/projection-marker.md',
+  'packages/wiki/projection/codex/references.md',
+  'packages/wiki/projection/codex/skill-md.md',
+  'packages/wiki/projection/verifier/index.md',
+  'packages/wiki/projection/verifier/description.md',
+  'packages/wiki/projection/verifier/links.md',
+  'packages/wiki/projection/verifier/metadata.md',
+  'packages/wiki/projection/verifier/nodes.md',
+  'packages/wiki/projection/verifier/shape.md',
+  'packages/wiki/practice/index.md',
+  'packages/wiki/practice/create.md',
+  'packages/wiki/practice/patch.md',
+  'packages/wiki/practice/audit.md',
+  'packages/wiki/collaboration/index.md',
+  'packages/wiki/documentation/index.md',
+  'packages/wiki/vocabulary/index.md',
+  'packages/wiki/vocabulary/assertion.md',
 ] as const
 
 describe('Partita verifier', () => {
@@ -271,10 +272,11 @@ describe('Partita verifier', () => {
       write(root, 'src/partita/packager.ts', 'export {}\n')
       write(root, 'src/partita/package-verify.ts', 'export {}\n')
       write(root, 'tests/packager.test.ts', 'export {}\n')
-      write(root, 'wiki/practice/migrate.md', '# Removed migration\n')
-      write(root, 'wiki/projection/verifier/package.md', '# Removed package node\n')
+      write(root, 'packages/wiki/practice/migrate.md', '# Removed migration\n')
+      write(root, 'packages/wiki/projection/verifier/package.md', '# Removed package node\n')
       mkdirSync(join(root, 'rules'), { recursive: true })
       mkdirSync(join(root, 'theory'), { recursive: true })
+      mkdirSync(join(root, 'wiki'), { recursive: true })
 
       const report = yield* verifySourceProject({ root })
       const codes = report.issues.map(issue => issue.code)
@@ -309,7 +311,7 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'skills/demo/references/insufficient-material.md', [
-        '<!-- partita:projection:file source="wiki/skill/case/insufficient-material.md" mode="copy" -->',
+        '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->',
         '',
         '# stale',
       ].join('\n'))
@@ -413,7 +415,7 @@ function validSkill(): string {
 
 function sourceFileFixture(path: string): string {
   if (path === 'CONTEXT.md' || path === 'HARNESS.md') {
-    return `# ${path}\n\nRead wiki/index.md first.\n`
+    return `# ${path}\n\nRead packages/wiki/index.md first.\n`
   }
   return `# ${path}\n`
 }

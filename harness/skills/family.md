@@ -2,7 +2,7 @@
 
 ## Definition
 
-Partita `skill family` 是 Partita-managed skills 的 source 组织方式和 routing 约定。
+Partita `skill family` 是 Partita-managed skills 的 source 组织方式和 routing convention。
 
 ## Families
 
@@ -23,5 +23,5 @@ Partita `skill family` 是 Partita-managed skills 的 source 组织方式和 rou
 - `skills/orientation/*` 是 Partita source family，不是 OpenAI target requirement。
 - `skills/maintenance/*` 是 Partita source family，不是 OpenAI target requirement。
 - source family 决定 dispatcher handle prefix。
-- global Codex 安装是扁平目录；family folders 只是 Partita source 组织方式。
+- global Codex 安装是 flat 的；family folders 只是 Partita source 组织方式。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。

@@ -22,10 +22,10 @@ Dispatcher 是 Partita harness 从当前 `skills/` source 生成的 routing inde
 | pm:score | score | true | Use when creating or modifying Markdown docs that should follow sayoriqwq-style Markdown writing preferences. Not for non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching. | `skills/primitive/score/SKILL.md` |
 <!-- partita:projection:end id="routing-table" -->
 
-## How This Works
+## 运行方式
 
 1. 读取用户消息。
 2. 如果 routing table 有匹配 skill，读取该 skill file。
 3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
 
-Skills 只手动串联，不自动链式触发。
+skills 只手动串联，不自动链式触发。

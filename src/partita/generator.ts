@@ -1,12 +1,16 @@
 import type { GeneratedFile, GeneratedFileCheckResult, GeneratedFileWriteResult, JsonObject, PluginManifest, SkillMetadata } from './model.ts'
 
+import {
+  fileCopyProjectionSource,
+  renderFileCopyProjection,
+  routingTableEnd as ROUTING_TABLE_END,
+  routingTableStart as ROUTING_TABLE_START,
+  validProjectionSource,
+} from '@partita/generic-projection'
 import { Effect, FileSystem } from 'effect'
 import { readSkillFrontmatter } from './frontmatter.ts'
 import { PartitaGeneratorError } from './model.ts'
 
-const ROUTING_TABLE_START = '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->'
-const ROUTING_TABLE_END = '<!-- partita:projection:end id="routing-table" -->'
-const FILE_COPY_PROJECTION_PATTERN = /^<!-- partita:projection:file source="([^"]+)" mode="copy" -->\r?\n/u
 const DISPATCHER_RELATIVE_PATH = 'harness/skills/dispatcher.md'
 const namespaceShorthands = {
   expression: 'ex',
@@ -35,13 +39,13 @@ Dispatcher 是 Partita harness 从当前 \`skills/\` source 生成的 routing in
 ${ROUTING_TABLE_START}
 ${ROUTING_TABLE_END}
 
-## How This Works
+## 运行方式
 
 1. 读取用户消息。
 2. 如果 routing table 有匹配 skill，读取该 skill file。
 3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
 
-Skills 只手动串联，不自动链式触发。
+skills 只手动串联，不自动链式触发。
 `
 
 function failGenerator(path: string, message: string) {
@@ -63,10 +67,6 @@ function parentPath(path: string): string {
     return index === 0 ? '/' : '.'
   }
   return path.slice(0, index)
-}
-
-function fileCopyProjectionHeader(source: string): string {
-  return `<!-- partita:projection:file source="${source}" mode="copy" -->`
 }
 
 const renderJson = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`
@@ -281,6 +281,7 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
 
   return {
     dependencies: {
+      '@partita/generic-projection': 'workspace:*',
       'effect': yield* requireString(baseline, manifestPath, 'effect'),
       '@effect/platform-node': yield* requireString(baseline, manifestPath, '@effect/platform-node'),
     },
@@ -293,11 +294,12 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
       '@typescript/native-preview': yield* requireString(baseline, manifestPath, '@typescript/native-preview'),
       'eslint': '^10.3.0',
       'knip': '^6.12.0',
+      'turbo': '^2.10.1',
       'typescript': '^6.0.3',
       'vitest': '^4.1.8',
     },
     scripts: {
-      'build': 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js',
+      'build': 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js',
       'effect:status': yield* requireString(commands, manifestPath, 'status'),
       'effect:verify': yield* requireString(commands, manifestPath, 'verify'),
       'generate': 'pnpm build && node dist/bin/partita.js generate',
@@ -306,10 +308,10 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
       'install:codex-skill': 'pnpm build && node dist/bin/partita.js install codex-skill',
       'knip': 'knip',
       'link:global': 'pnpm build && pnpm link --global',
-      'lint': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" --no-error-on-unmatched-pattern',
-      'lint:fix': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" --fix --no-error-on-unmatched-pattern',
-      'test': 'vitest run',
-      'typecheck': 'tsgo --noEmit',
+      'lint': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --no-error-on-unmatched-pattern',
+      'lint:fix': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --fix --no-error-on-unmatched-pattern',
+      'test': 'turbo run build --filter=@partita/generic-projection && vitest run',
+      'typecheck': 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit',
       'verify': 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify',
     },
   } satisfies JsonObject
@@ -323,6 +325,7 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
     description: 'CLI-backed Codex skill harness for user-defined workflow skills.',
     author: 'sayori',
     private: true,
+    packageManager: 'pnpm@11.7.0',
     license: 'MIT',
     bin: {
       partita: 'dist/bin/partita.js',
@@ -335,8 +338,8 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
       'CONTEXT.md',
       'HARNESS.md',
       'harness',
+      'packages',
       'skills',
-      'wiki',
     ],
     ...(yield* effectHarnessPackageFields(root)),
   }
@@ -413,21 +416,13 @@ const renderFileCopyProjections = Effect.fn('renderFileCopyProjections')(functio
       files.push({
         relativePath: `${parentPath(skill.relativePath)}/references/${entry}`,
         path: targetPath,
-        content: `${fileCopyProjectionHeader(source)}\n\n${sourceText}`,
+        content: renderFileCopyProjection(source, sourceText),
       })
     }
   }
 
   return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath))
 })
-
-function fileCopyProjectionSource(text: string): string | undefined {
-  return FILE_COPY_PROJECTION_PATTERN.exec(text)?.[1]
-}
-
-function validProjectionSource(source: string): boolean {
-  return !source.startsWith('/') && !source.split('/').includes('..') && source.endsWith('.md')
-}
 
 export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* (root: string) {
   const version = yield* readPackageVersion(root)

@@ -147,15 +147,31 @@ unsupported_field: Demo routing
       const packageJson = JSON.parse(packageFile.content) as {
         bin: { partita: string }
         dependencies: Record<string, string>
+        devDependencies: Record<string, string>
         files: ReadonlyArray<string>
-        scripts: { build: string, generate: string, package?: string, verify: string }
+        packageManager: string
+        scripts: {
+          build: string
+          generate: string
+          lint: string
+          package?: string
+          test: string
+          typecheck: string
+          verify: string
+        }
       }
+      assert.strictEqual(packageJson.packageManager, 'pnpm@11.7.0')
+      assert.strictEqual(packageJson.dependencies['@partita/generic-projection'], 'workspace:*')
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
-      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'harness', 'skills', 'wiki'])
+      assert.strictEqual(packageJson.devDependencies.turbo, '^2.10.1')
+      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'harness', 'packages', 'skills'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
-      assert.strictEqual(packageJson.scripts.build, 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
+      assert.strictEqual(packageJson.scripts.build, 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
+      assert.strictEqual(packageJson.scripts.lint, 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --no-error-on-unmatched-pattern')
       assert.strictEqual(packageJson.scripts.package, undefined)
+      assert.strictEqual(packageJson.scripts.test, 'turbo run build --filter=@partita/generic-projection && vitest run')
+      assert.strictEqual(packageJson.scripts.typecheck, 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit')
       assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
@@ -323,14 +339,14 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
         '.effect-harness.json': effectHarnessManifest,
-        'wiki/skill/case/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
+        'packages/wiki/skill/case/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
 ---
 `,
         'skills/demo/agents/openai.yaml': openAiMetadata(false),
-        'skills/demo/references/insufficient-material.md': '<!-- partita:projection:file source="wiki/skill/case/insufficient-material.md" mode="copy" -->\n',
+        'skills/demo/references/insufficient-material.md': '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->\n',
       })
       const fs = yield* FileSystem.FileSystem
 
@@ -351,7 +367,7 @@ description: "Use when demo is needed. Not for unrelated work."
       const projected = yield* fs.readFileString(joinPath(root, 'skills', 'demo', 'references', 'insufficient-material.md'))
       assert.strictEqual(
         projected,
-        '<!-- partita:projection:file source="wiki/skill/case/insufficient-material.md" mode="copy" -->\n\n# 材料不足\n\nMUST 打回。\n',
+        '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->\n\n# 材料不足\n\nMUST 打回。\n',
       )
 
       const checks = yield* checkGeneratedFiles(root)

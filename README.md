@@ -1,29 +1,30 @@
 # Partita
 
-`partita` is a CLI-backed Codex skill harness for user-defined workflow skills.
+`partita` 是 CLI-backed Codex skill harness，用来维护用户定义的 workflow skills。
 
-Zero skills remains a valid framework state, but the current customization
-defines the user's Partita skill domain.
+zero-skill 仍然是合法 framework state。
 
-## Current State
+当前定制定义 sayori 拥有的 Partita skill domain。
 
-- Codex plugin metadata: present.
-- User-defined skills: read from direct or namespaced `SKILL.md` frontmatter
-  under `skills/`.
-- Dispatcher: generated as a harness-owned routing index, not as skill content.
-- Executable maintenance is moving to the TypeScript/Effect `partita` CLI.
+## State
 
-## Repository Map
+- Codex plugin metadata 由 `.codex-plugin/plugin.json` 承载。
+- user-defined skills 从 `skills/` 下的 direct 或 namespaced `SKILL.md` frontmatter 读取。
+- dispatcher 是 harness-owned routing index，不是 skill content。
+- `packages/wiki/` 是 canonical semantic content。
+- `packages/generic-projection/` 是 repo 内部通用 projection helper。
+- generation、verification 和 local install 由 TypeScript/Effect `partita` CLI 执行。
 
-- `.codex-plugin/plugin.json` is the generated Codex plugin manifest.
-- `CONTEXT.md` maps the repository context to wiki nodes.
-- `HARNESS.md` maps harness operations to wiki nodes.
-- `harness/skills/dispatcher.md` is the generated harness dispatcher reference.
-- `bin/partita.ts` is the TypeScript/Effect CLI entrypoint.
-- `src/partita/` owns generation, verification, and local install behavior.
-- `wiki/` is the canonical Partita knowledge base for harness, skill,
-  workflow, projection, practice, collaboration, documentation, and vocabulary
-  nodes.
+## Map
+
+- `.codex-plugin/plugin.json` 是生成的 Codex plugin manifest。
+- `CONTEXT.md` 把 repository context 映射到 wiki nodes。
+- `HARNESS.md` 把 harness operations 映射到 wiki nodes。
+- `harness/skills/dispatcher.md` 是生成的 harness dispatcher reference。
+- `bin/partita.ts` 是 TypeScript/Effect CLI entrypoint。
+- `src/partita/` 负责 Partita-specific generation、verification、routing 和 install。
+- `packages/generic-projection/` 负责通用 projection marker、file copy 和 block marker helper。
+- `packages/wiki/` 负责 harness、skill、workflow、projection、practice、collaboration、documentation 和 vocabulary nodes。
 
 ## Commands
 
@@ -34,52 +35,67 @@ pnpm verify
 pnpm link:global
 ```
 
-## Install Locally
+## Projection
 
-Partita's local install path syncs skills from `./skills` globally first, then
-maps this repo into the personal Codex plugin marketplace:
+`generic projection` 是内部机制，不是独立产品名。
+
+`generic projection` 只处理通用 projection shape：marker parsing、file copy、block marker 和 drift comparison。
+
+Partita-specific routing、skill family handle、Codex plugin metadata 和 install policy 仍由 `src/partita/` 负责。
+
+`wiki/` 根目录不再存在；wiki source 位于 `packages/wiki/`。
+
+## Install
+
+Partita 的 local install 会先把 `./skills` 同步到 global skills，再把本 repo 映射到 personal Codex plugin marketplace：
 
 ```bash
 pnpm install:codex-skill
 pnpm install:codex-plugin
 ```
 
-Open a new Codex thread after installing so global skills are reloaded. The
-local marketplace maps `~/plugins/partita` back to this repo, so source edits
-stay in one place.
+安装后需要打开新的 Codex thread，让 global skills 重新加载。
 
-To run only the global sync:
+local marketplace 会把 `~/plugins/partita` 映射回本 repo，因此 source edits 仍保留在同一处。
+
+只运行 global sync 时使用：
 
 ```bash
 pnpm install:codex-skill
 ```
 
-`pnpm install:codex-plugin` maps the local plugin marketplace entry.
+`pnpm install:codex-plugin` 映射 local plugin marketplace entry。
 
-Codex global skill installation is flat: `npx skills add ./skills --full-depth`
-discovers nested source skills, but installs them by their `name` frontmatter.
-For example, `skills/primitive/notate/SKILL.md` installs as the global skill
-`notate`. The source family remains `primitive`, and Partita's dispatcher handle
-remains `pm:notate`. `skills/orientation/argue/SKILL.md` installs as `argue`
-and projects as `og:argue`. `skills/maintenance/reconcile/SKILL.md` installs as
-`reconcile` and projects as `mt:reconcile`. `skills/expression/density/SKILL.md`
-installs as `density` and projects as `ex:density`. `skills/link/pin/SKILL.md`
-installs as `pin` and projects as `lk:pin`.
+Codex global skill installation 是 flat 的：`npx skills add ./skills --full-depth` 会发现 nested source skills，但会按 `name` frontmatter 安装。
+
+例如，`skills/primitive/notate/SKILL.md` 安装为 global skill `notate`。source family 仍是 `primitive`，Partita dispatcher handle 仍是 `pm:notate`。
+
+`skills/orientation/argue/SKILL.md` 安装为 `argue`，投影为 `og:argue`。
+
+`skills/maintenance/reconcile/SKILL.md` 安装为 `reconcile`，投影为 `mt:reconcile`。
+
+`skills/expression/density/SKILL.md` 安装为 `density`，投影为 `ex:density`。
+
+`skills/link/pin/SKILL.md` 安装为 `pin`，投影为 `lk:pin`。
 
 `skills/` 是 skill source input。它后续可以被拆成独立 skill 族再 pin 回
 Partita；dispatcher 仍由 Partita harness 生成在 `harness/skills/dispatcher.md`。
 
-## Adding A Skill
+## Skill
 
-Only add a skill after the user defines the workflow.
+只有在用户明确 skill behavior 后，才能新增 skill。
 
-Read `wiki/practice/create.md` before writing a new skill. Use
-`pm:notate` for internal primitive skill creation, `pm:conduct` for public
-workflow skill creation, and `pm:retune` only for patching an existing valid
-skill from a real case. The current `SKILL.md` body shape is documented in
-`wiki/projection/codex/skill-md.md`.
+写新 skill 前读取 `packages/wiki/practice/create.md`。
 
-Minimum shape:
+创建 internal primitive skill 使用 `pm:notate`。
+
+创建 public workflow skill 使用 `pm:conduct`。
+
+从真实 case patch 已存在且 identity 成立的 skill 时，才使用 `pm:retune`。
+
+当前 `SKILL.md` body shape 定义在 `packages/wiki/projection/codex/skill-md.md`。
+
+minimum shape：
 
 ```text
 skills/<name>/SKILL.md
@@ -102,49 +118,58 @@ skills/primitive/<name>/agents/openai.yaml
 skills/primitive/<name>/{scripts,references,assets}/...
 ```
 
-`agents/openai.yaml` is required for every Partita skill because it projects
-the skill's invocation policy into runtime metadata. `scripts/`, `references/`,
-and `assets/` are optional official bundled resource directories.
+每个 Partita skill MUST 有 `agents/openai.yaml`，因为它会把 skill 的 invocation policy 投影到 runtime metadata。
 
-Required frontmatter:
+`scripts/`、`references/` 和 `assets/` 是 optional official bundled resource directories。
+
+required frontmatter：
 
 ```yaml
 ---
 name: <name>
-description: "使用场景：... 不用于..."
+description: "Use when ... Not for ..."
 ---
 ```
 
-Description is the Codex selector surface: keep it 40-500 characters, start it
-with `使用场景：`, `使用于`, `Use when`, or `Use for`, and include `不用于`,
-`不适用于`, or `Not for`. Partita reads only `name` and `description`;
-official optional frontmatter keys are `license`, `allowed-tools`, and
-`metadata`. Put Codex-specific UI,
-`policy.allow_implicit_invocation`, and tool dependencies in `agents/openai.yaml`;
-the policy key must live under the `policy` block.
+`description` 是 Codex selector surface：保持 40-500 characters，以 `Use when` 或 `Use for` 开头，并包含 `Not for`。
 
-`partita` is the product and plugin name, not a skill prefix. Source namespaces
-project dispatcher handles while frontmatter and global installed skills keep
-the short skill name: `expression` projects as `ex:<name>`, `link` projects as
-`lk:<name>`, `orientation` projects as `og:<name>`, `maintenance` projects as
-`mt:<name>`, and `primitive` projects as `pm:<name>`.
+Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
-`harness/skills/dispatcher.md` is generated from `skills/` source
-`SKILL.md` frontmatter and `agents/openai.yaml`. Its routing table projects
-`Handle`, `Name`, `Invocation`, `Description`, and `File`.
+official optional frontmatter keys 是 `license`、`allowed-tools` 和 `metadata`。
 
-After adding or changing a skill:
+Codex-specific UI、`policy.allow_implicit_invocation` 和 tool dependencies 放在 `agents/openai.yaml`。
+
+`policy.allow_implicit_invocation` MUST 位于 `policy` block 下。
+
+`partita` 是 product 和 plugin name，不是 skill prefix。
+
+source namespaces 只投影 dispatcher handles；frontmatter 和 global installed skills 保持 short skill name。
+
+`expression` 投影为 `ex:<name>`。
+
+`link` 投影为 `lk:<name>`。
+
+`orientation` 投影为 `og:<name>`。
+
+`maintenance` 投影为 `mt:<name>`。
+
+`primitive` 投影为 `pm:<name>`。
+
+`harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` 生成。
+
+routing table 投影 `Handle`、`Name`、`Invocation`、`Description` 和 `File`。
+
+新增或修改 skill 后运行：
 
 ```bash
 pnpm generate
 pnpm verify
 ```
 
-`pnpm verify` includes Effect harness verification for this repo; treat that as
-a hard script check, not a prose-only boundary.
+`pnpm verify` 包含本 repo 的 Effect harness verification；这是 hard script check，不是 prose-only boundary。
 
 ## Acknowledgement
 
-Early exploration referenced [Waza](https://github.com/tw93/Waza), published
-under the MIT License by Tw93. Partita does not ship Waza's skill taxonomy or
-skill contents.
+早期探索参考了 [Waza](https://github.com/tw93/Waza)，其由 Tw93 以 MIT License 发布。
+
+Partita 不 ship Waza 的 skill taxonomy 或 skill contents。

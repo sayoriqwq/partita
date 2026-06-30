@@ -7,11 +7,12 @@ export default antfu(
       '.codex-plugin/**',
       'dist/**',
       'node_modules/**',
+      'packages/*/dist/**',
     ],
   },
   {
     name: 'partita/effect-boundaries',
-    files: ['bin/**/*.ts', 'src/**/*.ts', 'tests/**/*.ts'],
+    files: ['bin/**/*.ts', 'src/**/*.ts', 'tests/**/*.ts', 'packages/*/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

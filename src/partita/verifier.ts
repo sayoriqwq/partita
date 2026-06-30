@@ -1,5 +1,16 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
+import {
+  blockProjectionEndPrefix,
+  blockProjectionStartPrefix,
+  fileProjectionPrefix,
+  parseProjectionAttributes,
+  projectionCommentLines,
+  renderFileCopyProjection,
+  routingTableEnd,
+  routingTableStart,
+  validProjectionSource,
+} from '@partita/generic-projection'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import { PartitaError } from './errors.ts'
@@ -27,13 +38,8 @@ const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:'
 const loadedSkillMarkers = ['💬', '🔗', '🧭', '🎼', '🧹'] as const
 const dispatcherRelativePath = 'harness/skills/dispatcher.md'
 const legacyDispatcherRelativePath = 'skills/DISPATCHER.md'
-const routingTableStart = '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->'
-const routingTableEnd = '<!-- partita:projection:end id="routing-table" -->'
 const legacyRoutingTableStart = '<!-- routing-table:start -->'
 const legacyRoutingTableEnd = '<!-- routing-table:end -->'
-const fileProjectionPrefix = '<!-- partita:projection:file '
-const blockProjectionStartPrefix = '<!-- partita:projection:start '
-const blockProjectionEndPrefix = '<!-- partita:projection:end '
 const namespaceShorthands = {
   expression: 'ex',
   link: 'lk',
@@ -88,46 +94,47 @@ const requiredRootMapFiles = [
 ] as const
 
 const requiredWikiFiles = [
-  'wiki/index.md',
-  'wiki/harness/index.md',
-  'wiki/skill/index.md',
-  'wiki/skill/rule.md',
-  'wiki/skill/primitive.md',
-  'wiki/skill/orchestrator.md',
-  'wiki/skill/case/index.md',
-  'wiki/skill/case/insufficient-material.md',
-  'wiki/skill/case/pattern.md',
-  'wiki/skill/case/pressure.md',
-  'wiki/skill/governance/index.md',
-  'wiki/skill/governance/identity.md',
-  'wiki/skill/lifecycle/index.md',
-  'wiki/workflow/index.md',
-  'wiki/workflow/gate/index.md',
-  'wiki/workflow/gate/contract.md',
-  'wiki/workflow/gate/span.md',
-  'wiki/projection/index.md',
-  'wiki/projection/codex/index.md',
-  'wiki/projection/codex/description.md',
-  'wiki/projection/codex/frontmatter.md',
-  'wiki/projection/codex/openai.md',
-  'wiki/projection/codex/dispatcher.md',
-  'wiki/projection/codex/projection-marker.md',
-  'wiki/projection/codex/references.md',
-  'wiki/projection/codex/skill-md.md',
-  'wiki/projection/verifier/index.md',
-  'wiki/projection/verifier/description.md',
-  'wiki/projection/verifier/links.md',
-  'wiki/projection/verifier/metadata.md',
-  'wiki/projection/verifier/nodes.md',
-  'wiki/projection/verifier/shape.md',
-  'wiki/practice/index.md',
-  'wiki/practice/create.md',
-  'wiki/practice/patch.md',
-  'wiki/practice/audit.md',
-  'wiki/collaboration/index.md',
-  'wiki/documentation/index.md',
-  'wiki/vocabulary/index.md',
-  'wiki/vocabulary/assertion.md',
+  'packages/wiki/index.md',
+  'packages/wiki/harness/index.md',
+  'packages/wiki/skill/index.md',
+  'packages/wiki/skill/rule.md',
+  'packages/wiki/skill/primitive.md',
+  'packages/wiki/skill/orchestrator.md',
+  'packages/wiki/skill/case/index.md',
+  'packages/wiki/skill/case/insufficient-material.md',
+  'packages/wiki/skill/case/pattern.md',
+  'packages/wiki/skill/case/pressure.md',
+  'packages/wiki/skill/governance/index.md',
+  'packages/wiki/skill/governance/identity.md',
+  'packages/wiki/skill/lifecycle/index.md',
+  'packages/wiki/workflow/index.md',
+  'packages/wiki/workflow/gate/index.md',
+  'packages/wiki/workflow/gate/contract.md',
+  'packages/wiki/workflow/gate/span.md',
+  'packages/wiki/projection/index.md',
+  'packages/wiki/projection/generic.md',
+  'packages/wiki/projection/codex/index.md',
+  'packages/wiki/projection/codex/description.md',
+  'packages/wiki/projection/codex/frontmatter.md',
+  'packages/wiki/projection/codex/openai.md',
+  'packages/wiki/projection/codex/dispatcher.md',
+  'packages/wiki/projection/codex/projection-marker.md',
+  'packages/wiki/projection/codex/references.md',
+  'packages/wiki/projection/codex/skill-md.md',
+  'packages/wiki/projection/verifier/index.md',
+  'packages/wiki/projection/verifier/description.md',
+  'packages/wiki/projection/verifier/links.md',
+  'packages/wiki/projection/verifier/metadata.md',
+  'packages/wiki/projection/verifier/nodes.md',
+  'packages/wiki/projection/verifier/shape.md',
+  'packages/wiki/practice/index.md',
+  'packages/wiki/practice/create.md',
+  'packages/wiki/practice/patch.md',
+  'packages/wiki/practice/audit.md',
+  'packages/wiki/collaboration/index.md',
+  'packages/wiki/documentation/index.md',
+  'packages/wiki/vocabulary/index.md',
+  'packages/wiki/vocabulary/assertion.md',
 ] as const
 
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {
@@ -728,36 +735,10 @@ function checkFileProjectionMarker(root: string, text: string, relativePath: str
     return [issue('projection.missing_source', `missing projection source: ${source}`, relativePath)]
   }
 
-  const expected = `${fileProjectionHeader(source)}\n\n${readText(sourcePath)}`
+  const expected = renderFileCopyProjection(source, readText(sourcePath))
   return text === expected
     ? []
     : [issue('projection.file_drift', `file projection is out of sync with ${source}`, relativePath)]
-}
-
-function projectionCommentLines(text: string, prefix: string): ReadonlyArray<string> {
-  return text
-    .split(/\r?\n/u)
-    .filter(line => line.startsWith(prefix) && line.endsWith('-->'))
-}
-
-function parseProjectionAttributes(comment: string): Record<string, string> {
-  const attrs: Record<string, string> = {}
-  for (const match of comment.matchAll(/([a-z-]+)="([^"]*)"/gu)) {
-    const key = match[1]
-    const value = match[2]
-    if (key !== undefined && value !== undefined) {
-      attrs[key] = value
-    }
-  }
-  return attrs
-}
-
-function fileProjectionHeader(source: string): string {
-  return `<!-- partita:projection:file source="${source}" mode="copy" -->`
-}
-
-function validProjectionSource(source: string): boolean {
-  return !source.startsWith('/') && !source.split('/').includes('..') && source.endsWith('.md')
 }
 
 function checkWikiFiles(root: string): ReadonlyArray<ValidationIssue> {
@@ -776,8 +757,8 @@ function checkRootMapFiles(root: string): ReadonlyArray<ValidationIssue> {
     }
 
     const text = readText(absolutePath)
-    if (!text.includes('wiki/')) {
-      issues.push(issue('root_map.missing_wiki_route', 'root map must route readers into wiki/', path))
+    if (!text.includes('packages/wiki/')) {
+      issues.push(issue('root_map.missing_wiki_route', 'root map must route readers into packages/wiki/', path))
     }
     if (text.includes('rules/') || text.includes('theory/')) {
       issues.push(issue('root_map.old_layer_ref', 'root map must not route to removed rules/ or theory/ layers', path))
@@ -815,7 +796,7 @@ function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
 
 function checkWikiLinks(root: string): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
-  const wikiRoot = join(root, 'wiki')
+  const wikiRoot = join(root, 'packages', 'wiki')
   for (const path of markdownFiles(root)) {
     const relativePath = relativePathFrom(root, path)
     const text = readText(path)
@@ -846,15 +827,16 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
     ['packaging.allowlist', 'removed package allowlist must not exist'],
     ['rules', 'removed rules directory must not exist'],
     ['theory', 'removed theory directory must not exist'],
+    ['wiki', 'root wiki directory must not exist; use packages/wiki'],
     ['skills/RESOLVER.md', 'removed resolver registry must not exist'],
     ['skills/skill-write', 'removed skill-write path must not exist; use skills/primitive/notate'],
     ['skills/skill-patch', 'removed skill-patch path must not exist; use skills/primitive/retune'],
     ['src/partita/packager.ts', 'removed zip packager must not exist'],
     ['src/partita/package-verify.ts', 'removed package verifier must not exist'],
     ['tests/packager.test.ts', 'removed packager tests must not exist'],
-    ['wiki/skill/design-v1.md', 'absorbed design-v1 source must not exist'],
-    ['wiki/practice/migrate.md', 'removed migration practice node must not exist'],
-    ['wiki/projection/verifier/package.md', 'removed package verifier node must not exist'],
+    ['packages/wiki/skill/design-v1.md', 'absorbed design-v1 source must not exist'],
+    ['packages/wiki/practice/migrate.md', 'removed migration practice node must not exist'],
+    ['packages/wiki/projection/verifier/package.md', 'removed package verifier node must not exist'],
     ['partita.zip', 'removed zip artifact must not exist'],
     ['dist/partita.zip', 'removed zip artifact must not exist'],
   ] as const

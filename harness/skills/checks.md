@@ -2,7 +2,7 @@
 
 ## Definition
 
-Partita `checks` 是验证 Partita-generated 或 Partita-managed skill surfaces 的本地命令。
+Partita `checks` 是验证 Partita-generated 或 Partita-managed skill surfaces 的 local commands。
 
 ## Commands
 

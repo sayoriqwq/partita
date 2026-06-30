@@ -1,4 +1,4 @@
-<!-- partita:projection:file source="wiki/documentation/pattern.md" mode="copy" -->
+<!-- partita:projection:file source="packages/wiki/documentation/pattern.md" mode="copy" -->
 
 ---
 audience: [agent, human]

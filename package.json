@@ -5,6 +5,7 @@
   "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
   "private": true,
+  "packageManager": "pnpm@11.7.0",
   "license": "MIT",
   "bin": {
     "partita": "dist/bin/partita.js"
@@ -17,10 +18,11 @@
     "CONTEXT.md",
     "HARNESS.md",
     "harness",
-    "skills",
-    "wiki"
+    "packages",
+    "skills"
   ],
   "dependencies": {
+    "@partita/generic-projection": "workspace:*",
     "effect": "4.0.0-beta.90",
     "@effect/platform-node": "4.0.0-beta.90"
   },
@@ -33,11 +35,12 @@
     "@typescript/native-preview": "7.0.0-dev.20260624.1",
     "eslint": "^10.3.0",
     "knip": "^6.12.0",
+    "turbo": "^2.10.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
+    "build": "turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
     "effect:status": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" status",
     "effect:verify": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" verify --target .",
     "generate": "pnpm build && node dist/bin/partita.js generate",
@@ -46,10 +49,10 @@
     "install:codex-skill": "pnpm build && node dist/bin/partita.js install codex-skill",
     "knip": "knip",
     "link:global": "pnpm build && pnpm link --global",
-    "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" --no-error-on-unmatched-pattern",
-    "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" --fix --no-error-on-unmatched-pattern",
-    "test": "vitest run",
-    "typecheck": "tsgo --noEmit",
+    "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
+    "test": "turbo run build --filter=@partita/generic-projection && vitest run",
+    "typecheck": "turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit",
     "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify"
   }
 }
