@@ -10,4 +10,4 @@ runtime installation 可以按 frontmatter name flatten skill directories。
 
 source families，例如 `skills/expression/<name>`、`skills/link/<name>`、`skills/orientation/<name>`、`skills/maintenance/<name>` 和 `skills/primitive/<name>`，由 repository 和 harness dispatcher projection 维护，不要求以 nested global install paths 存在。
 
-参见 [[projection/generic]] 和 [[projection/codex/index]]。
+参见 [[projection/generic]] 和 [[projection/verifier/index]]。

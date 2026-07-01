@@ -146,18 +146,6 @@ function unquoteScalar(value: string): string {
   return value
 }
 
-function requireRecord(value: unknown, path: string, field: string) {
-  return isRecord(value)
-    ? Effect.succeed(value)
-    : failGenerator(path, `INVALID EFFECT HARNESS MANIFEST: ${field} must be an object`)
-}
-
-function requireString(value: Record<string, unknown>, path: string, field: string) {
-  return typeof value[field] === 'string'
-    ? Effect.succeed(value[field])
-    : failGenerator(path, `INVALID EFFECT HARNESS MANIFEST: ${field} is required`)
-}
-
 export const collectSkillMetadata = Effect.fn('collectSkillMetadata')(function* (root: string) {
   const fs = yield* FileSystem.FileSystem
   const skillsDir = joinPath(root, 'skills')
@@ -232,7 +220,7 @@ function buildPluginJson(version: string): PluginManifest {
     interface: {
       displayName: 'Partita',
       shortDescription: 'A Codex skill harness for user-defined workflows',
-      longDescription: 'Partita defines user-owned Codex workflow skills with a wiki-backed CLI and skill runtime.',
+      longDescription: 'Partita defines user-owned Codex workflow skills with a CLI-backed skill runtime.',
       developerName: 'sayori',
       category: 'Developer Tools',
       capabilities: ['Interactive'],
@@ -253,7 +241,9 @@ const parseJsonObject = Effect.fn('parseJsonObject')(function* (path: string, te
       }),
   })
 
-  return yield* requireRecord(parsed, path, 'manifest')
+  return isRecord(parsed)
+    ? parsed
+    : yield* failGenerator(path, 'INVALID JSON: manifest must be an object')
 })
 
 const readPackageVersion = Effect.fn('readPackageVersion')(function* (root: string) {
@@ -267,31 +257,20 @@ const readPackageVersion = Effect.fn('readPackageVersion')(function* (root: stri
   return version.trim()
 })
 
-const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(function* (root: string) {
-  const manifestPath = joinPath(root, '.effect-harness.json')
-  const fs = yield* FileSystem.FileSystem
-  const exists = yield* pathExists(fs, manifestPath)
-  if (!exists) {
-    return {} satisfies JsonObject
-  }
-
-  const manifest = yield* parseJsonObject(manifestPath, yield* fs.readFileString(manifestPath))
-  const baseline = yield* requireRecord(manifest.packageBaseline, manifestPath, 'packageBaseline')
-  const commands = yield* requireRecord(manifest.commands, manifestPath, 'commands')
-
+function partitaPackageFields(): JsonObject {
   return {
     dependencies: {
       '@partita/generic-projection': 'workspace:*',
-      'effect': yield* requireString(baseline, manifestPath, 'effect'),
-      '@effect/platform-node': yield* requireString(baseline, manifestPath, '@effect/platform-node'),
+      'effect': '4.0.0-beta.90',
+      '@effect/platform-node': '4.0.0-beta.90',
     },
     devDependencies: {
       '@antfu/eslint-config': '^9.0.0',
       '@types/node': '^25.6.0',
-      '@effect/vitest': yield* requireString(baseline, manifestPath, '@effect/vitest'),
-      '@effect/tsgo': yield* requireString(baseline, manifestPath, '@effect/tsgo'),
-      '@effect/language-service': yield* requireString(baseline, manifestPath, '@effect/language-service'),
-      '@typescript/native-preview': yield* requireString(baseline, manifestPath, '@typescript/native-preview'),
+      '@effect/vitest': '4.0.0-beta.90',
+      '@effect/tsgo': '0.14.6',
+      '@effect/language-service': '0.86.2',
+      '@typescript/native-preview': '7.0.0-dev.20260624.1',
       'eslint': '^10.3.0',
       'knip': '^6.12.0',
       'turbo': '^2.10.1',
@@ -300,11 +279,8 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
     },
     scripts: {
       'build': 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js',
-      'effect:status': yield* requireString(commands, manifestPath, 'status'),
-      'effect:verify': yield* requireString(commands, manifestPath, 'verify'),
       'generate': 'pnpm build && node dist/bin/partita.js generate',
       'generate:check': 'pnpm build && node dist/bin/partita.js generate --check',
-      'install:codex-plugin': 'pnpm build && node dist/bin/partita.js install codex-plugin',
       'install:codex-skill': 'pnpm build && node dist/bin/partita.js install codex-skill',
       'knip': 'knip',
       'link:global': 'pnpm build && pnpm link --global',
@@ -312,12 +288,12 @@ const effectHarnessPackageFields = Effect.fn('effectHarnessPackageFields')(funct
       'lint:fix': 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --fix --no-error-on-unmatched-pattern',
       'test': 'turbo run build --filter=@partita/generic-projection && vitest run',
       'typecheck': 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit',
-      'verify': 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify',
+      'verify': 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip',
     },
-  } satisfies JsonObject
-})
+  }
+}
 
-const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, version: string) {
+function buildPackageJson(version: string): JsonObject {
   const packageJson = {
     name: 'partita',
     type: 'module',
@@ -341,14 +317,14 @@ const buildPackageJson = Effect.fn('buildPackageJson')(function* (root: string, 
       'packages',
       'skills',
     ],
-    ...(yield* effectHarnessPackageFields(root)),
+    ...partitaPackageFields(),
   }
 
   return packageJson satisfies JsonObject
-})
+}
 
-const renderPackageJson = Effect.fn('renderPackageJson')(function* (root: string, version: string) {
-  return renderJson(yield* buildPackageJson(root, version))
+const renderPackageJson = Effect.fn('renderPackageJson')(function* (version: string) {
+  return renderJson(buildPackageJson(version))
 })
 
 const renderDispatcher = Effect.fn('renderDispatcher')(function* (
@@ -427,7 +403,7 @@ const renderFileCopyProjections = Effect.fn('renderFileCopyProjections')(functio
 export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* (root: string) {
   const version = yield* readPackageVersion(root)
   const skills = yield* collectSkillMetadata(root)
-  const packageJson = yield* renderPackageJson(root, version)
+  const packageJson = yield* renderPackageJson(version)
   const dispatcher = yield* renderDispatcher(dispatcherTemplate, skills)
   const projectedReferences = yield* renderFileCopyProjections(root, skills)
 

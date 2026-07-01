@@ -34,4 +34,4 @@ supported namespace roots under `skills/` 由 verifier 维护。
 - `maintenance` 是 cleanup and residue source family，投影为 `mt:<name>`。
 - `primitive` 是 Partita-managed base source family，投影为 `pm:<name>`。
 
-hard verification surfaces 包括 generated-file checks、`partita verify`、tests、package checks，以及 target 使用 Effect harness 时的 Effect harness verification。
+hard verification surfaces 包括 generated-file checks、`partita verify`、tests、package checks，以及通过 prelude/provider 显式接入的外部 verification。

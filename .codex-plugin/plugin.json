@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Partita",
     "shortDescription": "A Codex skill harness for user-defined workflows",
-    "longDescription": "Partita defines user-owned Codex workflow skills with a wiki-backed CLI and skill runtime.",
+    "longDescription": "Partita defines user-owned Codex workflow skills with a CLI-backed skill runtime.",
     "developerName": "sayori",
     "category": "Developer Tools",
     "capabilities": [

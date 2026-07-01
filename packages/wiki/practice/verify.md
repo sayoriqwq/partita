@@ -9,7 +9,6 @@ pnpm typecheck
 pnpm test
 pnpm lint
 pnpm knip
-pnpm effect:verify
 ```
 
 如果 `pnpm verify` 被 dependency policy 阻塞，MUST 运行等价 local binaries 并报告 blocker。

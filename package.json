@@ -41,11 +41,8 @@
   },
   "scripts": {
     "build": "turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
-    "effect:status": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" status",
-    "effect:verify": "node \"/Users/sayori/Desktop/yume-infra/effect-harness/dist/bin/effect-harness.js\" verify --target .",
     "generate": "pnpm build && node dist/bin/partita.js generate",
     "generate:check": "pnpm build && node dist/bin/partita.js generate --check",
-    "install:codex-plugin": "pnpm build && node dist/bin/partita.js install codex-plugin",
     "install:codex-skill": "pnpm build && node dist/bin/partita.js install codex-skill",
     "knip": "knip",
     "link:global": "pnpm build && pnpm link --global",
@@ -53,6 +50,6 @@
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
     "test": "turbo run build --filter=@partita/generic-projection && vitest run",
     "typecheck": "turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit",
-    "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify"
+    "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
   }
 }

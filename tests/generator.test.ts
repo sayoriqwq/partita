@@ -12,25 +12,6 @@ import {
   writeGeneratedFiles,
 } from '../src/partita/generator.ts'
 
-const effectHarnessManifest = JSON.stringify(
-  {
-    packageBaseline: {
-      'effect': '4.0.0-beta.90',
-      '@effect/platform-node': '4.0.0-beta.90',
-      '@effect/vitest': '4.0.0-beta.90',
-      '@effect/tsgo': '0.14.6',
-      '@effect/language-service': '0.86.2',
-      '@typescript/native-preview': '7.0.0-dev.20260624.1',
-    },
-    commands: {
-      status: 'effect-harness status',
-      verify: 'effect-harness verify --target .',
-    },
-  },
-  null,
-  2,
-)
-
 const parentPath = (path: string): string => path.slice(0, path.lastIndexOf('/'))
 
 function requireElement<A>(values: ReadonlyArray<A>, index: number): A {
@@ -123,7 +104,6 @@ unsupported_field: Demo routing
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
-        '.effect-harness.json': effectHarnessManifest,
       })
 
       const files = yield* renderGeneratedFiles(root)
@@ -172,7 +152,7 @@ unsupported_field: Demo routing
       assert.strictEqual(packageJson.scripts.package, undefined)
       assert.strictEqual(packageJson.scripts.test, 'turbo run build --filter=@partita/generic-projection && vitest run')
       assert.strictEqual(packageJson.scripts.typecheck, 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit')
-      assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip && pnpm effect:verify')
+      assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
   it.effect('collects skill metadata sorted by directory and rejects name drift', () =>
@@ -262,7 +242,6 @@ description: "Use when notating a skill is needed. Not for local retuning."
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
-        '.effect-harness.json': effectHarnessManifest,
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
@@ -338,7 +317,6 @@ description: "Use when notating a skill is needed. Not for local retuning."
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
-        '.effect-harness.json': effectHarnessManifest,
         'packages/wiki/skill/case/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
         'skills/demo/SKILL.md': `---
 name: demo

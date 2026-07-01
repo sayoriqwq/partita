@@ -5,7 +5,7 @@ import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { generateProject } from '../partita/generator.ts'
-import { installCodexPlugin, installCodexSkill } from '../partita/install.ts'
+import { installCodexSkill } from '../partita/install.ts'
 import {
   printSourcePlan,
   printSourceStatus,
@@ -113,17 +113,9 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Install Partita skills into global Codex skill runtime'),
   )
 
-  const installPlugin = Command.make('codex-plugin', {
-    root,
-  }, Effect.fnUntraced(function* ({ root }) {
-    yield* installCodexPlugin({ root })
-  })).pipe(
-    Command.withDescription('Map this repository into the personal Codex plugin marketplace'),
-  )
-
   const install = Command.make('install').pipe(
-    Command.withDescription('Install Partita into local agent runtimes'),
-    Command.withSubcommands([installPlugin, installSkill]),
+    Command.withDescription('Install Partita skills into local agent runtimes'),
+    Command.withSubcommands([installSkill]),
   )
 
   const sourcePlan = Command.make('plan', {

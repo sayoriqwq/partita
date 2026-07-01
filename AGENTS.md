@@ -4,7 +4,7 @@
 
 ## Project
 
-`partita` 是 CLI-backed Codex skill harness，用来维护 user-defined workflow skills。
+`partita` 是 CLI-backed Codex skill harness，用来维护 sayori 自己创建或 maintain 的 skills workspace、workflow skills 和治理机制。
 
 framework 支持 zero-skill baseline。
 
@@ -12,7 +12,7 @@ framework 支持 zero-skill baseline。
 
 本 repo 当前是 pnpm/Turbo workspace。
 
-canonical wiki modules 位于 `packages/wiki/`。
+canonical wiki modules 当前位于 `packages/wiki/`，但 wiki 不是长期稳定 runtime boundary；新代码和新 workflow 应避免新增对 wiki path 的硬依赖。
 
 generic projection helpers 位于 `packages/generic-projection/`。
 
@@ -35,12 +35,13 @@ generic projection helpers 位于 `packages/generic-projection/`。
 - external skill collections 或其 taxonomies；
 - external plugin marketplace metadata；
 - project-specific commands、private local paths 或 one-off workflow history。
+- `sayoriqwq/sayoriqwq` personal skills monorepo 路径。
 
 ## Current Rule
 
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。
 - `CONTEXT.md` 和 `HARNESS.md` 是指向 `packages/wiki/` 的 root maps，不是独立 durable knowledge layers。
-- 新增或修改 skill 前，先从 `packages/wiki/practice/create.md` 或 `packages/wiki/practice/patch.md` 开始，再按 `packages/wiki/projection/codex/skill-md.md` 维护当前 V1 `SKILL.md` section shape。
+- 新增或修改 skill 前，先从 `packages/wiki/practice/create.md` 或 `packages/wiki/practice/patch.md` 开始，并维护当前 V1 `SKILL.md` section shape；不要依赖已拆除的 `packages/wiki/projection/codex/*` 节点。
 - Partita canonical knowledge 位于 `packages/wiki/`。
 - `skills/` 下的 Partita `SKILL.md` files 是 source skill runtime projections。
 - wiki nodes 承载 canonical behavior language；安装到 external harnesses 或 target repos 的 copies 是 managed projections，MUST NOT 重新定义 skill。
@@ -61,7 +62,7 @@ generic projection helpers 位于 `packages/generic-projection/`。
 - 新增 external authority link skill 时，创建 `skills/link/<name>/SKILL.md` 和 `skills/link/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
 - 新增 maintenance skill 时，创建 `skills/maintenance/<name>/SKILL.md` 和 `skills/maintenance/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
 - 新增 Partita-managed base skill 时，创建 `skills/primitive/<name>/SKILL.md` 和 `skills/primitive/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
-- repo 使用 Effect harness 时，Effect harness verification 属于 hard verification surface。
+- 当前 repo 不再直接安装旧 effect-harness runtime；后续 Effect guidance 和 verification 只能通过 prelude/provider 形式重新接入。
 
 ## Commands
 
@@ -70,34 +71,3 @@ pnpm generate
 pnpm generate:check
 pnpm verify
 ```
-
-<!-- effect-harness:start -->
-# Effect Harness
-
-This target uses `/Users/sayori/Desktop/yume-infra/effect-harness` as its Effect harness root.
-
-Before writing non-trivial Effect code, read:
-
-- `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect/LLMS.md`
-- `/Users/sayori/Desktop/yume-infra/effect-harness/harness/index.md`
-- `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect.subtree.json`
-- `.prelude/providers/effect-harness/provider.json` when this target is prelude-managed
-- `.effect-harness.json` only for standalone CLI compatibility
-
-Runtime assets installed by this harness:
-
-- Use `.codex/skills/effect-code/SKILL.md` for Effect implementation and review.
-- Use `.codex/skills/effect-feedback/SKILL.md` for reusable target feedback.
-- Use `.codex/agents/effect-worker.md` when delegating focused Effect work.
-
-Use:
-
-```bash
-pnpm effect:status
-pnpm effect:verify
-pnpm verify
-```
-
-Do not import from `/Users/sayori/Desktop/yume-infra/effect-harness/repos/effect`.
-Do not copy effect-harness maintainer `.codex/skills`; this target only uses the runtime installed under `.codex/`.
-<!-- effect-harness:end -->

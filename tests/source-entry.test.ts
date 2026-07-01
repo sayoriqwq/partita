@@ -18,21 +18,21 @@ describe('Partita source entries', () => {
       write(root, 'AGENTS.md', '# Agents\n')
 
       const plan = yield* buildSourceEntryPlan({
-        name: 'effect',
+        name: 'upstream',
         ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-        repository: 'https://github.com/Effect-TS/effect-smol.git',
+        repository: 'https://github.com/example/upstream.git',
         root,
       })
 
-      assert.strictEqual(plan.contractPath, 'repos/effect.subtree.json')
-      assert.strictEqual(defaultSourceContractPath({ name: 'effect', prefix: 'repos/effect' }), 'repos/effect.subtree.json')
-      assert.strictEqual(plan.contract.github.repository, 'https://github.com/Effect-TS/effect-smol.git')
-      assert.strictEqual(plan.contract.local.prefix, 'repos/effect')
+      assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
+      assert.strictEqual(defaultSourceContractPath({ name: 'upstream', prefix: 'repos/upstream' }), 'repos/upstream.subtree.json')
+      assert.strictEqual(plan.contract.github.repository, 'https://github.com/example/upstream.git')
+      assert.strictEqual(plan.contract.local.prefix, 'repos/upstream')
       assert.strictEqual(plan.contract.mechanism, 'git-subtree')
-      assert.strictEqual(plan.contract.anchor.llmDocument, 'repos/effect/LLMS.md')
+      assert.strictEqual(plan.contract.anchor.llmDocument, 'repos/upstream/LLMS.md')
       assert.strictEqual(plan.contract.agent.route, 'AGENTS.md')
-      assert.include(plan.contract.commands.update, '--contract repos/effect.subtree.json')
-      assert.include(plan.contract.commands.verify, '--contract repos/effect.subtree.json')
+      assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
+      assert.include(plan.contract.commands.verify, '--contract repos/upstream.subtree.json')
       assert.include(plan.editorSettings.vscode, '"typescript.preferences.autoImportFileExcludePatterns"')
       assert.include(plan.editorSettings.vscode, '"files.watcherExclude"')
       assert.include(plan.editorSettings.vscode, '"search.exclude"')
@@ -46,10 +46,10 @@ describe('Partita source entries', () => {
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/effect/LLMS.md', '# Effect LLM guide\n')
+      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
       write(root, '.vscode/settings.json', JSON.stringify({
-        'javascript.preferences.autoImportFileExcludePatterns': ['repos/effect/**'],
-        'typescript.preferences.autoImportFileExcludePatterns': ['repos/effect/**'],
+        'javascript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
+        'typescript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
       }, null, 2))
       write(root, '.zed/settings.json', JSON.stringify({
         lsp: {
@@ -57,12 +57,12 @@ describe('Partita source entries', () => {
             settings: {
               javascript: {
                 preferences: {
-                  autoImportFileExcludePatterns: ['repos/effect/**'],
+                  autoImportFileExcludePatterns: ['repos/upstream/**'],
                 },
               },
               typescript: {
                 preferences: {
-                  autoImportFileExcludePatterns: ['repos/effect/**'],
+                  autoImportFileExcludePatterns: ['repos/upstream/**'],
                 },
               },
             },
@@ -71,12 +71,12 @@ describe('Partita source entries', () => {
       }, null, 2))
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ name: 'effect', root })
+      const report = yield* inspectSourceEntries({ name: 'upstream', root })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
-      assert.strictEqual(report.contractPath, 'repos/effect.subtree.json')
-      assert.strictEqual(report.entry.name, 'effect')
+      assert.strictEqual(report.contractPath, 'repos/upstream.subtree.json')
+      assert.strictEqual(report.entry.name, 'upstream')
     }).pipe(Effect.provide(NodeServices.layer)))
 
   it.effect('hard-blocks missing source prefixes', () =>
@@ -85,7 +85,7 @@ describe('Partita source entries', () => {
       write(root, 'AGENTS.md', '# Agents\n')
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ name: 'effect', root })
+      const report = yield* inspectSourceEntries({ name: 'upstream', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
@@ -96,13 +96,13 @@ describe('Partita source entries', () => {
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, '.prelude/manifest.json', '{}\n')
-      write(root, 'repos/effect/.git', 'gitdir: ../.git/modules/effect\n')
-      write(root, 'src/app.ts', 'import { Effect } from "../repos/effect/packages/effect/src/Effect.ts"\n')
+      write(root, 'repos/upstream/.git', 'gitdir: ../.git/modules/upstream\n')
+      write(root, 'src/app.ts', 'import { value } from "../repos/upstream/packages/pkg/src/index.ts"\n')
       write(root, '.vscode/settings.json', '{}\n')
       writeContract(root, {
         ...validContract(),
         agent: { route: 'missing/AGENTS.md' },
-        anchor: { llmDocument: 'repos/effect/LLMS.md' },
+        anchor: { llmDocument: 'repos/upstream/LLMS.md' },
         boundaries: { importBlock: true, readOnly: false },
         github: {
           branch: 'main',
@@ -114,7 +114,7 @@ describe('Partita source entries', () => {
         subtree: { split: '', trailer: '' },
       })
 
-      const report = yield* inspectSourceEntries({ name: 'effect', root })
+      const report = yield* inspectSourceEntries({ name: 'upstream', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
@@ -142,15 +142,15 @@ function validContract(): GitHubSubtreePinContract {
       route: 'AGENTS.md',
     },
     anchor: {
-      llmDocument: 'repos/effect/LLMS.md',
+      llmDocument: 'repos/upstream/LLMS.md',
     },
     boundaries: {
       importBlock: true,
       readOnly: true,
     },
     commands: {
-      update: 'pnpm effect:update',
-      verify: 'pnpm effect:verify',
+      update: 'pnpm source:update',
+      verify: 'pnpm source:verify',
     },
     editorPolicy: {
       autoImportExclude: 'block',
@@ -159,10 +159,10 @@ function validContract(): GitHubSubtreePinContract {
       watcherExclude: 'recommended',
     },
     local: {
-      prefix: 'repos/effect',
+      prefix: 'repos/upstream',
     },
     mechanism: 'git-subtree',
-    name: 'effect',
+    name: 'upstream',
     ownership: {
       mode: 'provider',
     },
@@ -173,13 +173,13 @@ function validContract(): GitHubSubtreePinContract {
     github: {
       branch: 'main',
       ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-      repository: 'https://github.com/Effect-TS/effect-smol.git',
+      repository: 'https://github.com/example/upstream.git',
     },
   }
 }
 
 function writeContract(root: string, contract: GitHubSubtreePinContract) {
-  write(root, 'repos/effect.subtree.json', `${JSON.stringify(contract, null, 2)}\n`)
+  write(root, 'repos/upstream.subtree.json', `${JSON.stringify(contract, null, 2)}\n`)
 }
 
 function write(root: string, path: string, contents: string) {

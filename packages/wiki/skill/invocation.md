@@ -6,4 +6,4 @@
 
 当 skill 会改变 collaboration mode、跨 topic 持续存在或强烈收窄工作范围时，MUST 使用 explicit invocation。
 
-OpenAI metadata 通过 [[projection/codex/openai]] 投影这个决策。
+OpenAI metadata 通过 `agents/openai.yaml`、generator 和 verifier 投影这个决策。

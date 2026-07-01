@@ -7,7 +7,7 @@
 3. 写出 skill rule。
 4. 判断是 primitive 还是 orchestrator。
 5. 定义 boundary、effects、duration 和 validation。
-6. 按 [[projection/codex/skill-md]] V1 shape 投影到 Codex files。
+6. 按现有 Partita source skills、verifier 和 tests 承载的 V1 shape 投影到 Codex files。
 7. 运行 generation 和 verification。
 
-参见 [[skill/rule]] 和 [[projection/codex/skill-md]]。
+参见 [[skill/rule]] 和 [[projection/runtime]]。
