@@ -9,7 +9,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 ## State
 
 - `skills/` 是 self-owned skill source input。
-- `src/partita/` 负责 Partita-specific generation、verification、source pin、skills.sh install wrapper 和 chezmoi home adapter。
+- `src/partita/` 负责 Partita-specific generation、verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
 - `harness/skills/dispatcher.md` 是 generated source inventory 和 projection audit artifact。
 - `packages/generic-projection/` 是 repo-internal generic projection helper。
 - `tests/` 承载 executable behavior checks。
@@ -21,8 +21,8 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `src/cli/Main.ts` 定义 CLI command surface。
 - `src/partita/generator.ts` 生成 package metadata、dispatcher audit 和 valid file-copy projections。
 - `src/partita/verifier.ts` 校验 Partita source shape，并阻止迁出 surfaces 回流。
-- `src/partita/source-entry.ts` 管理 GitHub git-subtree source pins。
-- `src/partita/install.ts` 是 skills.sh CLI 的 thin wrapper。
+- `src/partita/pin.ts` 管理 GitHub git-subtree pins。
+- `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
 - `harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` 生成。
 - `MIGRATION.md` 记录迁移目标、架构图和 ownership table。
@@ -33,7 +33,9 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 pnpm generate
 pnpm generate:check
 pnpm verify
-pnpm install:codex-skill
+pnpm skill-sync
+pnpm skill-status
+pnpm skill-verify
 pnpm home:status
 pnpm home:diff
 ```
@@ -42,13 +44,21 @@ pnpm home:diff
 
 Partita 不直接写 global runtime skill universe。
 
-Codex global skill installation 由 skills.sh CLI 负责。Partita 的 install wrapper 只调用 skills.sh CLI，把 `./skills` 同步到 flat global skills：
+Codex global skill installation 由 skills.sh CLI 负责。Partita 的 skill wrapper 只调用 skills.sh CLI，把 `./skills` 同步到 flat global skills：
 
 ```bash
-pnpm install:codex-skill
+pnpm skill-sync
+pnpm skill-status
+pnpm skill-verify
 ```
 
 用户目录里的唯一 global runtime copy 是 `~/.agents/skills/<name>`。
+
+`skill-sync` 运行 `npx skills add ./skills -a codex -g --skill '*' -y --full-depth`。
+
+`skill-status` 运行 `npx skills list -g -a codex --json`，并比对 Partita source skill names 和 installed runtime names。
+
+`skill-verify` 在 status 之上 hard-check runtime folder contents 是否和 Partita source skill directories 一致。
 
 不要同时把 Partita 安装进 personal Codex plugin marketplace；plugin cache 会生成 `partita:<skill>` 副本，和 flat global skill 形成双入口。
 
@@ -64,16 +74,16 @@ partita home apply --write
 
 `partita home diff` 运行非写入的 `chezmoi diff`。只有显式传入 `--write` 时，`partita home apply` 才运行 `chezmoi apply`。
 
-## Source Pins
+## Pins
 
-`partita source` 只支持 GitHub repository + git subtree source pin。
+`partita pin` 只支持 GitHub repository + git subtree pin。
 
 默认 contract path 是 subtree prefix 的 sibling 文件。
 
 例如：
 
 ```bash
-partita source plan --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect --branch main
+partita pin plan --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect --branch main
 ```
 
 默认读取或生成：

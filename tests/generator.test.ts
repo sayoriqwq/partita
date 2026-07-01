@@ -131,7 +131,9 @@ unsupported_field: Demo routing
           'generate': string
           'home:diff': string
           'home:status': string
-          'install:codex-skill': string
+          'skill-sync': string
+          'skill-status': string
+          'skill-verify': string
           'lint': string
           'package'?: string
           'test': string
@@ -149,7 +151,9 @@ unsupported_field: Demo routing
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
       assert.strictEqual(packageJson.scripts['home:diff'], 'pnpm build && node dist/bin/partita.js home diff')
       assert.strictEqual(packageJson.scripts['home:status'], 'pnpm build && node dist/bin/partita.js home status')
-      assert.strictEqual(packageJson.scripts['install:codex-skill'], 'pnpm build && node dist/bin/partita.js install codex-skill')
+      assert.strictEqual(packageJson.scripts['skill-sync'], 'pnpm build && node dist/bin/partita.js skill sync')
+      assert.strictEqual(packageJson.scripts['skill-status'], 'pnpm build && node dist/bin/partita.js skill status')
+      assert.strictEqual(packageJson.scripts['skill-verify'], 'pnpm build && node dist/bin/partita.js skill verify')
       assert.strictEqual(packageJson.scripts.lint, 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --no-error-on-unmatched-pattern')
       assert.strictEqual(packageJson.scripts.package, undefined)
       assert.strictEqual(packageJson.scripts.test, 'turbo run build --filter=@partita/generic-projection && vitest run')

@@ -1,4 +1,4 @@
-import type { GitHubSubtreePinContract } from '../src/partita/source-entry.ts'
+import type { GitHubSubtreePinContract } from '../src/partita/pin.ts'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -6,18 +6,18 @@ import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {
-  buildSourceEntryPlan,
-  defaultSourceContractPath,
-  inspectSourceEntries,
-} from '../src/partita/source-entry.ts'
+  buildPinPlan,
+  defaultPinContractPath,
+  inspectPins,
+} from '../src/partita/pin.ts'
 
-describe('Partita source entries', () => {
+describe('Partita pins', () => {
   it.effect('plans a GitHub subtree pin with sibling contract path and separate editor settings shapes', () =>
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, 'AGENTS.md', '# Agents\n')
 
-      const plan = yield* buildSourceEntryPlan({
+      const plan = yield* buildPinPlan({
         name: 'upstream',
         ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
         repository: 'https://github.com/example/upstream.git',
@@ -25,7 +25,7 @@ describe('Partita source entries', () => {
       })
 
       assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
-      assert.strictEqual(defaultSourceContractPath({ name: 'upstream', prefix: 'repos/upstream' }), 'repos/upstream.subtree.json')
+      assert.strictEqual(defaultPinContractPath({ name: 'upstream', prefix: 'repos/upstream' }), 'repos/upstream.subtree.json')
       assert.strictEqual(plan.contract.github.repository, 'https://github.com/example/upstream.git')
       assert.strictEqual(plan.contract.local.prefix, 'repos/upstream')
       assert.strictEqual(plan.contract.mechanism, 'git-subtree')
@@ -71,7 +71,7 @@ describe('Partita source entries', () => {
       }, null, 2))
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ name: 'upstream', root })
+      const report = yield* inspectPins({ name: 'upstream', root })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
@@ -79,17 +79,17 @@ describe('Partita source entries', () => {
       assert.strictEqual(report.entry.name, 'upstream')
     }).pipe(Effect.provide(NodeServices.layer)))
 
-  it.effect('hard-blocks missing source prefixes', () =>
+  it.effect('hard-blocks missing pin prefixes', () =>
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, 'AGENTS.md', '# Agents\n')
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ name: 'upstream', root })
+      const report = yield* inspectPins({ name: 'upstream', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('source.missing'))
+      assert.isTrue(codes.includes('pin.missing'))
     }).pipe(Effect.provide(NodeServices.layer)))
 
   it.effect('hard-blocks unsafe GitHub subtree pin contracts', () =>
@@ -114,25 +114,25 @@ describe('Partita source entries', () => {
         subtree: { split: '', trailer: '' },
       })
 
-      const report = yield* inspectSourceEntries({ name: 'upstream', root })
+      const report = yield* inspectPins({ name: 'upstream', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('source.github_only'))
-      assert.isTrue(codes.includes('source.mechanism_invalid'))
-      assert.isTrue(codes.includes('source.gitlink'))
-      assert.isTrue(codes.includes('source.pin_missing'))
-      assert.isTrue(codes.includes('source.anchor_missing'))
-      assert.isTrue(codes.includes('source.agent_route_missing'))
-      assert.isTrue(codes.includes('source.read_only_missing'))
-      assert.isTrue(codes.includes('source.prelude_direct_write'))
-      assert.isTrue(codes.includes('source.import_blocked'))
-      assert.isTrue(codes.includes('source.editor_vscode_auto_import_missing'))
+      assert.isTrue(codes.includes('pin.github_only'))
+      assert.isTrue(codes.includes('pin.mechanism_invalid'))
+      assert.isTrue(codes.includes('pin.gitlink'))
+      assert.isTrue(codes.includes('pin.pin_missing'))
+      assert.isTrue(codes.includes('pin.anchor_missing'))
+      assert.isTrue(codes.includes('pin.agent_route_missing'))
+      assert.isTrue(codes.includes('pin.read_only_missing'))
+      assert.isTrue(codes.includes('pin.prelude_direct_write'))
+      assert.isTrue(codes.includes('pin.import_blocked'))
+      assert.isTrue(codes.includes('pin.editor_vscode_auto_import_missing'))
     }).pipe(Effect.provide(NodeServices.layer)))
 })
 
 function makeFixture(): string {
-  return mkdtempSync(join(tmpdir(), 'partita-source-entry-'))
+  return mkdtempSync(join(tmpdir(), 'partita-pin-'))
 }
 
 function validContract(): GitHubSubtreePinContract {

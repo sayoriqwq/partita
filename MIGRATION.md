@@ -17,7 +17,7 @@ updated: 2026-07-01
 
 Partita 的目标状态是 personal skill workflow/source harness。
 
-Partita SHOULD own 自建或维护的 skill source、skill authoring workflow、projection audit、source pin、verification 和最小 install wrapper。
+Partita SHOULD own 自建或维护的 skill source、skill authoring workflow、projection audit、pin、verification 和最小 skill runtime wrapper。
 
 Partita MUST NOT own user-home dotfile materialization、global runtime skill universe、provider runtime、external skill collections、target-repo runtime copies 或 one-off workflow history。
 
@@ -27,7 +27,7 @@ skills.sh CLI SHOULD own runtime skill install、list、remove 和 update。
 
 Prelude/provider repos SHOULD own target project lifecycle 和 provider runtime。
 
-External repositories SHOULD enter Partita only through GitHub git-subtree source pins and their sibling `repos/<name>.subtree.json` contract.
+External repositories SHOULD enter Partita only through GitHub git-subtree pins and their sibling `repos/<name>.subtree.json` contract.
 
 第一阶段迁移对象是 implementation loop，不是 `/Users/sayori/Desktop/partita-ref` 里的旧 semantic content。
 
@@ -36,9 +36,9 @@ Partita SHOULD migrate in thin adapters and checks for the current loop:
 | Loop segment | Owner | Partita surface |
 | --- | --- | --- |
 | Skill source update | Partita | `skills/`、`pnpm generate`、`pnpm verify` |
-| Runtime skill install/update | skills.sh CLI | `partita install codex-skill`、`pnpm install:codex-skill` |
+| Runtime skill install/update | skills.sh CLI | `partita skill sync`、`partita skill status`、`partita skill verify` |
 | User-home materialization | chezmoi | `partita home status`、`partita home diff`、显式写入的 `partita home apply --write` |
-| External source entry | Partita + git subtree | `partita source`、`repos/<name>.subtree.json` |
+| External pin | Partita + git subtree | `partita pin`、`repos/<name>.subtree.json` |
 
 ## Architecture
 
@@ -105,7 +105,7 @@ Content MAY return from `/Users/sayori/Desktop/partita-ref` only after sayori co
 | `generic-projection` | Partita keeps this while projection helper remains repo-internal. |
 | `wiki-external` | This should leave Partita or be folded into executable source before wiki removal. |
 | `runtime-reference` | This is migration candidate unless a concrete runtime consumer remains. |
-| `source-pin` | Partita keeps this as GitHub git-subtree source pin contract or read-only upstream materialization. |
+| `pin` | Partita keeps this as GitHub git-subtree pin contract or read-only upstream materialization. |
 | `quarantine-ref` | This has moved to `/Users/sayori/Desktop/partita-ref` for reference only. |
 | `external-tooling` | Ownership belongs to package managers, skills.sh CLI, chezmoi, or host tools. |
 | `legacy-delete` | This should be deleted from Partita. |
@@ -245,7 +245,7 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `skills/expression/density/references/examples.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/expression/density/references/protocol.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/expression/density/references/symbols.md` | `partita-skill-source` | keep | Skill-local reference. |
-| `skills/link/pin/SKILL.md` | `partita-skill-source` | keep | GitHub git-subtree source pin skill. |
+| `skills/link/pin/SKILL.md` | `partita-skill-source` | keep | GitHub git-subtree pin skill. |
 | `skills/link/pin/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
 | `skills/maintenance/reconcile/SKILL.md` | `partita-skill-source` | keep | Self-owned maintenance skill. |
 | `skills/maintenance/reconcile/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
@@ -294,28 +294,28 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `src/partita/frontmatter.ts` | `partita-core` | keep | Skill frontmatter parser. |
 | `src/partita/generator.ts` | `partita-core` | keep | Projection generator. |
 | `src/partita/home.ts` | `partita-core` | keep | Thin chezmoi home materialization wrapper. |
-| `src/partita/install.ts` | `partita-core` | keep | Thin skills.sh install wrapper. |
+| `src/partita/skill.ts` | `partita-core` | keep | Thin skills.sh skill runtime wrapper. |
 | `src/partita/model.ts` | `partita-core` | keep | Partita domain model. |
 | `src/partita/skill-validation.ts` | `partita-core` | keep | Skill source validation. |
-| `src/partita/source-entry.ts` | `partita-core` | keep | GitHub git-subtree source pin logic. |
+| `src/partita/pin.ts` | `partita-core` | keep | GitHub git-subtree pin logic. |
 | `src/partita/verifier.ts` | `partita-core` | keep | Repository verifier. |
 | `tests/generator.test.ts` | `partita-core` | keep | Generator tests. |
 | `tests/home.test.ts` | `partita-core` | keep | Chezmoi home wrapper tests. |
-| `tests/install.test.ts` | `partita-core` | keep | Install wrapper tests. |
+| `tests/skill.test.ts` | `partita-core` | keep | Skill runtime wrapper tests. |
 | `tests/skill-validation.test.ts` | `partita-core` | keep | Skill validation tests. |
-| `tests/source-entry.test.ts` | `partita-core` | keep | Source pin tests. |
+| `tests/pin.test.ts` | `partita-core` | keep | Pin tests. |
 | `tests/verifier.test.ts` | `partita-core` | keep | Verifier tests. |
 | `tsconfig.build.json` | `partita-core` | keep | Build TypeScript config. |
 | `tsconfig.json` | `partita-core` | keep | TypeScript config. |
 | `turbo.json` | `partita-core` | keep | Turbo task config. |
 
-## Future Source Pins
+## Future Pins
 
 | Future path | Owner | Action | Note |
 | --- | --- | --- | --- |
-| `repos/<name>.subtree.json` | `source-pin` | keep | GitHub git-subtree pin contract and source truth for the pinned external repo. |
-| `repos/<name>/` | `source-pin` | materialize read-only | External upstream subtree materialization; not Partita-owned skill source and not provider runtime. |
-| `repos/<name>/LLMS.md` or equivalent anchor | `source-pin` | read-only | Agent-readable upstream anchor, governed by the sibling contract. |
+| `repos/<name>.subtree.json` | `pin` | keep | GitHub git-subtree pin contract and source truth for the pinned external repo. |
+| `repos/<name>/` | `pin` | materialize read-only | External upstream subtree materialization; not Partita-owned skill source and not provider runtime. |
+| `repos/<name>/LLMS.md` or equivalent anchor | `pin` | read-only | Agent-readable upstream anchor, governed by the sibling contract. |
 
 ## Decisions
 

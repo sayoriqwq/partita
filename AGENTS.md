@@ -13,7 +13,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 本 repo owns：
 
 - `skills/` 下的 self-owned skill source；
-- `src/partita/` 下的 TypeScript/Effect CLI、generator、verifier、skills.sh install wrapper、chezmoi home adapter 和 source pin code；
+- `src/partita/` 下的 TypeScript/Effect CLI、generator、verifier、skills.sh skill runtime wrapper、chezmoi home adapter 和 pin code；
 - `tests/` 下的 executable behavior checks；
 - `harness/skills/dispatcher.md` 下的 generated source inventory 和 projection audit artifact；
 - `packages/generic-projection/` 下的 repo-internal generic projection helpers；
@@ -39,20 +39,21 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。
 - `skills/` 是 self-owned skill source input。
 - `skills/` 下的 Partita `SKILL.md` files 是 runtime-installable skill source，不是 wiki projection output。
-- 外部 repos MUST 通过 `partita source` 的 GitHub git-subtree pin 进入 Partita。
+- 外部 repos MUST 通过 `partita pin` 的 GitHub git-subtree pin 进入 Partita。
 - GitHub subtree pin contract MUST 使用 sibling path，例如 `repos/<name>.subtree.json`。
 - `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
 - dispatcher output 属于 `harness/skills/dispatcher.md`，不属于 `skills/`。
 - dispatcher MUST remain generated source inventory 和 projection audit artifact。
 - dispatcher MUST NOT become runtime governance、installer state、mapping layer 或 durable knowledge layer。
 - `packages/generic-projection/` owns generic marker parsing、file-copy rendering、block marker constants 和 projection helper functions。
-- `packages/generic-projection/` 不 owns Partita-specific routing、skill family handles、source pin policy 或 install behavior。
+- `packages/generic-projection/` 不 owns Partita-specific routing、skill family handles、pin policy 或 install behavior。
 - root `wiki/` 和 `packages/wiki/` MUST NOT exist in this repo。
 - `.codex-plugin/` MUST NOT exist in this repo。
 - `runtime/references/` MUST NOT exist in this repo。
 - executable setup、sync 和 verification mechanisms 属于 owning harness 或 CLI repo。
 - Partita skills 可以调用这些 mechanisms，但 SHOULD NOT 用 prose 重新实现它们。
-- global runtime skill mutation MUST 通过 skills.sh CLI；Partita 只能提供 thin wrapper，例如 `partita install codex-skill`。
+- global runtime skill mutation MUST 通过 skills.sh CLI；Partita 只能提供 thin wrapper，例如 `partita skill sync`。
+- global runtime skill status 和 verification SHOULD 通过 `partita skill status` 与 `partita skill verify` 比对 Partita source 和 skills.sh runtime list。
 - user-home materialization MUST 通过 chezmoi；Partita 只能提供 thin wrapper，例如 `partita home status`、`partita home diff` 和显式写入的 `partita home apply --write`。
 - agent MUST NOT 直接编辑 `~/.agents/skills` 里的 installed runtime projection。
 - zero skills MUST 保持为合法 framework state。
@@ -76,7 +77,9 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 pnpm generate
 pnpm generate:check
 pnpm verify
-pnpm install:codex-skill
+pnpm skill-sync
+pnpm skill-status
+pnpm skill-verify
 pnpm home:status
 pnpm home:diff
 ```
