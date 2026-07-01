@@ -9,33 +9,37 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 ## State
 
 - `skills/` 是 self-owned skill source input。
-- `docs/skills/` 是 Partita skill 建设理论和共享概念真源。
-- `src/partita/` 负责 Partita-specific generation、verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
-- `partita.materialize.json` 是 repo 内 materialization 真源，声明 clean copies 和 generated reports。
-- `harness/skills/dispatcher.md` 是 materialized skill inventory audit。
+- `src/partita/` 负责 Partita-specific verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
 - `tests/` 承载 executable behavior checks。
-- 旧 wiki、runtime references、plugin runtime metadata 和 harness reference docs 已迁出到 `/Users/sayori/Desktop/partita-ref`。
+- root operating docs 是 `README.md` 和 `AGENTS.md`。
+- Turbo/pnpm workspace 保留，即使 `packages/` 暂时没有 active package。
+
+当前没有 dispatcher、docs baseline 或 repo-internal materialization layer。
+
+以下 surfaces 已废弃，MUST NOT 恢复，除非用户显式要求从第一性原理重新设计：
+
+- `docs/skills/`
+- `harness/skills/dispatcher.md`
+- `partita.materialize.json`
+- `MIGRATION.md`
+- `packages/wiki/`
+- `runtime/references/`
+- `.codex-plugin/`
 
 ## Map
 
 - `bin/partita.ts` 是 TypeScript/Effect CLI entrypoint。
 - `src/cli/Main.ts` 定义 CLI command surface。
-- `src/partita/generator.ts` 生成 package metadata、dispatcher audit 和 clean local copies。
 - `src/partita/verifier.ts` 校验 Partita source shape，并阻止迁出 surfaces 回流。
 - `src/partita/openai-skill-validation.ts` 校验 OpenAI/Codex runtime skill folder 的基础可用性。
 - `src/partita/partita-skill-validation.ts` 在 runtime 层之上校验 Partita source skill contract。
 - `src/partita/pin.ts` 管理 GitHub git-subtree pins。
 - `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
-- `harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` materialize。
-- `docs/skills/concepts/` 下的共享概念通过 clean copy 进入 skill-local `references/`。
-- `MIGRATION.md` 记录迁移目标、架构图和 ownership table。
 
 ## Commands
 
 ```bash
-pnpm generate
-pnpm generate:check
 pnpm verify
 pnpm verify-runtime
 pnpm verify-source
@@ -100,16 +104,6 @@ repos/effect.subtree.json
 
 `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
 
-## Dispatcher
-
-`harness/skills/dispatcher.md` 是 materialized skill inventory audit。
-
-dispatcher 不决定 Codex runtime 加载哪些 skills。
-
-dispatcher 不承担 runtime governance、installer state、mapping layer 或 durable knowledge layer。
-
-dispatcher 不承载 marker DSL；它由 `partita.materialize.json` 的 `skill-inventory` report 重新生成。
-
 ## Verification
 
 `partita verify` 默认运行完整 project 层。
@@ -126,17 +120,15 @@ partita verify --level project
 
 `source` 在 runtime 层之上校验 Partita V1 section、marker、description policy、`agents/openai.yaml` 和 source path。
 
-`project` 在 source 层之上校验 dispatcher、materialized copies、links、迁出 surface 和 root shape。
+`project` 在 source 层之上校验 links、迁出 surface 和 root shape。
 
 ## Skill
 
 只有在用户明确 skill behavior 后，才能新增 skill。
 
-创建或修改 skill 时，直接维护 skill-local source 和 references，不再依赖 `packages/wiki/`。
+创建或修改 skill 时，直接维护 skill-local source 和 references。
 
-共享概念先维护在 `docs/skills/concepts/`，再 materialize 到每个需要该概念的 skill-local `references/`。
-
-runtime skill MUST NOT 依赖另一个 skill 的 `references/`。
+runtime skill MUST 自包含执行所需 references；MUST NOT 依赖另一个 skill 的 `references/`。
 
 minimum shape：
 
@@ -169,20 +161,11 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 `policy.allow_implicit_invocation` MUST 位于 `agents/openai.yaml` 的 `policy` block 下。
 
-source namespaces 只影响 dispatcher inventory handle；frontmatter 和 global installed skills 保持 short skill name。
-
-| Source namespace | Dispatcher handle |
-| --- | --- |
-| `expression` | `ex:<name>` |
-| `link` | `lk:<name>` |
-| `maintenance` | `mt:<name>` |
-| `orientation` | `og:<name>` |
-| `primitive` | `pm:<name>` |
+source namespaces 只影响 Partita source organization；frontmatter 和 global installed skills 保持 short skill name。
 
 新增或修改 skill 后运行：
 
 ```bash
-pnpm generate
 pnpm verify
 ```
 

@@ -37,19 +37,19 @@ Soft:
 - MUST 保持 target skill identity。
 - target identity 不成立时，MUST 停止并报告；MUST NOT patch 它。
 - MUST 默认 patch OpenAI/Codex skill，除非用户指定其他 target。
-- MUST 只在 Partita landing 中应用 Partita family、dispatcher、policy 和 checks。
+- MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
 - MUST 让 skill runtime 携带执行自身 Rule、Pattern、Boundary、Workflow 和 Validation 所需的本地概念定义。
 - 没有真实 case 时，MUST NOT 运行 structure-audit。
 - MUST 在修改前定位 target skill source truth。
-- installed/global/runtime skill copies MUST 视为 materialized runtime copies；MUST NOT 直接把 runtime copy 当作 patch target。
+- installed/global/runtime skill copies MUST 视为 installed runtime copies；MUST NOT 直接把 runtime copy 当作 patch target。
 - 当用户给出 runtime copy path 时，MUST 找到 owning source skill 并 patch source；找不到 source truth 时，MUST 停止并报告 blocker。
 - MUST 选择能防止复发的最小 patch。
 - MUST 按 [case feedback](references/case-feedback.md) 在 target skill references 中添加或更新真实 recurrence case，除非同一 case 已经存在。
 
 Hard:
 
-- When: Partita landing 中修改 skill source、local references、frontmatter、`agents/openai.yaml`、dispatcher 输入或 generated files。
-  Do: MUST 运行 `pnpm generate` 和 `pnpm generate:check`。
+- When: Partita landing 中修改 skill source、local references、frontmatter、`agents/openai.yaml` 或 generated files。
+  Do: MUST 运行 `pnpm verify`。
 
 - When: Partita landing 中完成 repo 变更前。
   Do: MUST 运行 `pnpm verify`。
@@ -71,7 +71,7 @@ Hard:
 3. 读取 [skill patch](references/skill-patch.md) 和 [case feedback](references/case-feedback.md)，确认 patch case 字段可读。
 4. 定位 target skill source truth；如果读到的是 installed/runtime copy，先找到 owning source skill。
 5. 读取 [OpenAI skill](references/openai-skill.md)，确认 target runtime shape 仍然成立。
-6. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确认 Partita family、shape、policy、dispatcher 和 checks 仍然成立。
+6. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确认 Partita family、shape、policy 和 checks 仍然成立。
 7. 确认 target skill identity 仍然成立；否则 MUST 停止并报告 identity invalid。
 8. 定位 case 暴露的最小 stale surface。
 9. 在 target skill references 中添加或更新 case feedback。

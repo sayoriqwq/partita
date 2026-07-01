@@ -49,8 +49,8 @@ Soft:
 
 Hard:
 
-- When: 修改 local references、dispatcher 输入、generated files 或 skill metadata。
-  Do: MUST 运行 `pnpm generate:check`。
+- When: 修改 local references、generated files 或 skill metadata。
+  Do: MUST 运行 `pnpm verify`。
 
 - When: 完成 repo 变更前。
   Do: MUST 运行 `pnpm verify`。

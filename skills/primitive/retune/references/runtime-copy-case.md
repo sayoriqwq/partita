@@ -35,7 +35,7 @@ agent 随后修改了 Partita 真源并运行生成、验证和安装命令。
 
 retune MUST 先定位 target skill source truth。
 
-installed/global/runtime skill copies MUST 被视为 materialized runtime copies，不能作为 patch target。
+installed/global/runtime skill copies MUST 被视为 installed runtime copies，不能作为 patch target。
 
 如果用户给的是 runtime copy path，retune MUST 找到 owning source skill 并 patch source。
 

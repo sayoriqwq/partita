@@ -5,7 +5,6 @@ import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {
   verifyPartitaSourceSkills,
-  verifyRouting,
   verifyRuntimeSkills,
   verifySourceProject,
 } from '../src/partita/verifier.ts'
@@ -47,8 +46,8 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'skills/demo/SKILL.md', validSkill().replace(
-        'Use when verifying Partita skill shape in tests. Not for production routing or broad behavior.',
-        'Demo verifies Partita skill shape in tests. This is useful for routing fixtures.',
+        'Use when verifying Partita skill shape in tests. Not for production behavior or broad review.',
+        'Demo verifies Partita skill shape in tests. This is useful for source fixtures.',
       ))
 
       const report = yield* verifySourceProject({ root })
@@ -63,9 +62,9 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       const repeatedSelector = 'a precise selector phrase '.repeat(20)
-      const longDescription = `Use when ${repeatedSelector}requires verifier coverage. Not for unrelated routing. Always use the best recommended path.`
+      const longDescription = `Use when ${repeatedSelector}requires verifier coverage. Not for unrelated work. Always use the best recommended path.`
       write(root, 'skills/demo/SKILL.md', validSkill().replace(
-        'Use when verifying Partita skill shape in tests. Not for production routing or broad behavior.',
+        'Use when verifying Partita skill shape in tests. Not for production behavior or broad review.',
         longDescription,
       ))
 
@@ -75,37 +74,6 @@ describe('Partita verifier', () => {
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('partita_skill.description_too_long'))
       assert.isTrue(codes.includes('partita_skill.description_scheduling_pollution'))
-    }))
-
-  it.effect('reports dispatcher routing drift', () =>
-    Effect.gen(function* () {
-      const root = makeValidSourceFixture()
-      write(root, 'harness/skills/dispatcher.md', [
-        '# Dispatcher',
-        '',
-        '| Handle | Name | Invocation | Description | File |',
-        '| --- | --- | --- | --- | --- |',
-        '| missing | missing | true | Missing skill fixture | `skills/missing/SKILL.md` |',
-      ].join('\n'))
-
-      const report = yield* verifyRouting({ root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('routing.missing_skill_refs'))
-      assert.isTrue(codes.includes('routing.stale_skill_refs'))
-    }))
-
-  it.effect('rejects dispatcher under skills', () =>
-    Effect.gen(function* () {
-      const root = makeValidSourceFixture()
-      write(root, 'skills/DISPATCHER.md', dispatcher())
-
-      const report = yield* verifySourceProject({ root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('routing.legacy_dispatcher_path'))
     }))
 
   it.effect('accepts supported namespace skill handles', () =>
@@ -121,18 +89,6 @@ describe('Partita verifier', () => {
       write(root, 'skills/maintenance/reconcile/agents/openai.yaml', validOpenAiMetadata())
       write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
       write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
-      write(root, 'harness/skills/dispatcher.md', [
-        '# Dispatcher',
-        '',
-        '| Handle | Name | Invocation | Description | File |',
-        '| --- | --- | --- | --- | --- |',
-        '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
-        '| ex:density | density | true | Demo skill fixture | `skills/expression/density/SKILL.md` |',
-        '| lk:pin | pin | true | Demo skill fixture | `skills/link/pin/SKILL.md` |',
-        '| mt:reconcile | reconcile | true | Demo skill fixture | `skills/maintenance/reconcile/SKILL.md` |',
-        '| og:argue | argue | true | Argue skill fixture | `skills/orientation/argue/SKILL.md` |',
-        '| pm:notate | notate | true | Notate skill fixture | `skills/primitive/notate/SKILL.md` |',
-      ].join('\n'))
 
       const report = yield* verifySourceProject({ root })
 
@@ -234,6 +190,10 @@ describe('Partita verifier', () => {
       write(root, 'packages/wiki/index.md', '# Migrated wiki\n')
       write(root, 'runtime/references/skill/case.md', '# Migrated runtime reference\n')
       write(root, 'harness/skills/checks.md', '# Migrated harness reference\n')
+      write(root, 'docs/skills/theory.md', '# Removed docs baseline\n')
+      write(root, 'harness/skills/dispatcher.md', '# Removed dispatcher\n')
+      write(root, 'partita.materialize.json', '{}\n')
+      write(root, 'MIGRATION.md', '# Removed migration baseline\n')
       mkdirSync(join(root, 'rules'), { recursive: true })
       mkdirSync(join(root, 'theory'), { recursive: true })
       mkdirSync(join(root, 'wiki'), { recursive: true })
@@ -243,59 +203,6 @@ describe('Partita verifier', () => {
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('surface.removed_exists'))
-    }))
-
-  it.effect('reports legacy materialization markers', () =>
-    Effect.gen(function* () {
-      const root = makeValidSourceFixture()
-      write(root, 'harness/skills/dispatcher.md', [
-        '# Dispatcher',
-        '',
-        '<!-- routing-table:start -->',
-        '| Skill | Description | File |',
-        '| --- | --- | --- |',
-        '| demo | Demo skill fixture | `skills/demo/SKILL.md` |',
-        '<!-- routing-table:end -->',
-      ].join('\n'))
-
-      const report = yield* verifySourceProject({ root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('materialize.legacy_marker'))
-    }))
-
-  it.effect('reports materialized copy drift', () =>
-    Effect.gen(function* () {
-      const root = makeValidSourceFixture()
-      write(root, 'partita.materialize.json', materializeConfig([
-        {
-          source: 'reference-source/insufficient-material.md',
-          targets: ['skills/demo/references/insufficient-material.md'],
-        },
-      ]))
-      write(root, 'skills/demo/references/insufficient-material.md', '# stale\n')
-
-      const report = yield* verifySourceProject({ root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('materialize.copy_drift'))
-    }))
-
-  it.effect('reports missing materialized inventory report config', () =>
-    Effect.gen(function* () {
-      const root = makeValidSourceFixture()
-      write(root, 'partita.materialize.json', JSON.stringify({
-        copies: [],
-        reports: [],
-      }))
-
-      const report = yield* verifySourceProject({ root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('materialize.report_missing'))
     }))
 
   it.effect('keeps runtime, source, and project verification as separate layers', () =>
@@ -323,19 +230,17 @@ describe('Partita verifier', () => {
       assert.isTrue(sourceCodes.includes('partita_skill.missing_contract_sections'))
       assert.isTrue(sourceCodes.includes('openai_metadata.missing'))
       assert.isFalse(projectReport.ok)
-      assert.isTrue(projectCodes.includes('routing.dispatcher_missing'))
+      assert.isTrue(projectCodes.includes('partita_skill.missing_marker'))
+      assert.isTrue(projectCodes.includes('openai_metadata.missing'))
     }))
 })
 
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))
   write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
-  write(root, 'partita.materialize.json', materializeConfig())
-  write(root, 'reference-source/insufficient-material.md', '# 材料不足\n\nMUST 打回。\n')
 
   write(root, 'skills/demo/SKILL.md', validSkill())
   write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata())
-  write(root, 'harness/skills/dispatcher.md', dispatcher())
   return root
 }
 
@@ -343,7 +248,7 @@ function validSkill(): string {
   return [
     '---',
     'name: demo',
-    'description: "Use when verifying Partita skill shape in tests. Not for production routing or broad behavior."',
+    'description: "Use when verifying Partita skill shape in tests. Not for production behavior or broad review."',
     '---',
     '',
     '# Demo',
@@ -352,7 +257,7 @@ function validSkill(): string {
     '',
     '## Rule',
     '',
-    'Facing Partita verifier fixture work, first run the local shape check, to avoid accepting invalid materialized skill copies.',
+    'Facing Partita verifier fixture work, first run the local shape check, to avoid accepting invalid skill source shape.',
     '',
     '## Pattern',
     '',
@@ -362,7 +267,7 @@ function validSkill(): string {
     '',
     'Do not use when:',
     '',
-    '- production routing or broad behavior is being tested.',
+    '- production behavior or broad review is being tested.',
     '',
     '## Boundary',
     '',
@@ -394,7 +299,7 @@ function validSkill(): string {
     '',
     '- the fixture pattern was matched;',
     '- the verifier rule was applied;',
-    '- invalid materialized skill copies were avoided;',
+    '- invalid skill source shape was avoided;',
     '- effects stayed at none for filesystem and external services;',
     '- hard checks passed.',
   ].join('\n')
@@ -411,30 +316,8 @@ function validOpenAiMetadata(): string {
   ].join('\n')
 }
 
-function dispatcher(): string {
-  return [
-    '# Dispatcher',
-    '',
-    '| Handle | Name | Invocation | Description | File |',
-    '| --- | --- | --- | --- | --- |',
-    '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
-  ].join('\n')
-}
-
 function write(root: string, path: string, contents: string) {
   const absolutePath = join(root, path)
   mkdirSync(dirname(absolutePath), { recursive: true })
   writeFileSync(absolutePath, contents)
-}
-
-function materializeConfig(copies: ReadonlyArray<{ readonly source: string, readonly targets: ReadonlyArray<string> }> = []): string {
-  return JSON.stringify({
-    copies,
-    reports: [
-      {
-        name: 'skill-inventory',
-        target: 'harness/skills/dispatcher.md',
-      },
-    ],
-  })
 }

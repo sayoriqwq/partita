@@ -2,7 +2,7 @@
 
 ## Family
 
-Partita family 是 source 组织方式和 inventory handle 约定。
+Partita family 是 source 组织方式。
 
 - `skills/primitive/<name>/` 存放 Partita-managed primitive source skills。
 - `skills/expression/<name>/` 存放 expression protocol source skills。
@@ -39,29 +39,10 @@ side-effect risk 高的 skill SHOULD 默认使用 `false`。
 
 creation、patching、migration、verification 和 file-writing workflow skills SHOULD 默认使用 `false`。
 
-## Dispatcher
-
-dispatcher 是 Partita materialized skill inventory report。
-
-dispatcher 将 Partita source skills 列成 audit table：
-
-- `skills/primitive/<name>/` 映射到 `pm:<name>`。
-- `skills/expression/<name>/` 映射到 `ex:<name>`。
-- `skills/link/<name>/` 映射到 `lk:<name>`。
-- `skills/orientation/<name>/` 映射到 `og:<name>`。
-- `skills/maintenance/<name>/` 映射到 `mt:<name>`。
-- direct `skills/<name>/` 映射到 `<name>`。
-
-dispatcher generated output 位于 `harness/skills/dispatcher.md`，不是 `skills/` 内容。
-
-dispatcher 不是 OpenAI skill target requirement。
-
-installed global Codex skills 通过各自的 `description` 触发，不通过 Partita dispatcher。
-
 ## Checks
 
 Partita landing 中：
 
-- 当 skill frontmatter、`agents/openai.yaml`、inventory input 或 generated files 变化时，MUST 运行 `pnpm generate:check`。
+- 当 skill frontmatter、`agents/openai.yaml`、source skill files 或 generated files 变化时，MUST 运行 `pnpm verify`。
 - 完成 Partita repo change 前，MUST 运行 `pnpm verify`。
 - 如果 checks 无法运行，报告准确 blocker。

@@ -13,15 +13,17 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 本 repo owns：
 
 - `skills/` 下的 self-owned skill source；
-- `docs/skills/` 下的 skill 建设理论和共享概念真源；
-- `partita.materialize.json` 下的 repo 内 materialization 配置；
-- `src/partita/` 下的 TypeScript/Effect CLI、generator、verifier、skills.sh skill runtime wrapper、chezmoi home adapter 和 pin code；
+- `src/partita/` 下的 TypeScript/Effect CLI、verifier、skills.sh skill runtime wrapper、chezmoi home adapter 和 pin code；
 - `tests/` 下的 executable behavior checks；
-- `harness/skills/dispatcher.md` 下的 materialized skill inventory audit；
-- root operating docs：`README.md`、`AGENTS.md` 和 `MIGRATION.md`。
+- root operating docs：`README.md` 和 `AGENTS.md`；
+- pnpm/Turbo workspace scaffold。
 
 本 repo 不 owns：
 
+- `docs/skills/` docs baseline；
+- `harness/skills/dispatcher.md` dispatcher baseline；
+- `partita.materialize.json` repo-internal materialization config；
+- `MIGRATION.md` one-off migration baseline；
 - `.codex-plugin/` plugin runtime metadata；
 - `packages/wiki/` wiki layer；
 - `runtime/references/` shared runtime reference layer；
@@ -33,24 +35,17 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - project-specific commands、private local paths 或 one-off workflow history；
 - `sayoriqwq/sayoriqwq` personal skills monorepo 路径。
 
-迁出的参考材料位于 `/Users/sayori/Desktop/partita-ref`。
-
 ## Rules
 
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。
 - `skills/` 是 self-owned skill source input。
-- `skills/` 下的 Partita `SKILL.md` files 是 runtime-installable skill source，不是 wiki materialized output。
-- `docs/skills/` 是 Partita skill theory 和共享概念 source truth，不是 runtime skill。
-- 共享概念 MUST 从 `docs/skills/concepts/` materialize 到每个需要它的 skill-local `references/`。
-- `partita.materialize.json` MUST 是 repo 内 clean copies 和 generated reports 的唯一配置。
-- materialized runtime 文件 MUST NOT 携带 `partita:projection`、`routing-table` 或其他治理 marker。
+- `skills/` 下的 Partita `SKILL.md` files 是 runtime-installable skill source。
 - runtime skill MUST 自包含执行所需 references；MUST NOT 依赖另一个 skill 的 `references/`。
+- `docs/skills/`、`harness/skills/dispatcher.md`、`partita.materialize.json` 和 `MIGRATION.md` MUST NOT 恢复，除非用户显式要求从第一性原理重建设计。
+- verifier MUST hard-block removed surfaces 回流，但 MUST NOT 继续维护 dispatcher routing 或 materialization drift 规则。
 - 外部 repos MUST 通过 `partita pin` 的 GitHub git-subtree pin 进入 Partita。
 - GitHub subtree pin contract MUST 使用 sibling path，例如 `repos/<name>.subtree.json`。
 - `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
-- dispatcher output 属于 `harness/skills/dispatcher.md`，不属于 `skills/`。
-- dispatcher MUST remain materialized skill inventory audit。
-- dispatcher MUST NOT become runtime governance、installer state、mapping layer 或 durable knowledge layer。
 - generic helper package 已废弃；MUST NOT 恢复 marker DSL 或 repo-internal materialization abstraction。
 - `openai-skill-validation` 只 owns OpenAI/Codex runtime skill folder 基础可用性。
 - `partita-skill-validation` owns Partita source skill contract，并依赖 runtime validation。
@@ -69,21 +64,19 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 
 ## Skills
 
-新增 request-orientation skill 时，创建 `skills/orientation/<name>/SKILL.md` 和 `skills/orientation/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
+新增 request-orientation skill 时，创建 `skills/orientation/<name>/SKILL.md` 和 `skills/orientation/<name>/agents/openai.yaml`，运行 `pnpm verify`。
 
-新增 expression protocol skill 时，创建 `skills/expression/<name>/SKILL.md` 和 `skills/expression/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
+新增 expression protocol skill 时，创建 `skills/expression/<name>/SKILL.md` 和 `skills/expression/<name>/agents/openai.yaml`，运行 `pnpm verify`。
 
-新增 external authority link skill 时，创建 `skills/link/<name>/SKILL.md` 和 `skills/link/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
+新增 external authority link skill 时，创建 `skills/link/<name>/SKILL.md` 和 `skills/link/<name>/agents/openai.yaml`，运行 `pnpm verify`。
 
-新增 maintenance skill 时，创建 `skills/maintenance/<name>/SKILL.md` 和 `skills/maintenance/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
+新增 maintenance skill 时，创建 `skills/maintenance/<name>/SKILL.md` 和 `skills/maintenance/<name>/agents/openai.yaml`，运行 `pnpm verify`。
 
-新增 Partita-managed base skill 时，创建 `skills/primitive/<name>/SKILL.md` 和 `skills/primitive/<name>/agents/openai.yaml`，运行 `pnpm generate`，再运行 `pnpm verify`。
+新增 Partita-managed base skill 时，创建 `skills/primitive/<name>/SKILL.md` 和 `skills/primitive/<name>/agents/openai.yaml`，运行 `pnpm verify`。
 
 ## Commands
 
 ```bash
-pnpm generate
-pnpm generate:check
 pnpm verify
 pnpm verify-runtime
 pnpm verify-source

@@ -53,6 +53,6 @@ skill runtime 的 `Hard:` 区 SHOULD 使用 `When:` / `Do:` pattern。
 `Do:` 只写必须执行或禁止执行的动作。
 
 ```md
-- When: 修改 skill frontmatter、`agents/openai.yaml`、dispatcher 输入或 generated files。
-  Do: MUST 运行 `pnpm generate:check`。
+- When: 修改 skill frontmatter、`agents/openai.yaml` 或 generated files。
+  Do: MUST 运行 `pnpm verify`。
 ```

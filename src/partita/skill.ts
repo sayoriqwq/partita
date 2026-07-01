@@ -5,7 +5,6 @@ import { NodeServices } from '@effect/platform-node'
 import { Effect, Schema, Stream } from 'effect'
 import * as Console from 'effect/Console'
 import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
-import { collectSkillMetadata } from './generator.ts'
 
 export interface SkillRuntimeCommand {
   readonly command: string
@@ -55,6 +54,13 @@ export interface SkillRuntimeStatus {
 export class PartitaSkillRuntimeError extends Schema.TaggedErrorClass<PartitaSkillRuntimeError>()('PartitaSkillRuntimeError', {
   message: Schema.String,
 }) {}
+
+interface SourceSkillEntry {
+  readonly name: string
+  readonly relativePath: string
+}
+
+const sourceSkillNamespaces = new Set(['expression', 'link', 'maintenance', 'orientation', 'primitive'])
 
 function formatUnknown(cause: unknown): string {
   if (cause instanceof Error) {
@@ -151,10 +157,7 @@ export const listSkillRuntime = Effect.fn('listSkillRuntime')(
 const inspectSkillRuntime = Effect.fn('inspectSkillRuntime')(
   function* (options: SkillRuntimeOptions = {}): Effect.fn.Return<SkillRuntimeStatus, PartitaSkillRuntimeError> {
     const root = path.resolve(options.root ?? process.cwd())
-    const sourceSkills = yield* collectSkillMetadata(root).pipe(
-      Effect.mapError(error => skillRuntimeError(error.message)),
-      Effect.provide(NodeServices.layer),
-    )
+    const sourceSkills = sourceSkillEntries(root)
     const runtime = yield* listSkillRuntime(runtimeOptions(root, options.runCommand))
     const expectedSkills = sourceSkills.map(skill => skill.name).sort()
     const installedSkills = [...runtime.entries].sort((left, right) => left.name.localeCompare(right.name))
@@ -202,6 +205,50 @@ const inspectSkillRuntime = Effect.fn('inspectSkillRuntime')(
     }
   },
 )
+
+function sourceSkillEntries(root: string): ReadonlyArray<SourceSkillEntry> {
+  const skillsRoot = path.join(root, 'skills')
+  if (!existsSync(skillsRoot)) {
+    return []
+  }
+
+  const entries: Array<SourceSkillEntry> = []
+  for (const entry of readdirSync(skillsRoot, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    const directSkillPath = path.join(skillsRoot, entry.name, 'SKILL.md')
+    if (existsSync(directSkillPath)) {
+      entries.push({
+        name: entry.name,
+        relativePath: path.join('skills', entry.name, 'SKILL.md'),
+      })
+      continue
+    }
+
+    if (!sourceSkillNamespaces.has(entry.name)) {
+      continue
+    }
+
+    const namespaceRoot = path.join(skillsRoot, entry.name)
+    for (const skillEntry of readdirSync(namespaceRoot, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name))) {
+      if (!skillEntry.isDirectory()) {
+        continue
+      }
+      const namespacedSkillPath = path.join(namespaceRoot, skillEntry.name, 'SKILL.md')
+      if (!existsSync(namespacedSkillPath)) {
+        continue
+      }
+      entries.push({
+        name: skillEntry.name,
+        relativePath: path.join('skills', entry.name, skillEntry.name, 'SKILL.md'),
+      })
+    }
+  }
+
+  return entries.sort((left, right) => left.name.localeCompare(right.name))
+}
 
 const verifySkillRuntime = Effect.fn('verifySkillRuntime')(
   function* (options: SkillRuntimeOptions = {}) {

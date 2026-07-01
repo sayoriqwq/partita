@@ -35,7 +35,7 @@ Soft:
 - MUST 打回不能支撑 workflow A/Y/X、gate logic、internal skill routing、disclosure boundary 和 target runtime shape 的材料。
 - MUST NOT 编造 workflow case、routing、gate logic、disclosure boundary、target runtime shape 或 A/Y/X。
 - MUST 默认创建 OpenAI/Codex skill，除非用户指定其他 target。
-- MUST 只在 Partita landing 中应用 Partita family、dispatcher、policy 和 checks。
+- MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
 - MUST 保持 public workflow skill 自己的 governance rule，不把它和被路由的 internal skills 混在一起。
 - MUST 根据 Pattern 精确度和 side-effect risk 决定 `policy.allow_implicit_invocation`。
 - MUST 让 skill runtime 携带执行自身 Rule、Pattern、Boundary、Workflow 和 Validation 所需的本地概念定义。
@@ -44,8 +44,8 @@ Soft:
 
 Hard:
 
-- When: Partita landing 中修改 skill frontmatter、`agents/openai.yaml`、dispatcher 输入或 generated files。
-  Do: MUST 运行 `pnpm generate:check`。
+- When: Partita landing 中修改 skill frontmatter、`agents/openai.yaml`、source skill files 或 generated files。
+  Do: MUST 运行 `pnpm verify`。
 
 - When: Partita landing 中完成 repo 变更前。
   Do: MUST 运行 `pnpm verify`。
@@ -62,7 +62,7 @@ Hard:
 2. 读取 [case](references/case.md)，确认输入是可治理的真实 workflow case。
 3. 读取 [workflow creation](references/workflow-creation.md)，读出 workflow A/Y/X、gate logic、internal skill routing 和 disclosure boundary。
 4. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
-5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy、dispatcher 和 checks。
+5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy 和 checks。
 6. 确认目标是 public workflow skill；否则路由到 `notate` 或 `retune`。
 7. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 8. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。

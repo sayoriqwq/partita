@@ -15,10 +15,6 @@
     "LICENSE",
     "README.md",
     "AGENTS.md",
-    "MIGRATION.md",
-    "partita.materialize.json",
-    "docs",
-    "harness",
     "skills"
   ],
   "dependencies": {
@@ -40,8 +36,6 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
-    "generate": "pnpm build && node dist/bin/partita.js generate",
-    "generate:check": "pnpm build && node dist/bin/partita.js generate --check",
     "home:diff": "pnpm build && node dist/bin/partita.js home diff",
     "home:status": "pnpm build && node dist/bin/partita.js home status",
     "skill-sync": "pnpm build && node dist/bin/partita.js skill sync",
@@ -53,7 +47,7 @@
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
-    "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
+    "verify": "pnpm build && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
     "verify-runtime": "pnpm build && node dist/bin/partita.js verify --level runtime",
     "verify-source": "pnpm build && node dist/bin/partita.js verify --level source"
   }

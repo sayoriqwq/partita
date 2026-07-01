@@ -16,7 +16,7 @@ const namespaceShorthands = {
 
 type SkillNamespace = keyof typeof namespaceShorthands
 
-export interface SkillFileDescriptor {
+interface SkillFileDescriptor {
   readonly handle: string
   readonly name: string
   readonly namespace: SkillNamespace | undefined
@@ -423,7 +423,7 @@ function parseQuotedString(value: string): { readonly ok: true, readonly value: 
   return { ok: true, value: result }
 }
 
-export function skillFiles(root: string): ReadonlyArray<SkillFileDescriptor> {
+function skillFiles(root: string): ReadonlyArray<SkillFileDescriptor> {
   const skillsRoot = join(root, 'skills')
   if (!existsSync(skillsRoot)) {
     return []

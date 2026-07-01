@@ -4,7 +4,6 @@ import * as Effect from 'effect/Effect'
 import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
-import { generateProject } from '../partita/generator.ts'
 import {
   printChezmoiHomeApply,
   printChezmoiHomeDiff,
@@ -39,10 +38,6 @@ function rootFlag(defaultRoot: string) {
     Flag.mapEffect(resolveFromCwd),
   )
 }
-
-const checkFlag = Flag.boolean('check').pipe(
-  Flag.withDescription('Check generated files without writing'),
-)
 
 const verifyLevelFlag = Flag.choice('level', ['project', 'source', 'runtime'] as const).pipe(
   Flag.withDescription('Verification layer to run'),
@@ -101,15 +96,6 @@ function makeCli(config: CliConfig) {
     prefix: Flag.string('prefix').pipe(Flag.withDescription('Local pinned prefix used to derive the default contract path'), Flag.withDefault('')),
     root,
   }
-
-  const generate = Command.make('generate', {
-    check: checkFlag,
-    root,
-  }, Effect.fnUntraced(function* ({ check, root }) {
-    yield* generateProject({ check, root })
-  })).pipe(
-    Command.withDescription('Generate Partita package metadata and dispatcher audit files'),
-  )
 
   const verify = Command.make('verify', {
     level: verifyLevelFlag,
@@ -244,7 +230,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('partita').pipe(
     Command.withDescription('Partita skill harness CLI'),
-    Command.withSubcommands([generate, verify, skill, home, pin]),
+    Command.withSubcommands([verify, skill, home, pin]),
   )
 }
 
