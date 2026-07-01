@@ -1,21 +1,21 @@
 {
-  "name": "partita",
+  "name": "@sayoriqwq/partita",
   "type": "module",
   "version": "0.1.0",
   "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
-  "private": true,
   "packageManager": "pnpm@11.7.0",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "partita": "dist/bin/partita.js"
   },
   "files": [
     "dist",
     "LICENSE",
-    "README.md",
-    "AGENTS.md",
-    "skills"
+    "README.md"
   ],
   "dependencies": {
     "effect": "4.0.0-beta.90",
@@ -45,6 +45,7 @@
     "link:global": "pnpm build && pnpm link --global",
     "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
+    "prepack": "pnpm build",
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
     "verify": "pnpm build && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",

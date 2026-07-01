@@ -42,6 +42,25 @@ describe('Partita pins', () => {
       assert.notInclude(plan.editorSettings.zed, '"file_scan_exclusions"')
     }).pipe(Effect.provide(NodeServices.layer)))
 
+  it.effect('normalizes explicit contract paths back to target-root relative paths', () =>
+    Effect.gen(function* () {
+      const root = makeFixture()
+      write(root, 'AGENTS.md', '# Agents\n')
+
+      const plan = yield* buildPinPlan({
+        contractPath: join(root, 'repos/upstream.subtree.json'),
+        name: 'upstream',
+        prefix: 'repos/upstream',
+        ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
+        repository: 'https://github.com/example/upstream.git',
+        root,
+      })
+
+      assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
+      assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
+      assert.include(plan.contract.commands.verify, '--contract repos/upstream.subtree.json')
+    }).pipe(Effect.provide(NodeServices.layer)))
+
   it.effect('accepts a valid GitHub subtree pin contract from the default path', () =>
     Effect.gen(function* () {
       const root = makeFixture()

@@ -156,7 +156,7 @@ export const buildPinPlan = Effect.fn('buildPinPlan')(function* (options: PinPla
   const root = resolve(options.root)
   const name = nonEmpty(options.name) ?? 'pin'
   const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
-  const contractPath = normalizeRelativePath(nonEmpty(options.contractPath) ?? defaultPinContractPath({ name, prefix }))
+  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath({ name, prefix }))
   const ownershipMode = options.ownershipMode ?? (yield* defaultOwnershipMode(root))
   const agentRoute = normalizeRelativePath(nonEmpty(options.agentRoute) ?? (yield* defaultAgentRoute(root)))
   const split = nonEmpty(options.ref) ?? '<TODO:github-ref-or-subtree-split>'
@@ -220,7 +220,7 @@ export const inspectPins = Effect.fn('inspectPins')(function* (options: PinComma
   if (prefix !== undefined) {
     defaultPathOptions.prefix = prefix
   }
-  const contractPath = normalizeRelativePath(nonEmpty(options.contractPath) ?? defaultPinContractPath(defaultPathOptions))
+  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath(defaultPathOptions))
   const contract = yield* readGitHubSubtreeContract(root, contractPath)
   return yield* buildPinReport(root, contractPath, contract)
 })
@@ -834,6 +834,12 @@ function siblingSubtreeContractPath(prefix: string, name: string): string {
     return `${basename}.subtree.json`
   }
   return `${parent}/${basename}.subtree.json`
+}
+
+function pinContractPathFromOption(root: string, value: string | undefined, fallback: string): string {
+  const rawPath = nonEmpty(value) ?? fallback
+  const relativePath = isAbsolute(rawPath) ? relativePathFrom(root, rawPath) : rawPath
+  return normalizeRelativePath(relativePath)
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

@@ -50,6 +50,26 @@ pnpm home:status
 pnpm home:diff
 ```
 
+## Npm CLI
+
+Partita CLI 发布为 `@sayoriqwq/partita`，bin name 是 `partita`。
+
+下游仓库不应该依赖本机 sibling repo 路径；GitHub subtree pin 应通过 package-level CLI 调用：
+
+```bash
+npx @sayoriqwq/partita pin status --name effect --prefix repos/effect --contract repos/effect.subtree.json
+npx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
+pnpm dlx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
+```
+
+`pin plan` 用于生成 GitHub git-subtree pin contract 和 editor settings shape：
+
+```bash
+npx @sayoriqwq/partita pin plan --name effect --prefix repos/effect --contract repos/effect.subtree.json --repository https://github.com/Effect-TS/effect --branch main --ref <commit-or-split>
+```
+
+默认 contract path 是 `repos/<name>.subtree.json`，和 `repos/<name>/` 并列。
+
 ## Loop
 
 Partita 不直接写 global runtime skill universe。
