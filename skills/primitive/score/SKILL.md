@@ -37,6 +37,9 @@ Soft:
 - MUST 把 `assertion` 当作一条可单独审查的语义判断，而不是正确性证明。
 - MUST 把每个 `.md` 文件当作一个 `module`。
 - MUST 维护 module boundary：一个 module 负责承载其职责内 assertions，并拒绝职责外 assertions。
+- When: 文档集已有 index、README、routing table 或模块清单，且变更内容是在说明各文档职责、阅读顺序或模块边界。
+  Do: MUST 把这些职责/路由 assertions 写入 index/routing module，而不是写进被描述的 leaf module 正文。
+- Leaf module SHOULD 直接承载自身主题内容，不应该用正文自述“本文件负责/不负责什么”，除非该 module 本身就是 index、policy 或 boundary 文档。
 - 除非更高优先级规则禁止，sayoriqwq-style docs MUST 使用 frontmatter metadata。
 - MUST 先选择 `audience`，再决定偏 pattern 还是偏 description。
 - MUST 使用简体中文作为主内容语言。
@@ -62,10 +65,11 @@ Hard:
 
 1. 读取与当前 Markdown surface 相关的本地 preference references。
 2. 识别 target module 及其 boundary。
-3. 在组织正文前，选择或维护 metadata，尤其是 `audience`。
-4. 用 sections 组织 assertions；heading 只打开 section，不当作 assertion。
-5. 应用 language、keywords、pattern、path 和 links preferences。
-6. 运行当前变更 surface 需要的 checks，或报告准确 blocker。
+3. 查找同一文档集是否已有 index、README、routing table 或模块清单；需要描述文档职责或阅读路线时，先更新该入口。
+4. 在组织正文前，选择或维护 metadata，尤其是 `audience`。
+5. 用 sections 组织 assertions；heading 只打开 section，不当作 assertion。
+6. 应用 language、keywords、pattern、path 和 links preferences。
+7. 运行当前变更 surface 需要的 checks，或报告准确 blocker。
 
 ## References
 
@@ -77,6 +81,8 @@ Hard:
 - 需要 normative keyword 强度时，读取 [keywords](references/keywords.md)。
 - 需要 frontmatter fields 时，读取 [metadata](references/metadata.md)。
 - 在选择偏 pattern 还是偏 description 前，读取 [audience](references/audience.md)。
+- 需要判断文档职责、阅读路线或模块边界是否应进入 index/routing module 时，读取
+  [index routing case](references/index-routing-case.md)。
 - 需要 agent-facing structures 或 template 定义时，读取 [pattern](references/pattern.md)。
 - 需要 index 和短 scope filename 时，读取 [path](references/path.md)。
 - 需要 OFM-first linking 时，读取 [links](references/links.md)。
@@ -88,6 +94,7 @@ Before done:
 - target surface 是 Markdown；
 - 相关本地 preference references 已应用；
 - 当变更触及 metadata、audience、module boundary、sections、assertions、language、keywords、pattern、path 或 links 时，这些面已被处理；
+- 当变更触及文档职责、阅读路线或模块边界，且文档集存在 index/routing module 时，这些 assertions 已集中到 index/routing module；
 - `score` 没有执行非 Markdown prose polish、product copy、workflow skill、primitive skill、skill patch、code comment、commit message、PR description 或 issue reply；
 - Effects 保持在声明的 filesystem scope 内；
 - 要求的 Hard checks 已通过，或准确 blocker 已报告。
