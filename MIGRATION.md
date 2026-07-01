@@ -17,7 +17,7 @@ updated: 2026-07-01
 
 Partita 的目标状态是 personal skill workflow/source harness。
 
-Partita SHOULD own 自建或维护的 skill source、skill authoring workflow、projection audit、pin、verification 和最小 skill runtime wrapper。
+Partita SHOULD own 自建或维护的 skill source、skill authoring workflow、materialization audit、pin、verification 和最小 skill runtime wrapper。
 
 Partita MUST NOT own user-home dotfile materialization、global runtime skill universe、provider runtime、external skill collections、target-repo runtime copies 或 one-off workflow history。
 
@@ -50,7 +50,7 @@ flowchart TD
   C["src/partita CLI"]
   V["verifier and tests"]
   D["harness/skills/dispatcher.md"]
-  GP["packages/generic-projection"]
+  M["partita.materialize.json"]
   REF["/Users/sayori/Desktop/partita-ref"]
   SH["skills.sh CLI"]
   CH["chezmoi"]
@@ -65,10 +65,11 @@ flowchart TD
   P --> DOC
   P --> C
   P --> V
+  P --> M
   C --> D
+  M --> D
   S --> D
   DOC --> S
-  C --> GP
   P -. "migrated reference material" .-> REF
   P --> PIN
 
@@ -84,7 +85,7 @@ flowchart TD
 
 ## Boundaries
 
-`harness/skills/dispatcher.md` SHOULD remain only as a generated source inventory and projection audit artifact.
+`harness/skills/dispatcher.md` SHOULD remain only as a materialized skill inventory audit.
 
 `harness/skills/dispatcher.md` MUST NOT become runtime governance, installer state, mapping layer, or durable knowledge layer.
 
@@ -94,7 +95,11 @@ flowchart TD
 
 `docs/skills/` is the Partita-owned theory and shared concept source surface.
 
-Shared concepts SHOULD be projected from `docs/skills/concepts/` into skill-local `references/` so runtime skills remain self-contained.
+Shared concepts SHOULD be materialized from `docs/skills/concepts/` into skill-local `references/` so runtime skills remain self-contained.
+
+`partita.materialize.json` SHOULD remain the only repo-local materialization config for clean copies and generated reports.
+
+Materialized outputs MUST NOT contain old `partita:projection` or `routing-table` markers.
 
 `.codex-plugin/` has been migrated out of Partita and MUST NOT be used to install duplicate `partita:<skill>` runtime copies.
 
@@ -109,8 +114,7 @@ Content MAY return from `/Users/sayori/Desktop/partita-ref` only after sayori co
 | `partita-core` | Partita keeps this as source, CLI, package, verification, or root operating surface. |
 | `partita-skill-source` | Partita keeps this as self-owned skill source. |
 | `partita-theory` | Partita keeps this as skill theory or shared concept source. |
-| `partita-generated` | Partita may regenerate this; it is audit surface, not source authority. |
-| `generic-projection` | Partita keeps this while projection helper remains repo-internal. |
+| `partita-generated` | Partita may regenerate or materialize this; it is not source authority. |
 | `wiki-external` | This should leave Partita or be folded into executable source before wiki removal. |
 | `runtime-reference` | This is migration candidate unless a concrete runtime consumer remains. |
 | `pin` | Partita keeps this as GitHub git-subtree pin contract or read-only upstream materialization. |
@@ -129,7 +133,7 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `.codex/effect-feedback/.gitkeep` | `legacy-delete` | delete | Old effect-harness runtime residue. |
 | `.gitignore` | `partita-core` | keep | Repository hygiene. |
 | `AGENTS.md` | `partita-core` | keep | Agent operating root map. |
-| `CLAUDE.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/CLAUDE.md`; tool-specific projection is not Partita core. |
+| `CLAUDE.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/CLAUDE.md`; tool-specific instruction file is not Partita core. |
 | `CONTEXT.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/CONTEXT.md`; old wiki root map is not Partita core. |
 | `HARNESS.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/HARNESS.md`; old wiki harness map is not Partita core. |
 | `LICENSE` | `partita-core` | keep | Repository license. |
@@ -140,17 +144,18 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `docs/skills/theory.md` | `partita-theory` | keep | Current Partita skill theory and verification layers. |
 | `eslint.config.mjs` | `partita-core` | keep | Lint configuration. |
 | `harness/skills/checks.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/checks.md`. |
-| `harness/skills/dispatcher.md` | `partita-generated` | keep | Generated source inventory and projection audit, not runtime router. |
+| `harness/skills/dispatcher.md` | `partita-generated` | keep | Materialized skill inventory audit, not runtime router. |
 | `harness/skills/family.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/family.md`. |
 | `harness/skills/policy.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/policy.md`. |
 | `harness/skills/routing.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/routing.md`. |
 | `harness/skills/shape.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/shape.md`. |
 | `knip.jsonc` | `partita-core` | keep | Dependency hygiene configuration. |
 | `package.json` | `partita-core` | keep | Package scripts and workspace metadata. |
-| `packages/generic-projection/package.json` | `generic-projection` | keep | Repo-internal helper package metadata. |
-| `packages/generic-projection/src/index.ts` | `generic-projection` | keep | Generic projection helper implementation. |
-| `packages/generic-projection/tsconfig.build.json` | `generic-projection` | keep | Helper build config. |
-| `packages/generic-projection/tsconfig.json` | `generic-projection` | keep | Helper TypeScript config. |
+| `partita.materialize.json` | `partita-core` | keep | Repo-local clean copy and generated report config. |
+| `packages/generic-projection/package.json` | `legacy-delete` | delete | Old helper package removed; materialization is Partita-specific generator/verifier behavior. |
+| `packages/generic-projection/src/index.ts` | `legacy-delete` | delete | Old marker DSL and file-copy helper removed. |
+| `packages/generic-projection/tsconfig.build.json` | `legacy-delete` | delete | Old helper build config removed. |
+| `packages/generic-projection/tsconfig.json` | `legacy-delete` | delete | Old helper TypeScript config removed. |
 | `packages/wiki/collaboration/context.md` | `quarantine-ref` | migrated | Collaboration semantic node. |
 | `packages/wiki/collaboration/corrections.md` | `quarantine-ref` | migrated | Collaboration semantic node. |
 | `packages/wiki/collaboration/index.md` | `quarantine-ref` | migrated | Wiki index node. |
@@ -185,16 +190,16 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `packages/wiki/practice/index.md` | `quarantine-ref` | migrated | Wiki index node. |
 | `packages/wiki/practice/patch.md` | `quarantine-ref` | migrated | Practice semantic node. |
 | `packages/wiki/practice/verify.md` | `quarantine-ref` | migrated | Practice semantic node. |
-| `packages/wiki/projection/generic.md` | `quarantine-ref` | migrated | Projection semantic node. |
-| `packages/wiki/projection/index.md` | `quarantine-ref` | migrated | Wiki index node. |
-| `packages/wiki/projection/loss.md` | `quarantine-ref` | migrated | Projection semantic node. |
-| `packages/wiki/projection/runtime.md` | `quarantine-ref` | migrated | Projection semantic node. |
-| `packages/wiki/projection/verifier/description.md` | `quarantine-ref` | migrated | Verifier semantic node. |
-| `packages/wiki/projection/verifier/index.md` | `quarantine-ref` | migrated | Wiki index node. |
-| `packages/wiki/projection/verifier/links.md` | `quarantine-ref` | migrated | Verifier semantic node. |
-| `packages/wiki/projection/verifier/metadata.md` | `quarantine-ref` | migrated | Verifier semantic node. |
-| `packages/wiki/projection/verifier/nodes.md` | `quarantine-ref` | migrated | Verifier semantic node. |
-| `packages/wiki/projection/verifier/shape.md` | `quarantine-ref` | migrated | Verifier semantic node. |
+| `packages/wiki/projection/generic.md` | `quarantine-ref` | migrated | Old wiki semantic node. |
+| `packages/wiki/projection/index.md` | `quarantine-ref` | migrated | Old wiki index node. |
+| `packages/wiki/projection/loss.md` | `quarantine-ref` | migrated | Old wiki semantic node. |
+| `packages/wiki/projection/runtime.md` | `quarantine-ref` | migrated | Old wiki semantic node. |
+| `packages/wiki/projection/verifier/description.md` | `quarantine-ref` | migrated | Old verifier semantic node. |
+| `packages/wiki/projection/verifier/index.md` | `quarantine-ref` | migrated | Old wiki index node. |
+| `packages/wiki/projection/verifier/links.md` | `quarantine-ref` | migrated | Old verifier semantic node. |
+| `packages/wiki/projection/verifier/metadata.md` | `quarantine-ref` | migrated | Old verifier semantic node. |
+| `packages/wiki/projection/verifier/nodes.md` | `quarantine-ref` | migrated | Old verifier semantic node. |
+| `packages/wiki/projection/verifier/shape.md` | `quarantine-ref` | migrated | Old verifier semantic node. |
 | `packages/wiki/skill/activation.md` | `quarantine-ref` | migrated | Skill semantic node. |
 | `packages/wiki/skill/boundary.md` | `quarantine-ref` | migrated | Skill semantic node. |
 | `packages/wiki/skill/case/capture.md` | `quarantine-ref` | migrated | Skill case semantic node. |
@@ -224,7 +229,7 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `packages/wiki/skill/validation-locality.md` | `quarantine-ref` | migrated | Skill semantic node. |
 | `packages/wiki/vocabulary/assertion.md` | `quarantine-ref` | migrated | Vocabulary node. |
 | `packages/wiki/vocabulary/index.md` | `quarantine-ref` | migrated | Wiki index node. |
-| `packages/wiki/vocabulary/projection.md` | `quarantine-ref` | migrated | Vocabulary node. |
+| `packages/wiki/vocabulary/projection.md` | `quarantine-ref` | migrated | Old vocabulary node. |
 | `packages/wiki/vocabulary/runtime.md` | `quarantine-ref` | migrated | Vocabulary node. |
 | `packages/wiki/vocabulary/skill.md` | `quarantine-ref` | migrated | Vocabulary node. |
 | `packages/wiki/vocabulary/workflow.md` | `quarantine-ref` | migrated | Vocabulary node. |
@@ -270,26 +275,26 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `skills/orientation/land/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
 | `skills/primitive/conduct/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/conduct/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
-| `skills/primitive/conduct/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
+| `skills/primitive/conduct/references/case.md` | `partita-generated` | keep | Skill-local materialized copy of shared case concept. |
 | `skills/primitive/conduct/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/workflow-creation.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/notate/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
-| `skills/primitive/notate/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
+| `skills/primitive/notate/references/case.md` | `partita-generated` | keep | Skill-local materialized copy of shared case concept. |
 | `skills/primitive/notate/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/skill-creation.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/retune/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
-| `skills/primitive/retune/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
+| `skills/primitive/retune/references/case.md` | `partita-generated` | keep | Skill-local materialized copy of shared case concept. |
 | `skills/primitive/retune/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/skill-patch.md` | `partita-skill-source` | keep | Skill-local reference. |
-| `skills/primitive/retune/references/source-projection-case.md` | `partita-skill-source` | keep | Skill-local recurrence case reference. |
+| `skills/primitive/retune/references/runtime-copy-case.md` | `partita-skill-source` | keep | Skill-local recurrence case reference. |
 | `skills/primitive/score/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/score/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
 | `skills/primitive/score/references/assertion.md` | `partita-skill-source` | keep | Skill-local reference. |
@@ -306,7 +311,7 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `src/cli/Main.ts` | `partita-core` | keep | Effect CLI program and command surface. |
 | `src/partita/errors.ts` | `partita-core` | keep | Partita error model. |
 | `src/partita/frontmatter.ts` | `partita-core` | keep | Skill frontmatter parser. |
-| `src/partita/generator.ts` | `partita-core` | keep | Projection generator. |
+| `src/partita/generator.ts` | `partita-core` | keep | Materialization generator. |
 | `src/partita/home.ts` | `partita-core` | keep | Thin chezmoi home materialization wrapper. |
 | `src/partita/skill.ts` | `partita-core` | keep | Thin skills.sh skill runtime wrapper. |
 | `src/partita/model.ts` | `partita-core` | keep | Partita domain model. |
@@ -337,9 +342,9 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 
 | Question | Default answer |
 | --- | --- |
-| Should dispatcher stay? | Yes, only as generated source inventory and projection audit. |
+| Should dispatcher stay? | Yes, only as materialized skill inventory audit. |
 | Should wiki stay? | No, it has been migrated to `/Users/sayori/Desktop/partita-ref`. |
-| Should generic projection stay? | Yes, while it is repo-internal and not reused elsewhere. |
+| Should old helper package stay? | No, it has been removed. Turbo/pnpm workspace stays for future packages. |
 | Should runtime references stay? | No, they have been migrated to `/Users/sayori/Desktop/partita-ref`. |
 | Should `.codex-plugin` stay? | No, it has been migrated to `/Users/sayori/Desktop/partita-ref`. |
 | Should global runtime skills be written by Partita? | No, skills.sh CLI owns runtime install state. |

@@ -11,8 +11,8 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `skills/` 是 self-owned skill source input。
 - `docs/skills/` 是 Partita skill 建设理论和共享概念真源。
 - `src/partita/` 负责 Partita-specific generation、verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
-- `harness/skills/dispatcher.md` 是 generated source inventory 和 projection audit artifact。
-- `packages/generic-projection/` 是 repo-internal generic projection helper。
+- `partita.materialize.json` 是 repo 内 materialization 真源，声明 clean copies 和 generated reports。
+- `harness/skills/dispatcher.md` 是 materialized skill inventory audit。
 - `tests/` 承载 executable behavior checks。
 - 旧 wiki、runtime references、plugin runtime metadata 和 harness reference docs 已迁出到 `/Users/sayori/Desktop/partita-ref`。
 
@@ -20,15 +20,15 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 
 - `bin/partita.ts` 是 TypeScript/Effect CLI entrypoint。
 - `src/cli/Main.ts` 定义 CLI command surface。
-- `src/partita/generator.ts` 生成 package metadata、dispatcher audit 和 valid file-copy projections。
+- `src/partita/generator.ts` 生成 package metadata、dispatcher audit 和 clean local copies。
 - `src/partita/verifier.ts` 校验 Partita source shape，并阻止迁出 surfaces 回流。
 - `src/partita/openai-skill-validation.ts` 校验 OpenAI/Codex runtime skill folder 的基础可用性。
 - `src/partita/partita-skill-validation.ts` 在 runtime 层之上校验 Partita source skill contract。
 - `src/partita/pin.ts` 管理 GitHub git-subtree pins。
 - `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
-- `harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` 生成。
-- `docs/skills/concepts/` 下的共享概念通过 file projection 进入 skill-local `references/`。
+- `harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` materialize。
+- `docs/skills/concepts/` 下的共享概念通过 clean copy 进入 skill-local `references/`。
 - `MIGRATION.md` 记录迁移目标、架构图和 ownership table。
 
 ## Commands
@@ -102,11 +102,13 @@ repos/effect.subtree.json
 
 ## Dispatcher
 
-`harness/skills/dispatcher.md` 是 generated source inventory 和 projection audit artifact。
+`harness/skills/dispatcher.md` 是 materialized skill inventory audit。
 
 dispatcher 不决定 Codex runtime 加载哪些 skills。
 
 dispatcher 不承担 runtime governance、installer state、mapping layer 或 durable knowledge layer。
+
+dispatcher 不承载 marker DSL；它由 `partita.materialize.json` 的 `skill-inventory` report 重新生成。
 
 ## Verification
 
@@ -124,7 +126,7 @@ partita verify --level project
 
 `source` 在 runtime 层之上校验 Partita V1 section、marker、description policy、`agents/openai.yaml` 和 source path。
 
-`project` 在 source 层之上校验 dispatcher、projection、links、迁出 surface 和 root shape。
+`project` 在 source 层之上校验 dispatcher、materialized copies、links、迁出 surface 和 root shape。
 
 ## Skill
 
@@ -132,7 +134,7 @@ partita verify --level project
 
 创建或修改 skill 时，直接维护 skill-local source 和 references，不再依赖 `packages/wiki/`。
 
-共享概念先维护在 `docs/skills/concepts/`，再投影到每个需要该概念的 skill-local `references/`。
+共享概念先维护在 `docs/skills/concepts/`，再 materialize 到每个需要该概念的 skill-local `references/`。
 
 runtime skill MUST NOT 依赖另一个 skill 的 `references/`。
 
@@ -159,7 +161,7 @@ skills/primitive/<name>/agents/openai.yaml
 skills/primitive/<name>/{scripts,references,assets}/...
 ```
 
-每个 Partita skill MUST 有 `agents/openai.yaml`，因为它会把 skill 的 invocation policy 投影到 runtime metadata。
+每个 Partita skill MUST 有 `agents/openai.yaml`，因为它承载 skill 的 invocation policy runtime metadata。
 
 `description` 是 Codex selector surface：保持 40-500 characters，以 `Use when` 或 `Use for` 开头，并包含 `Not for`。
 
@@ -167,7 +169,7 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 `policy.allow_implicit_invocation` MUST 位于 `agents/openai.yaml` 的 `policy` block 下。
 
-source namespaces 只投影 dispatcher handles；frontmatter 和 global installed skills 保持 short skill name。
+source namespaces 只影响 dispatcher inventory handle；frontmatter 和 global installed skills 保持 short skill name。
 
 | Source namespace | Dispatcher handle |
 | --- | --- |

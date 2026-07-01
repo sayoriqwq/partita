@@ -10,17 +10,10 @@
         "src/**/*.ts",
         "tests/**/*.ts"
       ]
-    },
-    "packages/generic-projection": {
-      "entry": [
-        "src/index.ts"
-      ],
-      "project": [
-        "src/**/*.ts"
-      ]
     }
   },
   "ignoreDependencies": [
-    "@effect/tsgo"
+    "@effect/tsgo",
+    "turbo"
   ]
 }

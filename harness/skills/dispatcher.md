@@ -1,6 +1,6 @@
 # Dispatcher
 
-Dispatcher 是 Partita 从当前 `skills/` source 生成的 source inventory 和 projection audit artifact。
+Dispatcher 是 Partita 从当前 `skills/` source materialize 出来的 skill inventory audit。
 
 它不是 runtime governance、installer state、mapping layer 或 durable knowledge layer。
 
@@ -8,7 +8,6 @@ Dispatcher 是 Partita 从当前 `skills/` source 生成的 source inventory 和
 
 ## Inventory
 
-<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->
 | Handle | Name | Invocation | Description | File |
 |--------|------|------------|-------------|------|
 | ex:density | density | false | Use when the user explicitly invokes density or asks for sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler. Not for one-off summarization, code minification, classical Chinese, ordinary prose editing, hiding uncertainty, or compressing safety-critical meaning. | `skills/expression/density/SKILL.md` |
@@ -22,4 +21,3 @@ Dispatcher 是 Partita 从当前 `skills/` source 生成的 source inventory 和
 | pm:notate | notate | false | Use when creating a case-rooted OpenAI/Codex skill from a real case with enough material for default failure, pressure, governance action, and target runtime shape. In Partita landing, creates a Partita primitive source skill. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation. | `skills/primitive/notate/SKILL.md` |
 | pm:retune | retune | false | Use when patching an existing identity-valid OpenAI/Codex skill from a real recurrence case that exposes a stale local surface. In Partita landing, patches an existing valid Partita source skill. Not for creating new skills, structure audits without a patch case, identity-invalid skills, external skill migration, ordinary code review, or prose cleanup. | `skills/primitive/retune/SKILL.md` |
 | pm:score | score | true | Use when creating or modifying Markdown docs that should follow sayoriqwq-style Markdown writing preferences. Not for non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching. | `skills/primitive/score/SKILL.md` |
-<!-- partita:projection:end id="routing-table" -->

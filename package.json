@@ -16,13 +16,12 @@
     "README.md",
     "AGENTS.md",
     "MIGRATION.md",
+    "partita.materialize.json",
     "docs",
     "harness",
-    "packages/generic-projection",
     "skills"
   ],
   "dependencies": {
-    "@partita/generic-projection": "workspace:*",
     "effect": "4.0.0-beta.90",
     "@effect/platform-node": "4.0.0-beta.90"
   },
@@ -40,7 +39,7 @@
     "vitest": "^4.1.8"
   },
   "scripts": {
-    "build": "turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
     "generate": "pnpm build && node dist/bin/partita.js generate",
     "generate:check": "pnpm build && node dist/bin/partita.js generate --check",
     "home:diff": "pnpm build && node dist/bin/partita.js home diff",
@@ -52,8 +51,8 @@
     "link:global": "pnpm build && pnpm link --global",
     "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
-    "test": "turbo run build --filter=@partita/generic-projection && vitest run",
-    "typecheck": "turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit",
+    "test": "vitest run",
+    "typecheck": "tsgo --noEmit",
     "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
     "verify-runtime": "pnpm build && node dist/bin/partita.js verify --level runtime",
     "verify-source": "pnpm build && node dist/bin/partita.js verify --level source"

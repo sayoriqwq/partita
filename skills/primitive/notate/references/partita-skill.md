@@ -2,7 +2,7 @@
 
 ## Family
 
-Partita family 是 source 组织方式和 routing 约定。
+Partita family 是 source 组织方式和 inventory handle 约定。
 
 - `skills/primitive/<name>/` 存放 Partita-managed primitive source skills。
 - `skills/expression/<name>/` 存放 expression protocol source skills。
@@ -41,9 +41,9 @@ creation、patching、migration、verification 和 file-writing workflow skills 
 
 ## Dispatcher
 
-dispatcher 是 Partita harness routing mechanism。
+dispatcher 是 Partita materialized skill inventory report。
 
-dispatcher 将 Partita source skills 映射到 runtime handles：
+dispatcher 将 Partita source skills 列成 audit table：
 
 - `skills/primitive/<name>/` 映射到 `pm:<name>`。
 - `skills/expression/<name>/` 映射到 `ex:<name>`。
@@ -62,6 +62,6 @@ installed global Codex skills 通过各自的 `description` 触发，不通过 P
 
 Partita landing 中：
 
-- 当 skill frontmatter、`agents/openai.yaml`、dispatcher input 或 generated files 变化时，MUST 运行 `pnpm generate:check`。
+- 当 skill frontmatter、`agents/openai.yaml`、inventory input 或 generated files 变化时，MUST 运行 `pnpm generate:check`。
 - 完成 Partita repo change 前，MUST 运行 `pnpm verify`。
 - 如果 checks 无法运行，报告准确 blocker。

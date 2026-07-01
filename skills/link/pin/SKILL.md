@@ -30,7 +30,7 @@ Do not use when:
 - source 不是 GitHub repository，或用户要求使用 submodule、普通 clone、archive、HTTP fetch、package install、download cache 或其他 mechanism。
 - 用户要求从 `node_modules`、web cache、临时 clone 或粘贴内容推断真源。
 - `pin` 指 UI 项、线程、笔记、任务或本地工作状态。
-- 用户要做 projection 分发或 runtime copy 管理；这属于 owning projection mechanism。
+- 用户要做 skill-local copy 分发或 runtime copy 管理；这属于 owning materialization/sync mechanism。
 
 ## Boundary
 

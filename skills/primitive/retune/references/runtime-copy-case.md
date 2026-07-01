@@ -3,13 +3,13 @@ audience: agent
 authors:
   - codex
 reviewed_by: []
-purpose: 记录 retune 直接修改 runtime projection 且未写 case feedback 的复发样例。
+purpose: 记录 retune 直接修改 installed runtime copy 且未写 case feedback 的复发样例。
 status: active
 sources: []
 updated: 2026-07-01
 ---
 
-# Source Projection Case
+# Runtime Copy Case
 
 ## Case
 
@@ -25,7 +25,7 @@ agent 随后修改了 Partita 真源并运行生成、验证和安装命令。
 
 ## Failure
 
-`retune` 当时没有明确区分 source skill 和 installed runtime projection。
+`retune` 当时没有明确区分 source skill 和 installed runtime copy。
 
 `retune` 允许 agent 直接 patch 运行时 copy。
 
@@ -35,9 +35,9 @@ agent 随后修改了 Partita 真源并运行生成、验证和安装命令。
 
 retune MUST 先定位 target skill source truth。
 
-installed/global/runtime skill copies MUST 被视为 projection，不能作为 patch target。
+installed/global/runtime skill copies MUST 被视为 materialized runtime copies，不能作为 patch target。
 
-如果用户给的是 runtime projection path，retune MUST 找到 owning source skill 并 patch source。
+如果用户给的是 runtime copy path，retune MUST 找到 owning source skill 并 patch source。
 
 如果找不到 source truth，retune MUST 停止并报告 blocker。
 
@@ -45,4 +45,4 @@ retune patch target skill 时，MUST 添加或更新 case feedback reference。
 
 retune 完成 Partita source patch 后，MUST 运行 Partita 生成和验证指令。
 
-需要同步 installed runtime 时，retune MUST 运行 owning install/projection command，MUST NOT 手动改 runtime projection。
+需要同步 installed runtime 时，retune MUST 运行 owning install/sync command，MUST NOT 手动改 runtime copy。

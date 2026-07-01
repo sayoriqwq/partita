@@ -2,17 +2,6 @@ import type { ValidationIssue, ValidationReport } from './validation.ts'
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
-import {
-  blockProjectionEndPrefix,
-  blockProjectionStartPrefix,
-  fileProjectionPrefix,
-  parseProjectionAttributes,
-  projectionCommentLines,
-  renderFileCopyProjection,
-  routingTableEnd,
-  routingTableStart,
-  validProjectionSource,
-} from '@partita/generic-projection'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import { PartitaError } from './errors.ts'
@@ -34,10 +23,12 @@ const skillRefPattern = /skills\/(?:(expression|link|maintenance|orientation|pri
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
+const materializeConfigRelativePath = 'partita.materialize.json'
 const dispatcherRelativePath = 'harness/skills/dispatcher.md'
 const legacyDispatcherRelativePath = 'skills/DISPATCHER.md'
 const legacyRoutingTableStart = '<!-- routing-table:start -->'
 const legacyRoutingTableEnd = '<!-- routing-table:end -->'
+const legacyProjectionMarker = '<!-- partita:projection:'
 const namespaceShorthands = {
   expression: 'ex',
   link: 'lk',
@@ -105,7 +96,8 @@ function buildSourceReport(root: string, level: VerifyLevel): ValidationReport {
   const issues = [
     ...skillResult.issues,
     ...checkRouting(root, skills),
-    ...checkProjectionMarkers(root),
+    ...checkMaterializedCopies(root),
+    ...checkLegacyMaterializationMarkers(root),
     ...checkMarkdownLinks(root),
     ...checkWikiLinks(root),
     ...checkRemovedSurfaces(root),
@@ -143,100 +135,128 @@ function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<
     if (stale.length > 0) {
       issues.push(issue('routing.stale_skill_refs', `stale skill refs: ${stale.join(', ')}`, path))
     }
-    if (!text.includes(routingTableStart) || !text.includes(routingTableEnd)) {
-      issues.push(issue('routing.missing_projection_marker', 'dispatcher must use partita routing-table projection markers', path))
+  }
+
+  return issues
+}
+
+function checkMaterializedCopies(root: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+  const configPath = join(root, materializeConfigRelativePath)
+  if (!existsSync(configPath)) {
+    return [issue('materialize.config_missing', `missing materialization config: ${materializeConfigRelativePath}`, materializeConfigRelativePath)]
+  }
+
+  const config = readMaterializeConfig(root)
+  if (!config.ok) {
+    return [issue('materialize.config_invalid', config.message, materializeConfigRelativePath)]
+  }
+
+  if (!config.config.reports.some(report => report.name === 'skill-inventory' && report.target === dispatcherRelativePath)) {
+    issues.push(issue(
+      'materialize.report_missing',
+      `materialization config must declare skill-inventory report at ${dispatcherRelativePath}`,
+      materializeConfigRelativePath,
+    ))
+  }
+
+  for (const copy of config.config.copies) {
+    const sourcePath = join(root, copy.source)
+    if (!existsSync(sourcePath)) {
+      issues.push(issue('materialize.source_missing', `missing materialization source: ${copy.source}`, copy.source))
+      continue
+    }
+
+    const expected = readText(sourcePath)
+    for (const target of copy.targets) {
+      const targetPath = join(root, target)
+      if (!existsSync(targetPath)) {
+        issues.push(issue('materialize.target_missing', `missing materialized target: ${target}`, target))
+        continue
+      }
+      if (readText(targetPath) !== expected) {
+        issues.push(issue('materialize.copy_drift', `materialized target is out of sync with ${copy.source}`, target))
+      }
     }
   }
 
   return issues
 }
 
-function checkProjectionMarkers(root: string): ReadonlyArray<ValidationIssue> {
+interface MaterializedCopy {
+  readonly source: string
+  readonly targets: ReadonlyArray<string>
+}
+
+interface MaterializedReport {
+  readonly name: string
+  readonly target: string
+}
+
+interface MaterializeConfig {
+  readonly copies: ReadonlyArray<MaterializedCopy>
+  readonly reports: ReadonlyArray<MaterializedReport>
+}
+
+function readMaterializeConfig(root: string): { readonly ok: true, readonly config: MaterializeConfig } | { readonly ok: false, readonly message: string } {
+  try {
+    const parsed = JSON.parse(readText(join(root, materializeConfigRelativePath))) as unknown
+    if (!isRecord(parsed)) {
+      return { ok: false, message: 'materialization config must be an object' }
+    }
+    if (!Array.isArray(parsed.copies)) {
+      return { ok: false, message: 'materialization config must contain copies array' }
+    }
+    if (!Array.isArray(parsed.reports)) {
+      return { ok: false, message: 'materialization config must contain reports array' }
+    }
+
+    const copies: Array<MaterializedCopy> = []
+    for (const [index, entry] of parsed.copies.entries()) {
+      if (
+        !isRecord(entry)
+        || typeof entry.source !== 'string'
+        || !isSafeRelativePath(entry.source)
+        || !isStringArray(entry.targets)
+        || entry.targets.length === 0
+      ) {
+        return { ok: false, message: `invalid copies[${index}] entry` }
+      }
+      copies.push({ source: entry.source, targets: entry.targets })
+    }
+
+    const reports: Array<MaterializedReport> = []
+    for (const [index, entry] of parsed.reports.entries()) {
+      if (
+        !isRecord(entry)
+        || entry.name !== 'skill-inventory'
+        || typeof entry.target !== 'string'
+        || !isSafeRelativePath(entry.target)
+      ) {
+        return { ok: false, message: `invalid reports[${index}] entry` }
+      }
+      reports.push({ name: entry.name, target: entry.target })
+    }
+    return { config: { copies, reports }, ok: true }
+  }
+  catch (cause) {
+    return { ok: false, message: cause instanceof Error ? cause.message : String(cause) }
+  }
+}
+
+function checkLegacyMaterializationMarkers(root: string): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   for (const path of markdownFiles(root)) {
     const relativePath = relativePathFrom(root, path)
     const text = readText(path)
+    if (text.includes(legacyProjectionMarker)) {
+      issues.push(issue('materialize.legacy_marker', 'legacy partita:projection marker is not allowed in materialized output', relativePath))
+    }
     if (text.includes(legacyRoutingTableStart) || text.includes(legacyRoutingTableEnd)) {
-      issues.push(issue('projection.legacy_marker', 'legacy routing-table marker is not allowed; use partita:projection markers', relativePath))
+      issues.push(issue('materialize.legacy_marker', 'legacy routing-table marker is not allowed in materialized output', relativePath))
     }
-
-    issues.push(...checkBlockProjectionMarkers(text, relativePath))
-    issues.push(...checkFileProjectionMarker(root, text, relativePath))
   }
   return issues
-}
-
-function checkBlockProjectionMarkers(text: string, relativePath: string): ReadonlyArray<ValidationIssue> {
-  const issues: Array<ValidationIssue> = []
-  const starts = projectionCommentLines(text, blockProjectionStartPrefix)
-  const ends = projectionCommentLines(text, blockProjectionEndPrefix)
-  const endCounts = new Map<string, number>()
-
-  for (const end of ends) {
-    const attrs = parseProjectionAttributes(end)
-    const id = attrs.id
-    if (!id) {
-      issues.push(issue('projection.block_end_missing_id', 'projection block end marker must include id', relativePath))
-      continue
-    }
-    endCounts.set(id, (endCounts.get(id) ?? 0) + 1)
-  }
-
-  for (const start of starts) {
-    const attrs = parseProjectionAttributes(start)
-    const id = attrs.id
-    if (!id || !attrs.source || !attrs.mode) {
-      issues.push(issue('projection.block_start_missing_attributes', 'projection block start marker must include id, source, and mode', relativePath))
-      continue
-    }
-    if (attrs.mode !== 'block-table') {
-      issues.push(issue('projection.unsupported_block_mode', `unsupported projection block mode: ${attrs.mode}`, relativePath))
-    }
-
-    const remaining = endCounts.get(id) ?? 0
-    if (remaining === 0) {
-      issues.push(issue('projection.block_end_missing', `missing projection block end marker for id=${id}`, relativePath))
-      continue
-    }
-    endCounts.set(id, remaining - 1)
-  }
-
-  for (const [id, count] of endCounts) {
-    if (count > 0) {
-      issues.push(issue('projection.block_start_missing', `missing projection block start marker for id=${id}`, relativePath))
-    }
-  }
-
-  return issues
-}
-
-function checkFileProjectionMarker(root: string, text: string, relativePath: string): ReadonlyArray<ValidationIssue> {
-  if (!text.startsWith(fileProjectionPrefix)) {
-    return []
-  }
-
-  const firstLine = text.split(/\r?\n/u, 1)[0] ?? ''
-  const attrs = parseProjectionAttributes(firstLine)
-  const source = attrs.source
-  if (!source || !attrs.mode) {
-    return [issue('projection.file_missing_attributes', 'file projection marker must include source and mode', relativePath)]
-  }
-  if (attrs.mode !== 'copy') {
-    return [issue('projection.unsupported_file_mode', `unsupported file projection mode: ${attrs.mode}`, relativePath)]
-  }
-  if (!validProjectionSource(source)) {
-    return [issue('projection.invalid_source', `invalid projection source: ${source}`, relativePath)]
-  }
-
-  const sourcePath = join(root, source)
-  if (!existsSync(sourcePath)) {
-    return [issue('projection.missing_source', `missing projection source: ${source}`, relativePath)]
-  }
-
-  const expected = renderFileCopyProjection(source, readText(sourcePath))
-  return text === expected
-    ? []
-    : [issue('projection.file_drift', `file projection is out of sync with ${source}`, relativePath)]
 }
 
 function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
@@ -299,7 +319,7 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
     ['packaging.allowlist', 'removed package allowlist must not exist'],
     ['.codex', 'repo-local Codex runtime state must not exist'],
     ['.codex-plugin', 'Codex plugin metadata was migrated to /Users/sayori/Desktop/partita-ref'],
-    ['CLAUDE.md', 'tool-specific instruction projection was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['CLAUDE.md', 'tool-specific instruction file was migrated to /Users/sayori/Desktop/partita-ref'],
     ['CONTEXT.md', 'wiki root map was migrated to /Users/sayori/Desktop/partita-ref'],
     ['HARNESS.md', 'wiki harness map was migrated to /Users/sayori/Desktop/partita-ref'],
     ['rules', 'removed rules directory must not exist'],
@@ -394,6 +414,18 @@ function cleanWikiTarget(target: string): string {
   const hashIndex = withoutAlias.indexOf('#')
   const withoutHash = hashIndex === -1 ? withoutAlias : withoutAlias.slice(0, hashIndex)
   return withoutHash.trim().replace(/^\/+|\/+$/g, '')
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isStringArray(value: unknown): value is ReadonlyArray<string> {
+  return Array.isArray(value) && value.every(item => typeof item === 'string')
+}
+
+function isSafeRelativePath(path: string): boolean {
+  return path.trim().length > 0 && !path.startsWith('/') && !path.split('/').includes('..')
 }
 
 function readText(path: string): string {

@@ -1,5 +1,3 @@
-<!-- partita:projection:file source="docs/skills/concepts/case.md" mode="copy" -->
-
 ---
 audience: agent
 authors:

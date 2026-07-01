@@ -2,10 +2,10 @@
 
 ## Family
 
-Partita family 是 source 组织方式和 routing 约定。
+Partita family 是 source 组织方式和 inventory handle 约定。
 
 - target skill 可以是 direct、expression、link、primitive、orientation 或 maintenance source skill。
-- source family 决定 dispatcher handle。
+- source family 决定 inventory handle。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。
 
@@ -35,9 +35,9 @@ Partita V1 section 顺序是：
 
 ## Dispatcher
 
-dispatcher 是 Partita harness routing mechanism。
+dispatcher 是 Partita materialized skill inventory report。
 
-frontmatter 或 metadata 变化时，dispatcher input 可能需要 regeneration。
+frontmatter 或 metadata 变化时，inventory input 可能需要 regeneration。
 
 dispatcher generated output 位于 `harness/skills/dispatcher.md`，不是 `skills/` 内容。
 
@@ -47,6 +47,6 @@ dispatcher 不是 OpenAI skill target requirement。
 
 Partita landing 中：
 
-- 当 skill frontmatter、`agents/openai.yaml`、dispatcher input 或 generated files 变化时，MUST 运行 `pnpm generate:check`。
+- 当 skill frontmatter、`agents/openai.yaml`、inventory input 或 generated files 变化时，MUST 运行 `pnpm generate:check`。
 - 完成 Partita repo change 前，MUST 运行 `pnpm verify`。
 - 如果 checks 无法运行，报告准确 blocker。

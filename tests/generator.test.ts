@@ -104,6 +104,7 @@ unsupported_field: Demo routing
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
+        'partita.materialize.json': materializeConfig(),
       })
 
       const files = yield* renderGeneratedFiles(root)
@@ -116,7 +117,7 @@ unsupported_field: Demo routing
       const packageFile = requireElement(files, 0)
       const dispatcherFile = requireElement(files, 1)
 
-      assert.include(dispatcherFile.content, 'source inventory 和 projection audit artifact')
+      assert.include(dispatcherFile.content, 'skill inventory audit')
       assert.include(dispatcherFile.content, '| Handle | Name | Invocation | Description | File |')
       assert.notInclude(dispatcherFile.content, 'skills/demo/SKILL.md')
 
@@ -144,12 +145,12 @@ unsupported_field: Demo routing
         }
       }
       assert.strictEqual(packageJson.packageManager, 'pnpm@11.7.0')
-      assert.strictEqual(packageJson.dependencies['@partita/generic-projection'], 'workspace:*')
+      assert.strictEqual(packageJson.dependencies['@partita/generic-projection'], undefined)
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
       assert.strictEqual(packageJson.devDependencies.turbo, '^2.10.1')
-      assert.deepStrictEqual(packageJson.files, ['dist', 'LICENSE', 'README.md', 'AGENTS.md', 'MIGRATION.md', 'docs', 'harness', 'packages/generic-projection', 'skills'])
+      assert.deepStrictEqual(packageJson.files, ['dist', 'LICENSE', 'README.md', 'AGENTS.md', 'MIGRATION.md', 'partita.materialize.json', 'docs', 'harness', 'skills'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
-      assert.strictEqual(packageJson.scripts.build, 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
+      assert.strictEqual(packageJson.scripts.build, 'rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
       assert.strictEqual(packageJson.scripts['home:diff'], 'pnpm build && node dist/bin/partita.js home diff')
       assert.strictEqual(packageJson.scripts['home:status'], 'pnpm build && node dist/bin/partita.js home status')
@@ -158,8 +159,8 @@ unsupported_field: Demo routing
       assert.strictEqual(packageJson.scripts['skill-verify'], 'pnpm build && node dist/bin/partita.js skill verify')
       assert.strictEqual(packageJson.scripts.lint, 'eslint eslint.config.mjs "bin/**/*.ts" "src/**/*.ts" "tests/**/*.ts" "packages/*/src/**/*.ts" --no-error-on-unmatched-pattern')
       assert.strictEqual(packageJson.scripts.package, undefined)
-      assert.strictEqual(packageJson.scripts.test, 'turbo run build --filter=@partita/generic-projection && vitest run')
-      assert.strictEqual(packageJson.scripts.typecheck, 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit')
+      assert.strictEqual(packageJson.scripts.test, 'vitest run')
+      assert.strictEqual(packageJson.scripts.typecheck, 'tsgo --noEmit')
       assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip')
       assert.strictEqual(packageJson.scripts['verify-runtime'], 'pnpm build && node dist/bin/partita.js verify --level runtime')
       assert.strictEqual(packageJson.scripts['verify-source'], 'pnpm build && node dist/bin/partita.js verify --level source')
@@ -252,6 +253,7 @@ description: "Use when notating a skill is needed. Not for local retuning."
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
+        'partita.materialize.json': materializeConfig(),
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
@@ -301,7 +303,7 @@ description: "Use when notating a skill is needed. Not for local retuning."
       )
 
       const dispatcher = yield* fs.readFileString(joinPath(root, 'harness', 'skills', 'dispatcher.md'))
-      assert.include(dispatcher, '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->')
+      assert.notInclude(dispatcher, '<!-- partita:projection:')
       assert.include(dispatcher, '| demo | demo | true | Use when demo is needed. Not for unrelated work. | `skills/demo/SKILL.md` |')
       assert.include(dispatcher, '| ex:density | density | false | Use when density is needed. Not for unrelated prose. | `skills/expression/density/SKILL.md` |')
       assert.include(dispatcher, '| lk:pin | pin | false | Use when pinning external authority is needed. Not for unrelated links. | `skills/link/pin/SKILL.md` |')
@@ -322,10 +324,16 @@ description: "Use when notating a skill is needed. Not for local retuning."
       )
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
-  it.effect('projects local markdown sources into skill-local references', () =>
+  it.effect('materializes local markdown sources into clean skill-local references', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
+        'partita.materialize.json': materializeConfig([
+          {
+            source: 'reference-source/insufficient-material.md',
+            targets: ['skills/demo/references/insufficient-material.md'],
+          },
+        ]),
         'reference-source/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
         'skills/demo/SKILL.md': `---
 name: demo
@@ -333,7 +341,6 @@ description: "Use when demo is needed. Not for unrelated work."
 ---
 `,
         'skills/demo/agents/openai.yaml': openAiMetadata(false),
-        'skills/demo/references/insufficient-material.md': '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->\n',
       })
       const fs = yield* FileSystem.FileSystem
 
@@ -353,7 +360,7 @@ description: "Use when demo is needed. Not for unrelated work."
       const projected = yield* fs.readFileString(joinPath(root, 'skills', 'demo', 'references', 'insufficient-material.md'))
       assert.strictEqual(
         projected,
-        '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->\n\n# 材料不足\n\nMUST 打回。\n',
+        '# 材料不足\n\nMUST 打回。\n',
       )
 
       const checks = yield* checkGeneratedFiles(root)
@@ -373,4 +380,16 @@ function openAiMetadata(allowImplicitInvocation: boolean): string {
     'policy:',
     `  allow_implicit_invocation: ${String(allowImplicitInvocation)}`,
   ].join('\n')
+}
+
+function materializeConfig(copies: ReadonlyArray<{ readonly source: string, readonly targets: ReadonlyArray<string> }> = []): string {
+  return JSON.stringify({
+    copies,
+    reports: [
+      {
+        name: 'skill-inventory',
+        target: 'harness/skills/dispatcher.md',
+      },
+    ],
+  })
 }

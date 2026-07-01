@@ -1,0 +1,18 @@
+{
+  "copies": [
+    {
+      "source": "docs/skills/concepts/case.md",
+      "targets": [
+        "skills/primitive/conduct/references/case.md",
+        "skills/primitive/notate/references/case.md",
+        "skills/primitive/retune/references/case.md"
+      ]
+    }
+  ],
+  "reports": [
+    {
+      "name": "skill-inventory",
+      "target": "harness/skills/dispatcher.md"
+    }
+  ]
+}

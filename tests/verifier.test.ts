@@ -83,11 +83,9 @@ describe('Partita verifier', () => {
       write(root, 'harness/skills/dispatcher.md', [
         '# Dispatcher',
         '',
-        '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
         '| --- | --- | --- | --- | --- |',
         '| missing | missing | true | Missing skill fixture | `skills/missing/SKILL.md` |',
-        '<!-- partita:projection:end id="routing-table" -->',
       ].join('\n'))
 
       const report = yield* verifyRouting({ root })
@@ -126,7 +124,6 @@ describe('Partita verifier', () => {
       write(root, 'harness/skills/dispatcher.md', [
         '# Dispatcher',
         '',
-        '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
         '| Handle | Name | Invocation | Description | File |',
         '| --- | --- | --- | --- | --- |',
         '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
@@ -135,7 +132,6 @@ describe('Partita verifier', () => {
         '| mt:reconcile | reconcile | true | Demo skill fixture | `skills/maintenance/reconcile/SKILL.md` |',
         '| og:argue | argue | true | Argue skill fixture | `skills/orientation/argue/SKILL.md` |',
         '| pm:notate | notate | true | Notate skill fixture | `skills/primitive/notate/SKILL.md` |',
-        '<!-- partita:projection:end id="routing-table" -->',
       ].join('\n'))
 
       const report = yield* verifySourceProject({ root })
@@ -232,7 +228,7 @@ describe('Partita verifier', () => {
       write(root, 'src/partita/package-verify.ts', 'export {}\n')
       write(root, 'tests/packager.test.ts', 'export {}\n')
       write(root, '.codex-plugin/plugin.json', '{}\n')
-      write(root, 'CLAUDE.md', '# Removed Claude projection\n')
+      write(root, 'CLAUDE.md', '# Removed Claude instruction\n')
       write(root, 'CONTEXT.md', '# Removed context map\n')
       write(root, 'HARNESS.md', '# Removed harness map\n')
       write(root, 'packages/wiki/index.md', '# Migrated wiki\n')
@@ -249,7 +245,7 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('surface.removed_exists'))
     }))
 
-  it.effect('reports legacy projection markers', () =>
+  it.effect('reports legacy materialization markers', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'harness/skills/dispatcher.md', [
@@ -266,24 +262,40 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('projection.legacy_marker'))
-      assert.isTrue(codes.includes('routing.missing_projection_marker'))
+      assert.isTrue(codes.includes('materialize.legacy_marker'))
     }))
 
-  it.effect('reports file projection drift', () =>
+  it.effect('reports materialized copy drift', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/demo/references/insufficient-material.md', [
-        '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->',
-        '',
-        '# stale',
-      ].join('\n'))
+      write(root, 'partita.materialize.json', materializeConfig([
+        {
+          source: 'reference-source/insufficient-material.md',
+          targets: ['skills/demo/references/insufficient-material.md'],
+        },
+      ]))
+      write(root, 'skills/demo/references/insufficient-material.md', '# stale\n')
 
       const report = yield* verifySourceProject({ root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('projection.file_drift'))
+      assert.isTrue(codes.includes('materialize.copy_drift'))
+    }))
+
+  it.effect('reports missing materialized inventory report config', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'partita.materialize.json', JSON.stringify({
+        copies: [],
+        reports: [],
+      }))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('materialize.report_missing'))
     }))
 
   it.effect('keeps runtime, source, and project verification as separate layers', () =>
@@ -318,6 +330,7 @@ describe('Partita verifier', () => {
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))
   write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
+  write(root, 'partita.materialize.json', materializeConfig())
   write(root, 'reference-source/insufficient-material.md', '# 材料不足\n\nMUST 打回。\n')
 
   write(root, 'skills/demo/SKILL.md', validSkill())
@@ -339,7 +352,7 @@ function validSkill(): string {
     '',
     '## Rule',
     '',
-    'Facing Partita verifier fixture work, first run the local shape check, to avoid accepting invalid skill projections.',
+    'Facing Partita verifier fixture work, first run the local shape check, to avoid accepting invalid materialized skill copies.',
     '',
     '## Pattern',
     '',
@@ -381,7 +394,7 @@ function validSkill(): string {
     '',
     '- the fixture pattern was matched;',
     '- the verifier rule was applied;',
-    '- invalid skill projections were avoided;',
+    '- invalid materialized skill copies were avoided;',
     '- effects stayed at none for filesystem and external services;',
     '- hard checks passed.',
   ].join('\n')
@@ -402,11 +415,9 @@ function dispatcher(): string {
   return [
     '# Dispatcher',
     '',
-    '<!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->',
     '| Handle | Name | Invocation | Description | File |',
     '| --- | --- | --- | --- | --- |',
     '| demo | demo | true | Demo skill fixture | `skills/demo/SKILL.md` |',
-    '<!-- partita:projection:end id="routing-table" -->',
   ].join('\n')
 }
 
@@ -414,4 +425,16 @@ function write(root: string, path: string, contents: string) {
   const absolutePath = join(root, path)
   mkdirSync(dirname(absolutePath), { recursive: true })
   writeFileSync(absolutePath, contents)
+}
+
+function materializeConfig(copies: ReadonlyArray<{ readonly source: string, readonly targets: ReadonlyArray<string> }> = []): string {
+  return JSON.stringify({
+    copies,
+    reports: [
+      {
+        name: 'skill-inventory',
+        target: 'harness/skills/dispatcher.md',
+      },
+    ],
+  })
 }
