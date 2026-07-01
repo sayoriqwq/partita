@@ -2,7 +2,7 @@ import type { SkillMetadata } from './model.ts'
 
 import { Effect, FileSystem } from 'effect'
 import { PartitaFrontmatterError } from './model.ts'
-import { validateSkillText } from './skill-validation.ts'
+import { validateOpenAiSkillText } from './openai-skill-validation.ts'
 
 function failFrontmatter(path: string, message: string) {
   return Effect.fail(new PartitaFrontmatterError({ path, message }))
@@ -12,7 +12,7 @@ export const parseSkillFrontmatter = Effect.fn('parseSkillFrontmatter')(function
   path: string,
   text: string,
 ) {
-  const validation = validateSkillText(text, path)
+  const validation = validateOpenAiSkillText(text, path)
   if (!validation.ok || !validation.fields) {
     const firstIssue = validation.issues[0]
     const message = firstIssue === undefined

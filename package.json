@@ -16,6 +16,7 @@
     "README.md",
     "AGENTS.md",
     "MIGRATION.md",
+    "docs",
     "harness",
     "packages/generic-projection",
     "skills"
@@ -53,6 +54,8 @@
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
     "test": "turbo run build --filter=@partita/generic-projection && vitest run",
     "typecheck": "turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit",
-    "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
+    "verify": "pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
+    "verify-runtime": "pnpm build && node dist/bin/partita.js verify --level runtime",
+    "verify-source": "pnpm build && node dist/bin/partita.js verify --level source"
   }
 }

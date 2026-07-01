@@ -67,19 +67,21 @@ Hard:
 ## Workflow
 
 1. 读取 target skill 和真实 patch case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
-2. 读取 [skill patch](references/skill-patch.md) 和 [case feedback](references/case-feedback.md)，确认 patch case 字段可读。
-3. 定位 target skill source truth；如果读到的是 installed/runtime projection，先找到 owning source skill。
-4. 读取 [OpenAI skill](references/openai-skill.md)，确认 target runtime shape 仍然成立。
-5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确认 Partita family、shape、policy、dispatcher 和 checks 仍然成立。
-6. 确认 target skill identity 仍然成立；否则 MUST 停止并报告 identity invalid。
-7. 定位 case 暴露的最小 stale surface。
-8. 在 target skill references 中添加或更新 case feedback。
-9. 只 patch 该 stale surface，以及直接需要同步的 metadata、references 或 generated files。
-10. 运行 target source 或 Partita landing 要求的 checks；需要同步 runtime projection 时运行 owning install/projection command。
+2. 读取 [case](references/case.md)，确认输入是可治理的真实 patch case。
+3. 读取 [skill patch](references/skill-patch.md) 和 [case feedback](references/case-feedback.md)，确认 patch case 字段可读。
+4. 定位 target skill source truth；如果读到的是 installed/runtime projection，先找到 owning source skill。
+5. 读取 [OpenAI skill](references/openai-skill.md)，确认 target runtime shape 仍然成立。
+6. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确认 Partita family、shape、policy、dispatcher 和 checks 仍然成立。
+7. 确认 target skill identity 仍然成立；否则 MUST 停止并报告 identity invalid。
+8. 定位 case 暴露的最小 stale surface。
+9. 在 target skill references 中添加或更新 case feedback。
+10. 只 patch 该 stale surface，以及直接需要同步的 metadata、references 或 generated files。
+11. 运行 target source 或 Partita landing 要求的 checks；需要同步 runtime projection 时运行 owning install/projection command。
 
 ## References
 
 - 材料不足时，MUST 使用 [insufficient material](references/insufficient-material.md)。
+- 判断 case 概念和最小字段时，MUST 使用 [case](references/case.md)。
 - patch skill 时，MUST 使用 [skill patch](references/skill-patch.md)。
 - 写回真实 recurrence case 时，MUST 使用 [case feedback](references/case-feedback.md)。
 - patch OpenAI/Codex skill 时，MUST 使用 [OpenAI skill](references/openai-skill.md)。

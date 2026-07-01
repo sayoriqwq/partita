@@ -46,6 +46,7 @@ Partita SHOULD migrate in thin adapters and checks for the current loop:
 flowchart TD
   P["Partita repo"]
   S["skills/ source"]
+  DOC["docs/skills theory and shared concepts"]
   C["src/partita CLI"]
   V["verifier and tests"]
   D["harness/skills/dispatcher.md"]
@@ -61,10 +62,12 @@ flowchart TD
   T["target repos"]
 
   P --> S
+  P --> DOC
   P --> C
   P --> V
   C --> D
   S --> D
+  DOC --> S
   C --> GP
   P -. "migrated reference material" .-> REF
   P --> PIN
@@ -89,6 +92,10 @@ flowchart TD
 
 `runtime/references/` has been migrated out of Partita and MUST NOT be restored without a concrete runtime consumer.
 
+`docs/skills/` is the Partita-owned theory and shared concept source surface.
+
+Shared concepts SHOULD be projected from `docs/skills/concepts/` into skill-local `references/` so runtime skills remain self-contained.
+
 `.codex-plugin/` has been migrated out of Partita and MUST NOT be used to install duplicate `partita:<skill>` runtime copies.
 
 `/Users/sayori/Desktop/partita-ref` is a quarantine/reference location, not a second source of truth.
@@ -101,6 +108,7 @@ Content MAY return from `/Users/sayori/Desktop/partita-ref` only after sayori co
 | --- | --- |
 | `partita-core` | Partita keeps this as source, CLI, package, verification, or root operating surface. |
 | `partita-skill-source` | Partita keeps this as self-owned skill source. |
+| `partita-theory` | Partita keeps this as skill theory or shared concept source. |
 | `partita-generated` | Partita may regenerate this; it is audit surface, not source authority. |
 | `generic-projection` | Partita keeps this while projection helper remains repo-internal. |
 | `wiki-external` | This should leave Partita or be folded into executable source before wiki removal. |
@@ -128,6 +136,8 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `README.md` | `partita-core` | keep | Human entrypoint. |
 | `MIGRATION.md` | `partita-core` | keep | Migration target and ownership audit. |
 | `bin/partita.ts` | `partita-core` | keep | CLI entrypoint. |
+| `docs/skills/concepts/case.md` | `partita-theory` | keep | Shared case concept source projected into skill-local references. |
+| `docs/skills/theory.md` | `partita-theory` | keep | Current Partita skill theory and verification layers. |
 | `eslint.config.mjs` | `partita-core` | keep | Lint configuration. |
 | `harness/skills/checks.md` | `quarantine-ref` | migrated | Moved to `/Users/sayori/Desktop/partita-ref/harness/skills/checks.md`. |
 | `harness/skills/dispatcher.md` | `partita-generated` | keep | Generated source inventory and projection audit, not runtime router. |
@@ -260,22 +270,26 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `skills/orientation/land/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
 | `skills/primitive/conduct/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/conduct/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
+| `skills/primitive/conduct/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
 | `skills/primitive/conduct/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/conduct/references/workflow-creation.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/notate/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
+| `skills/primitive/notate/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
 | `skills/primitive/notate/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/notate/references/skill-creation.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/retune/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
+| `skills/primitive/retune/references/case.md` | `partita-generated` | keep | Skill-local projection of shared case concept. |
 | `skills/primitive/retune/references/insufficient-material.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/openai-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/partita-skill.md` | `partita-skill-source` | keep | Skill-local reference. |
 | `skills/primitive/retune/references/skill-patch.md` | `partita-skill-source` | keep | Skill-local reference. |
+| `skills/primitive/retune/references/source-projection-case.md` | `partita-skill-source` | keep | Skill-local recurrence case reference. |
 | `skills/primitive/score/SKILL.md` | `partita-skill-source` | keep | Self-owned primitive skill. |
 | `skills/primitive/score/agents/openai.yaml` | `partita-skill-source` | keep | Skill runtime metadata source. |
 | `skills/primitive/score/references/assertion.md` | `partita-skill-source` | keep | Skill-local reference. |
@@ -296,13 +310,15 @@ This table covers every tracked path returned by `git ls-files` on 2026-07-01, p
 | `src/partita/home.ts` | `partita-core` | keep | Thin chezmoi home materialization wrapper. |
 | `src/partita/skill.ts` | `partita-core` | keep | Thin skills.sh skill runtime wrapper. |
 | `src/partita/model.ts` | `partita-core` | keep | Partita domain model. |
-| `src/partita/skill-validation.ts` | `partita-core` | keep | Skill source validation. |
+| `src/partita/openai-skill-validation.ts` | `partita-core` | keep | OpenAI/Codex runtime skill validation. |
+| `src/partita/partita-skill-validation.ts` | `partita-core` | keep | Partita source skill contract validation. |
 | `src/partita/pin.ts` | `partita-core` | keep | GitHub git-subtree pin logic. |
+| `src/partita/validation.ts` | `partita-core` | keep | Shared validation report model. |
 | `src/partita/verifier.ts` | `partita-core` | keep | Repository verifier. |
 | `tests/generator.test.ts` | `partita-core` | keep | Generator tests. |
 | `tests/home.test.ts` | `partita-core` | keep | Chezmoi home wrapper tests. |
 | `tests/skill.test.ts` | `partita-core` | keep | Skill runtime wrapper tests. |
-| `tests/skill-validation.test.ts` | `partita-core` | keep | Skill validation tests. |
+| `tests/openai-skill-validation.test.ts` | `partita-core` | keep | OpenAI runtime skill validation tests. |
 | `tests/pin.test.ts` | `partita-core` | keep | Pin tests. |
 | `tests/verifier.test.ts` | `partita-core` | keep | Verifier tests. |
 | `tsconfig.build.json` | `partita-core` | keep | Build TypeScript config. |

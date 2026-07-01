@@ -9,6 +9,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 ## State
 
 - `skills/` 是 self-owned skill source input。
+- `docs/skills/` 是 Partita skill 建设理论和共享概念真源。
 - `src/partita/` 负责 Partita-specific generation、verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
 - `harness/skills/dispatcher.md` 是 generated source inventory 和 projection audit artifact。
 - `packages/generic-projection/` 是 repo-internal generic projection helper。
@@ -21,10 +22,13 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `src/cli/Main.ts` 定义 CLI command surface。
 - `src/partita/generator.ts` 生成 package metadata、dispatcher audit 和 valid file-copy projections。
 - `src/partita/verifier.ts` 校验 Partita source shape，并阻止迁出 surfaces 回流。
+- `src/partita/openai-skill-validation.ts` 校验 OpenAI/Codex runtime skill folder 的基础可用性。
+- `src/partita/partita-skill-validation.ts` 在 runtime 层之上校验 Partita source skill contract。
 - `src/partita/pin.ts` 管理 GitHub git-subtree pins。
 - `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
 - `harness/skills/dispatcher.md` 从 `skills/` source `SKILL.md` frontmatter 和 `agents/openai.yaml` 生成。
+- `docs/skills/concepts/` 下的共享概念通过 file projection 进入 skill-local `references/`。
 - `MIGRATION.md` 记录迁移目标、架构图和 ownership table。
 
 ## Commands
@@ -33,6 +37,8 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 pnpm generate
 pnpm generate:check
 pnpm verify
+pnpm verify-runtime
+pnpm verify-source
 pnpm skill-sync
 pnpm skill-status
 pnpm skill-verify
@@ -102,11 +108,33 @@ dispatcher 不决定 Codex runtime 加载哪些 skills。
 
 dispatcher 不承担 runtime governance、installer state、mapping layer 或 durable knowledge layer。
 
+## Verification
+
+`partita verify` 默认运行完整 project 层。
+
+需要只看某一层时：
+
+```bash
+partita verify --level runtime
+partita verify --level source
+partita verify --level project
+```
+
+`runtime` 只校验 OpenAI/Codex skill folder 可用性。
+
+`source` 在 runtime 层之上校验 Partita V1 section、marker、description policy、`agents/openai.yaml` 和 source path。
+
+`project` 在 source 层之上校验 dispatcher、projection、links、迁出 surface 和 root shape。
+
 ## Skill
 
 只有在用户明确 skill behavior 后，才能新增 skill。
 
 创建或修改 skill 时，直接维护 skill-local source 和 references，不再依赖 `packages/wiki/`。
+
+共享概念先维护在 `docs/skills/concepts/`，再投影到每个需要该概念的 skill-local `references/`。
+
+runtime skill MUST NOT 依赖另一个 skill 的 `references/`。
 
 minimum shape：
 

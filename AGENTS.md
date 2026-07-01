@@ -13,6 +13,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 本 repo owns：
 
 - `skills/` 下的 self-owned skill source；
+- `docs/skills/` 下的 skill 建设理论和共享概念真源；
 - `src/partita/` 下的 TypeScript/Effect CLI、generator、verifier、skills.sh skill runtime wrapper、chezmoi home adapter 和 pin code；
 - `tests/` 下的 executable behavior checks；
 - `harness/skills/dispatcher.md` 下的 generated source inventory 和 projection audit artifact；
@@ -39,6 +40,9 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。
 - `skills/` 是 self-owned skill source input。
 - `skills/` 下的 Partita `SKILL.md` files 是 runtime-installable skill source，不是 wiki projection output。
+- `docs/skills/` 是 Partita skill theory 和共享概念 source truth，不是 runtime skill。
+- 共享概念 MUST 从 `docs/skills/concepts/` 投影到每个需要它的 skill-local `references/`。
+- runtime skill MUST 自包含执行所需 references；MUST NOT 依赖另一个 skill 的 `references/`。
 - 外部 repos MUST 通过 `partita pin` 的 GitHub git-subtree pin 进入 Partita。
 - GitHub subtree pin contract MUST 使用 sibling path，例如 `repos/<name>.subtree.json`。
 - `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
@@ -47,6 +51,9 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - dispatcher MUST NOT become runtime governance、installer state、mapping layer 或 durable knowledge layer。
 - `packages/generic-projection/` owns generic marker parsing、file-copy rendering、block marker constants 和 projection helper functions。
 - `packages/generic-projection/` 不 owns Partita-specific routing、skill family handles、pin policy 或 install behavior。
+- `openai-skill-validation` 只 owns OpenAI/Codex runtime skill folder 基础可用性。
+- `partita-skill-validation` owns Partita source skill contract，并依赖 runtime validation。
+- `partita verify --level project` owns repo-level invariants，不应把所有规则塞回单一 validator。
 - root `wiki/` 和 `packages/wiki/` MUST NOT exist in this repo。
 - `.codex-plugin/` MUST NOT exist in this repo。
 - `runtime/references/` MUST NOT exist in this repo。
@@ -77,6 +84,8 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 pnpm generate
 pnpm generate:check
 pnpm verify
+pnpm verify-runtime
+pnpm verify-source
 pnpm skill-sync
 pnpm skill-status
 pnpm skill-verify

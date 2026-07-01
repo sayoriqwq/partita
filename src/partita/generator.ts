@@ -264,6 +264,8 @@ function partitaPackageFields(): JsonObject {
       'test': 'turbo run build --filter=@partita/generic-projection && vitest run',
       'typecheck': 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit',
       'verify': 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip',
+      'verify-runtime': 'pnpm build && node dist/bin/partita.js verify --level runtime',
+      'verify-source': 'pnpm build && node dist/bin/partita.js verify --level source',
     },
   }
 }
@@ -287,6 +289,7 @@ function buildPackageJson(version: string): JsonObject {
       'README.md',
       'AGENTS.md',
       'MIGRATION.md',
+      'docs',
       'harness',
       'packages/generic-projection',
       'skills',

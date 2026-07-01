@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import { verifyRouting, verifySourceProject } from '../src/partita/verifier.ts'
+import {
+  verifyPartitaSourceSkills,
+  verifyRouting,
+  verifyRuntimeSkills,
+  verifySourceProject,
+} from '../src/partita/verifier.ts'
 
 const marker = '🧭'
 
@@ -33,9 +38,9 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('skill.description_too_short'))
-      assert.isTrue(codes.includes('skill.missing_marker'))
-      assert.isTrue(codes.includes('skill.missing_contract_sections'))
+      assert.isTrue(codes.includes('partita_skill.description_too_short'))
+      assert.isTrue(codes.includes('partita_skill.missing_marker'))
+      assert.isTrue(codes.includes('partita_skill.missing_contract_sections'))
     }))
 
   it.effect('reports description selector contract drift', () =>
@@ -50,8 +55,8 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('skill.description_selector_prefix'))
-      assert.isTrue(codes.includes('skill.description_activation_surface'))
+      assert.isTrue(codes.includes('partita_skill.description_selector_prefix'))
+      assert.isTrue(codes.includes('partita_skill.description_activation_surface'))
     }))
 
   it.effect('reports long or polluted skill descriptions', () =>
@@ -68,8 +73,8 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('skill.description_too_long'))
-      assert.isTrue(codes.includes('skill.description_scheduling_pollution'))
+      assert.isTrue(codes.includes('partita_skill.description_too_long'))
+      assert.isTrue(codes.includes('partita_skill.description_scheduling_pollution'))
     }))
 
   it.effect('reports dispatcher routing drift', () =>
@@ -148,8 +153,8 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('skill.missing_contract_sections'))
-      assert.isTrue(codes.includes('skill.legacy_section'))
+      assert.isTrue(codes.includes('partita_skill.missing_contract_sections'))
+      assert.isTrue(codes.includes('partita_skill.legacy_section'))
     }))
 
   it.effect('reports missing OpenAI metadata for implicit skills', () =>
@@ -195,9 +200,9 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('skill_shape.unsupported_entry'))
-      assert.isTrue(codes.includes('skill_shape.unsupported_reference'))
-      assert.isTrue(codes.includes('skill_shape.invalid_scripts_dir'))
+      assert.isTrue(codes.includes('openai_skill_shape.unsupported_entry'))
+      assert.isTrue(codes.includes('openai_skill_shape.unsupported_reference'))
+      assert.isTrue(codes.includes('openai_skill_shape.invalid_scripts_dir'))
     }))
 
   it.effect('accepts official bundled resource directories', () =>
@@ -279,6 +284,34 @@ describe('Partita verifier', () => {
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('projection.file_drift'))
+    }))
+
+  it.effect('keeps runtime, source, and project verification as separate layers', () =>
+    Effect.gen(function* () {
+      const root = mkdtempSync(join(tmpdir(), 'partita-verifier-levels-'))
+      write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
+      write(root, 'skills/demo/SKILL.md', [
+        '---',
+        'name: demo',
+        'description: "Use when demo validation is needed. Not for unrelated work."',
+        '---',
+        '',
+        '# Demo',
+      ].join('\n'))
+
+      const runtimeReport = yield* verifyRuntimeSkills({ root })
+      const sourceReport = yield* verifyPartitaSourceSkills({ root })
+      const projectReport = yield* verifySourceProject({ level: 'project', root })
+      const sourceCodes = sourceReport.issues.map(issue => issue.code)
+      const projectCodes = projectReport.issues.map(issue => issue.code)
+
+      assert.isTrue(runtimeReport.ok)
+      assert.isFalse(sourceReport.ok)
+      assert.isTrue(sourceCodes.includes('partita_skill.missing_marker'))
+      assert.isTrue(sourceCodes.includes('partita_skill.missing_contract_sections'))
+      assert.isTrue(sourceCodes.includes('openai_metadata.missing'))
+      assert.isFalse(projectReport.ok)
+      assert.isTrue(projectCodes.includes('routing.dispatcher_missing'))
     }))
 })
 

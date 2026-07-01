@@ -44,6 +44,11 @@ const checkFlag = Flag.boolean('check').pipe(
   Flag.withDescription('Check generated files without writing'),
 )
 
+const verifyLevelFlag = Flag.choice('level', ['project', 'source', 'runtime'] as const).pipe(
+  Flag.withDescription('Verification layer to run'),
+  Flag.withDefault('project' as const),
+)
+
 const pinContractFlag = Flag.path('contract').pipe(
   Flag.withDescription('GitHub subtree pin contract path; defaults to repos/<name>.subtree.json from --name/--prefix'),
   Flag.withDefault(''),
@@ -107,11 +112,12 @@ function makeCli(config: CliConfig) {
   )
 
   const verify = Command.make('verify', {
+    level: verifyLevelFlag,
     root,
-  }, Effect.fnUntraced(function* ({ root }) {
-    yield* verifyProject({ root })
+  }, Effect.fnUntraced(function* ({ level, root }) {
+    yield* verifyProject({ level, root })
   })).pipe(
-    Command.withDescription('Verify Partita skill framework and generated metadata'),
+    Command.withDescription('Verify Partita runtime, source, or full project invariants'),
   )
 
   const skillSync = Command.make('sync', {

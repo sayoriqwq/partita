@@ -97,7 +97,7 @@ unsupported_field: Demo routing
       ))
 
       assert.strictEqual(error._tag, 'PartitaFrontmatterError')
-      assert.include(error.message, 'skill_validation.unexpected_frontmatter_key')
+      assert.include(error.message, 'openai_skill.unexpected_frontmatter_key')
     }))
 
   it.effect('renders generated files for a zero-skill repo', () =>
@@ -139,13 +139,15 @@ unsupported_field: Demo routing
           'test': string
           'typecheck': string
           'verify': string
+          'verify-runtime': string
+          'verify-source': string
         }
       }
       assert.strictEqual(packageJson.packageManager, 'pnpm@11.7.0')
       assert.strictEqual(packageJson.dependencies['@partita/generic-projection'], 'workspace:*')
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
       assert.strictEqual(packageJson.devDependencies.turbo, '^2.10.1')
-      assert.deepStrictEqual(packageJson.files, ['dist', 'LICENSE', 'README.md', 'AGENTS.md', 'MIGRATION.md', 'harness', 'packages/generic-projection', 'skills'])
+      assert.deepStrictEqual(packageJson.files, ['dist', 'LICENSE', 'README.md', 'AGENTS.md', 'MIGRATION.md', 'docs', 'harness', 'packages/generic-projection', 'skills'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.build, 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
@@ -159,6 +161,8 @@ unsupported_field: Demo routing
       assert.strictEqual(packageJson.scripts.test, 'turbo run build --filter=@partita/generic-projection && vitest run')
       assert.strictEqual(packageJson.scripts.typecheck, 'turbo run build --filter=@partita/generic-projection && turbo run typecheck --filter=@partita/generic-projection && tsgo --noEmit')
       assert.strictEqual(packageJson.scripts.verify, 'pnpm generate:check && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip')
+      assert.strictEqual(packageJson.scripts['verify-runtime'], 'pnpm build && node dist/bin/partita.js verify --level runtime')
+      assert.strictEqual(packageJson.scripts['verify-source'], 'pnpm build && node dist/bin/partita.js verify --level source')
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
   it.effect('collects skill metadata sorted by directory and rejects name drift', () =>

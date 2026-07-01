@@ -59,16 +59,18 @@ Hard:
 ## Workflow
 
 1. 读取真实 workflow case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
-2. 读取 [workflow creation](references/workflow-creation.md)，读出 workflow A/Y/X、gate logic、internal skill routing 和 disclosure boundary。
-3. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
-4. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy、dispatcher 和 checks。
-5. 确认目标是 public workflow skill；否则路由到 `notate` 或 `retune`。
-6. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
-7. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
+2. 读取 [case](references/case.md)，确认输入是可治理的真实 workflow case。
+3. 读取 [workflow creation](references/workflow-creation.md)，读出 workflow A/Y/X、gate logic、internal skill routing 和 disclosure boundary。
+4. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
+5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy、dispatcher 和 checks。
+6. 确认目标是 public workflow skill；否则路由到 `notate` 或 `retune`。
+7. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
+8. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 
 ## References
 
 - 材料不足时，MUST 使用 [insufficient material](references/insufficient-material.md)。
+- 判断 case 概念和最小字段时，MUST 使用 [case](references/case.md)。
 - 创建 workflow skill 时，MUST 使用 [workflow creation](references/workflow-creation.md)。
 - 创建 OpenAI/Codex skill 时，MUST 使用 [OpenAI skill](references/openai-skill.md)。
 - 目标是 Partita landing 时，MUST 使用 [Partita skill](references/partita-skill.md)。

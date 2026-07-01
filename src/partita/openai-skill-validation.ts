@@ -1,18 +1,12 @@
 import type { SkillMetadata } from './model.ts'
+import type { ValidationIssue, ValidationReport } from './validation.ts'
 
-import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { Effect, FileSystem } from 'effect'
+import { issue } from './validation.ts'
 
-interface SkillValidationIssue {
-  readonly code: string
-  readonly message: string
-  readonly path?: string
-}
-
-export interface SkillValidationReport {
-  readonly ok: boolean
+export interface OpenAiSkillValidationReport extends ValidationReport {
   readonly fields?: SkillMetadata
-  readonly issues: ReadonlyArray<SkillValidationIssue>
 }
 
 const maxSkillNameLength = 64
@@ -29,40 +23,50 @@ type ScalarValue
 interface ParsedFrontmatter {
   readonly keys: ReadonlyArray<string>
   readonly values: ReadonlyMap<string, ScalarValue>
-  readonly issues: ReadonlyArray<SkillValidationIssue>
+  readonly issues: ReadonlyArray<ValidationIssue>
 }
 
-export function validateSkillFolder(skillPath: string): SkillValidationReport {
+function pathExists(fs: FileSystem.FileSystem, path: string) {
+  return fs.exists(path).pipe(
+    Effect.catchTag('PlatformError', () => Effect.succeed(false)),
+  )
+}
+
+export const validateOpenAiSkillFolder = Effect.fn('validateOpenAiSkillFolder')(function* (
+  skillPath: string,
+) {
   const skillMdPath = join(skillPath, 'SKILL.md')
-  if (!existsSync(skillMdPath)) {
-    return report([issue('skill_validation.skill_md_missing', 'SKILL.md not found', skillMdPath)])
+  const fs = yield* FileSystem.FileSystem
+  const exists = yield* pathExists(fs, skillMdPath)
+  if (!exists) {
+    return report([issue('openai_skill.skill_md_missing', 'SKILL.md not found', skillMdPath)])
   }
 
-  return validateSkillText(readFileSync(skillMdPath, 'utf8'), skillMdPath)
-}
+  return validateOpenAiSkillText(yield* fs.readFileString(skillMdPath), skillMdPath)
+})
 
-export function validateSkillText(text: string, path = 'SKILL.md'): SkillValidationReport {
+export function validateOpenAiSkillText(text: string, path = 'SKILL.md'): OpenAiSkillValidationReport {
   const lines = text.split(/\r?\n/u)
   if (lines[0] !== '---') {
-    return report([issue('skill_validation.no_frontmatter', 'No YAML frontmatter found', path)])
+    return report([issue('openai_skill.no_frontmatter', 'No YAML frontmatter found', path)])
   }
 
   const end = lines.indexOf('---', 1)
   if (end === -1) {
-    return report([issue('skill_validation.invalid_frontmatter', 'Invalid frontmatter format', path)])
+    return report([issue('openai_skill.invalid_frontmatter', 'Invalid frontmatter format', path)])
   }
 
   const parsed = parseFrontmatterLines(lines.slice(1, end), path)
   const issues = [...parsed.issues]
   if (parsed.keys.length === 0) {
-    issues.push(issue('skill_validation.frontmatter_not_mapping', 'Frontmatter must be a YAML dictionary', path))
+    issues.push(issue('openai_skill.frontmatter_not_mapping', 'Frontmatter must be a YAML dictionary', path))
   }
 
   const unexpectedKeys = [...new Set(parsed.keys.filter(key => !officialFrontmatterKeys.has(key)))].sort()
   if (unexpectedKeys.length > 0) {
     const allowed = [...officialFrontmatterKeys].sort().join(', ')
     issues.push(issue(
-      'skill_validation.unexpected_frontmatter_key',
+      'openai_skill.unexpected_frontmatter_key',
       `Unexpected key(s) in SKILL.md frontmatter: ${unexpectedKeys.join(', ')}. Allowed properties are: ${allowed}`,
       path,
     ))
@@ -71,10 +75,10 @@ export function validateSkillText(text: string, path = 'SKILL.md'): SkillValidat
   const hasName = parsed.keys.includes('name')
   const hasDescription = parsed.keys.includes('description')
   if (!hasName) {
-    issues.push(issue('skill_validation.missing_name', 'Missing \'name\' in frontmatter', path))
+    issues.push(issue('openai_skill.missing_name', 'Missing \'name\' in frontmatter', path))
   }
   if (!hasDescription) {
-    issues.push(issue('skill_validation.missing_description', 'Missing \'description\' in frontmatter', path))
+    issues.push(issue('openai_skill.missing_description', 'Missing \'description\' in frontmatter', path))
   }
 
   const name = checkName(parsed.values.get('name'), path, issues)
@@ -89,7 +93,7 @@ export function validateSkillText(text: string, path = 'SKILL.md'): SkillValidat
 function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): ParsedFrontmatter {
   const keys: Array<string> = []
   const values = new Map<string, ScalarValue>()
-  const issues: Array<SkillValidationIssue> = []
+  const issues: Array<ValidationIssue> = []
   let currentKey: string | undefined
 
   for (const rawLine of lines) {
@@ -99,14 +103,14 @@ function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): Pars
 
     if (/^\s/u.test(rawLine)) {
       if (currentKey === undefined) {
-        issues.push(issue('skill_validation.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
+        issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
       }
       continue
     }
 
     const separator = rawLine.indexOf(':')
     if (separator === -1) {
-      issues.push(issue('skill_validation.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
+      issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
       currentKey = undefined
       continue
     }
@@ -114,7 +118,7 @@ function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): Pars
     const key = rawLine.slice(0, separator).trim()
     currentKey = key
     if (!key) {
-      issues.push(issue('skill_validation.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
+      issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
       continue
     }
 
@@ -130,17 +134,17 @@ function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): Pars
 function checkName(
   value: ScalarValue | undefined,
   path: string,
-  issues: Array<SkillValidationIssue>,
+  issues: Array<ValidationIssue>,
 ): string | undefined {
   if (value === undefined) {
     return undefined
   }
   if (value.kind === 'invalid') {
-    issues.push(issue('skill_validation.invalid_frontmatter', `Invalid YAML in frontmatter: ${value.message}`, path))
+    issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${value.message}`, path))
     return undefined
   }
   if (value.kind === 'non_string') {
-    issues.push(issue('skill_validation.name_not_string', `Name must be a string, got ${value.typeName}`, path))
+    issues.push(issue('openai_skill.name_not_string', `Name must be a string, got ${value.typeName}`, path))
     return undefined
   }
 
@@ -150,21 +154,21 @@ function checkName(
   }
   if (!skillNamePattern.test(name)) {
     issues.push(issue(
-      'skill_validation.name_format',
+      'openai_skill.name_format',
       `Name '${name}' should be hyphen-case (lowercase letters, digits, and hyphens only)`,
       path,
     ))
   }
   if (name.startsWith('-') || name.endsWith('-') || name.includes('--')) {
     issues.push(issue(
-      'skill_validation.name_hyphen',
+      'openai_skill.name_hyphen',
       `Name '${name}' cannot start/end with hyphen or contain consecutive hyphens`,
       path,
     ))
   }
   if (name.length > maxSkillNameLength) {
     issues.push(issue(
-      'skill_validation.name_too_long',
+      'openai_skill.name_too_long',
       `Name is too long (${name.length} characters). Maximum is ${maxSkillNameLength} characters.`,
       path,
     ))
@@ -175,17 +179,17 @@ function checkName(
 function checkDescription(
   value: ScalarValue | undefined,
   path: string,
-  issues: Array<SkillValidationIssue>,
+  issues: Array<ValidationIssue>,
 ): string | undefined {
   if (value === undefined) {
     return undefined
   }
   if (value.kind === 'invalid') {
-    issues.push(issue('skill_validation.invalid_frontmatter', `Invalid YAML in frontmatter: ${value.message}`, path))
+    issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${value.message}`, path))
     return undefined
   }
   if (value.kind === 'non_string') {
-    issues.push(issue('skill_validation.description_not_string', `Description must be a string, got ${value.typeName}`, path))
+    issues.push(issue('openai_skill.description_not_string', `Description must be a string, got ${value.typeName}`, path))
     return undefined
   }
 
@@ -194,11 +198,11 @@ function checkDescription(
     return description
   }
   if (description.includes('<') || description.includes('>')) {
-    issues.push(issue('skill_validation.description_angle_bracket', 'Description cannot contain angle brackets (< or >)', path))
+    issues.push(issue('openai_skill.description_angle_bracket', 'Description cannot contain angle brackets (< or >)', path))
   }
   if (description.length > maxOfficialDescriptionLength) {
     issues.push(issue(
-      'skill_validation.description_too_long',
+      'openai_skill.description_too_long',
       `Description is too long (${description.length} characters). Maximum is ${maxOfficialDescriptionLength} characters.`,
       path,
     ))
@@ -287,7 +291,7 @@ function parseQuotedString(value: string): { readonly ok: true, readonly value: 
   return { ok: true, value: result }
 }
 
-function report(issues: ReadonlyArray<SkillValidationIssue>, fields?: SkillMetadata): SkillValidationReport {
+function report(issues: ReadonlyArray<ValidationIssue>, fields?: SkillMetadata): OpenAiSkillValidationReport {
   return fields === undefined
     ? {
         issues,
@@ -298,8 +302,4 @@ function report(issues: ReadonlyArray<SkillValidationIssue>, fields?: SkillMetad
         issues,
         ok: issues.length === 0,
       }
-}
-
-function issue(code: string, message: string, path?: string): SkillValidationIssue {
-  return path ? { code, message, path } : { code, message }
 }
