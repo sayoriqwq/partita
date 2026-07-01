@@ -1,4 +1,3 @@
-<!-- partita:projection:file source="packages/wiki/documentation/boundary.md" mode="copy" -->
 
 ---
 audience: [agent, human]

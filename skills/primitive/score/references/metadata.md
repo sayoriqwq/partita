@@ -1,4 +1,3 @@
-<!-- partita:projection:file source="packages/wiki/documentation/metadata.md" mode="copy" -->
 
 ---
 audience: [agent, human]

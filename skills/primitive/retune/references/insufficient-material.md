@@ -1,4 +1,3 @@
-<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->
 
 ---
 audience: agent

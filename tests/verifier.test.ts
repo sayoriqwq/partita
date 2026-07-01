@@ -7,44 +7,6 @@ import { verifyRouting, verifySourceProject } from '../src/partita/verifier.ts'
 
 const marker = '🧭'
 
-const requiredSourceFiles = [
-  'CONTEXT.md',
-  'HARNESS.md',
-  'packages/wiki/index.md',
-  'packages/wiki/harness/index.md',
-  'packages/wiki/skill/index.md',
-  'packages/wiki/skill/rule.md',
-  'packages/wiki/skill/primitive.md',
-  'packages/wiki/skill/orchestrator.md',
-  'packages/wiki/skill/case/index.md',
-  'packages/wiki/skill/case/insufficient-material.md',
-  'packages/wiki/skill/case/pattern.md',
-  'packages/wiki/skill/case/pressure.md',
-  'packages/wiki/skill/governance/index.md',
-  'packages/wiki/skill/governance/identity.md',
-  'packages/wiki/skill/lifecycle/index.md',
-  'packages/wiki/workflow/index.md',
-  'packages/wiki/workflow/gate/index.md',
-  'packages/wiki/workflow/gate/contract.md',
-  'packages/wiki/workflow/gate/span.md',
-  'packages/wiki/projection/index.md',
-  'packages/wiki/projection/generic.md',
-  'packages/wiki/projection/verifier/index.md',
-  'packages/wiki/projection/verifier/description.md',
-  'packages/wiki/projection/verifier/links.md',
-  'packages/wiki/projection/verifier/metadata.md',
-  'packages/wiki/projection/verifier/nodes.md',
-  'packages/wiki/projection/verifier/shape.md',
-  'packages/wiki/practice/index.md',
-  'packages/wiki/practice/create.md',
-  'packages/wiki/practice/patch.md',
-  'packages/wiki/practice/audit.md',
-  'packages/wiki/collaboration/index.md',
-  'packages/wiki/documentation/index.md',
-  'packages/wiki/vocabulary/index.md',
-  'packages/wiki/vocabulary/assertion.md',
-] as const
-
 describe('Partita verifier', () => {
   it.effect('accepts a valid source fixture', () =>
     Effect.gen(function* () {
@@ -264,8 +226,13 @@ describe('Partita verifier', () => {
       write(root, 'src/partita/packager.ts', 'export {}\n')
       write(root, 'src/partita/package-verify.ts', 'export {}\n')
       write(root, 'tests/packager.test.ts', 'export {}\n')
-      write(root, 'packages/wiki/practice/migrate.md', '# Removed migration\n')
-      write(root, 'packages/wiki/projection/verifier/package.md', '# Removed package node\n')
+      write(root, '.codex-plugin/plugin.json', '{}\n')
+      write(root, 'CLAUDE.md', '# Removed Claude projection\n')
+      write(root, 'CONTEXT.md', '# Removed context map\n')
+      write(root, 'HARNESS.md', '# Removed harness map\n')
+      write(root, 'packages/wiki/index.md', '# Migrated wiki\n')
+      write(root, 'runtime/references/skill/case.md', '# Migrated runtime reference\n')
+      write(root, 'harness/skills/checks.md', '# Migrated harness reference\n')
       mkdirSync(join(root, 'rules'), { recursive: true })
       mkdirSync(join(root, 'theory'), { recursive: true })
       mkdirSync(join(root, 'wiki'), { recursive: true })
@@ -274,7 +241,6 @@ describe('Partita verifier', () => {
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('version_file.forbidden'))
       assert.isTrue(codes.includes('surface.removed_exists'))
     }))
 
@@ -303,7 +269,7 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'skills/demo/references/insufficient-material.md', [
-        '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->',
+        '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->',
         '',
         '# stale',
       ].join('\n'))
@@ -319,24 +285,7 @@ describe('Partita verifier', () => {
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))
   write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
-  write(root, '.codex-plugin/plugin.json', JSON.stringify({
-    name: 'partita',
-    version: '0.1.0',
-    skills: './skills/',
-    interface: {
-      displayName: 'Partita',
-      shortDescription: 'A Codex skill harness for user-defined workflows',
-      longDescription: 'Partita verifies user-defined Codex workflow skills.',
-      developerName: 'sayori',
-      category: 'Developer Tools',
-      capabilities: ['Interactive'],
-      defaultPrompt: ['Add a custom Partita skill'],
-    },
-  }, null, 2))
-
-  for (const path of requiredSourceFiles) {
-    write(root, path, sourceFileFixture(path))
-  }
+  write(root, 'reference-source/insufficient-material.md', '# 材料不足\n\nMUST 打回。\n')
 
   write(root, 'skills/demo/SKILL.md', validSkill())
   write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata())
@@ -403,13 +352,6 @@ function validSkill(): string {
     '- effects stayed at none for filesystem and external services;',
     '- hard checks passed.',
   ].join('\n')
-}
-
-function sourceFileFixture(path: string): string {
-  if (path === 'CONTEXT.md' || path === 'HARNESS.md') {
-    return `# ${path}\n\nRead packages/wiki/index.md first.\n`
-  }
-  return `# ${path}\n`
 }
 
 function validOpenAiMetadata(): string {

@@ -3,8 +3,6 @@ import antfu from '@antfu/eslint-config'
 export default antfu(
   {
     ignores: [
-      '.codex/**',
-      '.codex-plugin/**',
       'dist/**',
       'node_modules/**',
       'packages/*/dist/**',

@@ -58,8 +58,6 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/wiki: {}
-
 packages:
 
   '@antfu/eslint-config@9.1.0':

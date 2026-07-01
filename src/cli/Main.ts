@@ -94,7 +94,7 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* ({ check, root }) {
     yield* generateProject({ check, root })
   })).pipe(
-    Command.withDescription('Generate Partita plugin metadata and dispatcher files'),
+    Command.withDescription('Generate Partita package metadata and dispatcher audit files'),
   )
 
   const verify = Command.make('verify', {

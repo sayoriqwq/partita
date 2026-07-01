@@ -12,13 +12,12 @@
   },
   "files": [
     "dist",
-    ".codex-plugin",
     "LICENSE",
     "README.md",
-    "CONTEXT.md",
-    "HARNESS.md",
+    "AGENTS.md",
+    "MIGRATION.md",
     "harness",
-    "packages",
+    "packages/generic-projection",
     "skills"
   ],
   "dependencies": {

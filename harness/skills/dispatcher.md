@@ -1,10 +1,12 @@
 # Dispatcher
 
-Dispatcher 是 Partita harness 从当前 `skills/` source 生成的 routing index。
+Dispatcher 是 Partita 从当前 `skills/` source 生成的 source inventory 和 projection audit artifact。
 
-它不是 skill content，不放在 `skills/` 目录，也不定义 portable skill。只根据 routing table 中实际存在的 skill 进行匹配。
+它不是 runtime governance、installer state、mapping layer 或 durable knowledge layer。
 
-## Routing Table
+它不决定 Codex runtime 加载哪些 skills；runtime 安装状态由 skills.sh CLI 管理。
+
+## Inventory
 
 <!-- partita:projection:start id="routing-table" source="skills" mode="block-table" -->
 | Handle | Name | Invocation | Description | File |
@@ -21,11 +23,3 @@ Dispatcher 是 Partita harness 从当前 `skills/` source 生成的 routing inde
 | pm:retune | retune | false | Use when patching an existing identity-valid OpenAI/Codex skill from a real recurrence case that exposes a stale local surface. In Partita landing, patches an existing valid Partita source skill. Not for creating new skills, structure audits without a patch case, identity-invalid skills, external skill migration, ordinary code review, or prose cleanup. | `skills/primitive/retune/SKILL.md` |
 | pm:score | score | true | Use when creating or modifying Markdown docs that should follow sayoriqwq-style Markdown writing preferences. Not for non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching. | `skills/primitive/score/SKILL.md` |
 <!-- partita:projection:end id="routing-table" -->
-
-## 运行方式
-
-1. 读取用户消息。
-2. 如果 routing table 有匹配 skill，读取该 skill file。
-3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
-
-skills 只手动串联，不自动链式触发。

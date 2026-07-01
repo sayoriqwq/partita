@@ -5,27 +5,6 @@ export interface SkillMetadata {
   readonly description: string
 }
 
-export interface PluginManifest {
-  readonly name: string
-  readonly version: string
-  readonly description: string
-  readonly author: {
-    readonly name: string
-  }
-  readonly license: string
-  readonly keywords: ReadonlyArray<string>
-  readonly skills: string
-  readonly interface: {
-    readonly displayName: string
-    readonly shortDescription: string
-    readonly longDescription: string
-    readonly developerName: string
-    readonly category: string
-    readonly capabilities: ReadonlyArray<string>
-    readonly defaultPrompt: ReadonlyArray<string>
-  }
-}
-
 export type JsonObject = Record<string, unknown>
 
 export interface GeneratedFile {

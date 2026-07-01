@@ -111,18 +111,14 @@ unsupported_field: Demo routing
 
       assert.deepStrictEqual(
         files.map(file => file.relativePath),
-        ['.codex-plugin/plugin.json', 'package.json', 'harness/skills/dispatcher.md'],
+        ['package.json', 'harness/skills/dispatcher.md'],
       )
-      const pluginFile = requireElement(files, 0)
-      const packageFile = requireElement(files, 1)
-      const dispatcherFile = requireElement(files, 2)
+      const packageFile = requireElement(files, 0)
+      const dispatcherFile = requireElement(files, 1)
 
+      assert.include(dispatcherFile.content, 'source inventory 和 projection audit artifact')
       assert.include(dispatcherFile.content, '| Handle | Name | Invocation | Description | File |')
       assert.notInclude(dispatcherFile.content, 'skills/demo/SKILL.md')
-
-      const pluginJson = JSON.parse(pluginFile.content) as { version: string, skills: string }
-      assert.strictEqual(pluginJson.version, '0.2.0')
-      assert.strictEqual(pluginJson.skills, './skills/')
 
       const packageJson = JSON.parse(packageFile.content) as {
         bin: { partita: string }
@@ -144,7 +140,7 @@ unsupported_field: Demo routing
       assert.strictEqual(packageJson.dependencies['@partita/generic-projection'], 'workspace:*')
       assert.strictEqual(packageJson.dependencies.effect, '4.0.0-beta.90')
       assert.strictEqual(packageJson.devDependencies.turbo, '^2.10.1')
-      assert.deepStrictEqual(packageJson.files, ['dist', '.codex-plugin', 'LICENSE', 'README.md', 'CONTEXT.md', 'HARNESS.md', 'harness', 'packages', 'skills'])
+      assert.deepStrictEqual(packageJson.files, ['dist', 'LICENSE', 'README.md', 'AGENTS.md', 'MIGRATION.md', 'harness', 'packages/generic-projection', 'skills'])
       assert.strictEqual(packageJson.bin.partita, 'dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.build, 'turbo run build --filter=@partita/generic-projection && rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js')
       assert.strictEqual(packageJson.scripts.generate, 'pnpm build && node dist/bin/partita.js generate')
@@ -285,7 +281,6 @@ description: "Use when notating a skill is needed. Not for local retuning."
       assert.deepStrictEqual(
         results.map(result => [result.relativePath, result.status]),
         [
-          ['.codex-plugin/plugin.json', 'written'],
           ['package.json', 'written'],
           ['harness/skills/dispatcher.md', 'written'],
         ],
@@ -303,28 +298,28 @@ description: "Use when notating a skill is needed. Not for local retuning."
       const checks = yield* checkGeneratedFiles(root)
       assert.deepStrictEqual(
         checks.map(check => check.status),
-        ['ok', 'ok', 'ok'],
+        ['ok', 'ok'],
       )
 
       const generateChecks = yield* generateProject({ check: true, root })
       assert.deepStrictEqual(
         generateChecks.map(check => check.status),
-        ['ok', 'ok', 'ok'],
+        ['ok', 'ok'],
       )
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 
-  it.effect('projects wiki sources into runtime references', () =>
+  it.effect('projects local markdown sources into skill-local references', () =>
     Effect.scoped(Effect.gen(function* () {
       const root = yield* makeRepo({
         'package.json': JSON.stringify({ version: '0.2.0' }),
-        'packages/wiki/skill/case/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
+        'reference-source/insufficient-material.md': '# 材料不足\n\nMUST 打回。\n',
         'skills/demo/SKILL.md': `---
 name: demo
 description: "Use when demo is needed. Not for unrelated work."
 ---
 `,
         'skills/demo/agents/openai.yaml': openAiMetadata(false),
-        'skills/demo/references/insufficient-material.md': '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->\n',
+        'skills/demo/references/insufficient-material.md': '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->\n',
       })
       const fs = yield* FileSystem.FileSystem
 
@@ -335,7 +330,6 @@ description: "Use when demo is needed. Not for unrelated work."
       assert.deepStrictEqual(
         results.map(result => [result.relativePath, result.status]),
         [
-          ['.codex-plugin/plugin.json', 'written'],
           ['package.json', 'written'],
           ['harness/skills/dispatcher.md', 'written'],
           ['skills/demo/references/insufficient-material.md', 'written'],
@@ -345,13 +339,13 @@ description: "Use when demo is needed. Not for unrelated work."
       const projected = yield* fs.readFileString(joinPath(root, 'skills', 'demo', 'references', 'insufficient-material.md'))
       assert.strictEqual(
         projected,
-        '<!-- partita:projection:file source="packages/wiki/skill/case/insufficient-material.md" mode="copy" -->\n\n# 材料不足\n\nMUST 打回。\n',
+        '<!-- partita:projection:file source="reference-source/insufficient-material.md" mode="copy" -->\n\n# 材料不足\n\nMUST 打回。\n',
       )
 
       const checks = yield* checkGeneratedFiles(root)
       assert.deepStrictEqual(
         checks.map(check => check.status),
-        ['ok', 'ok', 'ok', 'ok'],
+        ['ok', 'ok', 'ok'],
       )
     }).pipe(Effect.provide(NodeFileSystem.layer))))
 })

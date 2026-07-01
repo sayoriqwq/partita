@@ -1,4 +1,4 @@
-import type { GeneratedFile, GeneratedFileCheckResult, GeneratedFileWriteResult, JsonObject, PluginManifest, SkillMetadata } from './model.ts'
+import type { GeneratedFile, GeneratedFileCheckResult, GeneratedFileWriteResult, JsonObject, SkillMetadata } from './model.ts'
 
 import {
   fileCopyProjectionSource,
@@ -30,22 +30,16 @@ export interface SourceSkillMetadata extends SkillMetadata {
 
 const dispatcherTemplate = `# Dispatcher
 
-Dispatcher 是 Partita harness 从当前 \`skills/\` source 生成的 routing index。
+Dispatcher 是 Partita 从当前 \`skills/\` source 生成的 source inventory 和 projection audit artifact。
 
-它不是 skill content，不放在 \`skills/\` 目录，也不定义 portable skill。只根据 routing table 中实际存在的 skill 进行匹配。
+它不是 runtime governance、installer state、mapping layer 或 durable knowledge layer。
 
-## Routing Table
+它不决定 Codex runtime 加载哪些 skills；runtime 安装状态由 skills.sh CLI 管理。
+
+## Inventory
 
 ${ROUTING_TABLE_START}
 ${ROUTING_TABLE_END}
-
-## 运行方式
-
-1. 读取用户消息。
-2. 如果 routing table 有匹配 skill，读取该 skill file。
-3. 如果没有匹配 skill，执行普通 agent work，不要发明 skill。
-
-skills 只手动串联，不自动链式触发。
 `
 
 function failGenerator(path: string, message: string) {
@@ -208,29 +202,6 @@ export const collectSkillMetadata = Effect.fn('collectSkillMetadata')(function* 
   return skills
 })
 
-function buildPluginJson(version: string): PluginManifest {
-  return {
-    name: 'partita',
-    version,
-    description: 'CLI-backed Codex skill harness for user-defined workflow skills.',
-    author: { name: 'sayori' },
-    license: 'MIT',
-    keywords: ['codex', 'skills', 'workflow'],
-    skills: './skills/',
-    interface: {
-      displayName: 'Partita',
-      shortDescription: 'A Codex skill harness for user-defined workflows',
-      longDescription: 'Partita defines user-owned Codex workflow skills with a CLI-backed skill runtime.',
-      developerName: 'sayori',
-      category: 'Developer Tools',
-      capabilities: ['Interactive'],
-      defaultPrompt: ['Add a custom Partita skill'],
-    },
-  }
-}
-
-const renderPluginJson = (version: string): string => renderJson(buildPluginJson(version))
-
 const parseJsonObject = Effect.fn('parseJsonObject')(function* (path: string, text: string) {
   const parsed = yield* Effect.try({
     try: () => JSON.parse(text) as unknown,
@@ -308,13 +279,12 @@ function buildPackageJson(version: string): JsonObject {
     },
     files: [
       'dist',
-      '.codex-plugin',
       'LICENSE',
       'README.md',
-      'CONTEXT.md',
-      'HARNESS.md',
+      'AGENTS.md',
+      'MIGRATION.md',
       'harness',
-      'packages',
+      'packages/generic-projection',
       'skills',
     ],
     ...partitaPackageFields(),
@@ -408,11 +378,6 @@ export const renderGeneratedFiles = Effect.fn('renderGeneratedFiles')(function* 
   const projectedReferences = yield* renderFileCopyProjections(root, skills)
 
   return [
-    {
-      relativePath: '.codex-plugin/plugin.json',
-      path: joinPath(root, '.codex-plugin', 'plugin.json'),
-      content: renderPluginJson(version),
-    },
     {
       relativePath: 'package.json',
       path: joinPath(root, 'package.json'),

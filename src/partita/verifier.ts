@@ -88,47 +88,6 @@ const descriptionSchedulingPollution = [
 ] as const
 const requiredOpenAiInterfaceFields = ['display_name', 'short_description', 'default_prompt'] as const
 
-const requiredRootMapFiles = [
-  'CONTEXT.md',
-  'HARNESS.md',
-] as const
-
-const requiredWikiFiles = [
-  'packages/wiki/index.md',
-  'packages/wiki/harness/index.md',
-  'packages/wiki/skill/index.md',
-  'packages/wiki/skill/rule.md',
-  'packages/wiki/skill/primitive.md',
-  'packages/wiki/skill/orchestrator.md',
-  'packages/wiki/skill/case/index.md',
-  'packages/wiki/skill/case/insufficient-material.md',
-  'packages/wiki/skill/case/pattern.md',
-  'packages/wiki/skill/case/pressure.md',
-  'packages/wiki/skill/governance/index.md',
-  'packages/wiki/skill/governance/identity.md',
-  'packages/wiki/skill/lifecycle/index.md',
-  'packages/wiki/workflow/index.md',
-  'packages/wiki/workflow/gate/index.md',
-  'packages/wiki/workflow/gate/contract.md',
-  'packages/wiki/workflow/gate/span.md',
-  'packages/wiki/projection/index.md',
-  'packages/wiki/projection/generic.md',
-  'packages/wiki/projection/verifier/index.md',
-  'packages/wiki/projection/verifier/description.md',
-  'packages/wiki/projection/verifier/links.md',
-  'packages/wiki/projection/verifier/metadata.md',
-  'packages/wiki/projection/verifier/nodes.md',
-  'packages/wiki/projection/verifier/shape.md',
-  'packages/wiki/practice/index.md',
-  'packages/wiki/practice/create.md',
-  'packages/wiki/practice/patch.md',
-  'packages/wiki/practice/audit.md',
-  'packages/wiki/collaboration/index.md',
-  'packages/wiki/documentation/index.md',
-  'packages/wiki/vocabulary/index.md',
-  'packages/wiki/vocabulary/assertion.md',
-] as const
-
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {
   return yield* Effect.sync(() => buildSourceReport(resolve(options.root)))
 })
@@ -170,10 +129,7 @@ function buildSourceReport(root: string): ValidationReport {
   const skills = new Set(Object.keys(skillResult.descriptions))
   const issues = [
     ...skillResult.issues,
-    ...checkPluginManifest(root),
     ...checkRouting(root, skills),
-    ...checkRootMapFiles(root),
-    ...checkWikiFiles(root),
     ...checkProjectionMarkers(root),
     ...checkMarkdownLinks(root),
     ...checkWikiLinks(root),
@@ -520,94 +476,6 @@ function parseQuotedString(value: string): { readonly ok: true, readonly value: 
   return { ok: true, value: result }
 }
 
-function checkPluginManifest(root: string): ReadonlyArray<ValidationIssue> {
-  const issues: Array<ValidationIssue> = []
-  const packageJsonPath = join(root, 'package.json')
-  const packageJsonRelPath = 'package.json'
-  const manifestPath = join(root, '.codex-plugin', 'plugin.json')
-  const manifestRelPath = '.codex-plugin/plugin.json'
-
-  const version = packageJsonVersion(packageJsonPath, packageJsonRelPath, issues)
-
-  if (existsSync(join(root, 'VERSION'))) {
-    issues.push(issue('version_file.forbidden', 'VERSION file is not used; package.json owns the version', 'VERSION'))
-  }
-
-  if (!existsSync(manifestPath)) {
-    issues.push(issue('plugin_manifest.missing', '.codex-plugin/plugin.json missing', manifestRelPath))
-    return issues
-  }
-
-  const parsed = parseJson(readText(manifestPath), manifestRelPath)
-  if (!parsed.ok) {
-    issues.push(parsed.issue)
-    return issues
-  }
-
-  const data = parsed.value
-  if (!isRecord(data)) {
-    issues.push(issue('plugin_manifest.invalid', 'plugin manifest must be a JSON object', manifestRelPath))
-    return issues
-  }
-
-  if (data.name !== 'partita') {
-    issues.push(issue('plugin_manifest.name', 'name must be partita', manifestRelPath))
-  }
-  if (version && data.version !== version) {
-    issues.push(issue('plugin_manifest.version_drift', `plugin.json version ${stringifyField(data.version)} != package.json version ${version}`, manifestRelPath))
-  }
-  if (data.skills !== './skills/') {
-    issues.push(issue('plugin_manifest.skills_path', 'skills must be ./skills/', manifestRelPath))
-  }
-
-  const interfaceValue = data.interface
-  if (!isRecord(interfaceValue)) {
-    issues.push(issue('plugin_manifest.interface', 'interface must be an object', manifestRelPath))
-    return issues
-  }
-
-  for (const field of ['displayName', 'shortDescription', 'longDescription', 'developerName', 'category'] as const) {
-    if (!nonEmptyString(interfaceValue[field])) {
-      issues.push(issue('plugin_manifest.interface_field', `interface.${field} is required`, manifestRelPath))
-    }
-  }
-
-  for (const field of ['capabilities', 'defaultPrompt'] as const) {
-    const value = interfaceValue[field]
-    if (!Array.isArray(value) || !value.every(nonEmptyString)) {
-      issues.push(issue('plugin_manifest.interface_array', `interface.${field} must be non-empty strings`, manifestRelPath))
-    }
-  }
-
-  return issues
-}
-
-function packageJsonVersion(path: string, relativePath: string, issues: Array<ValidationIssue>): string {
-  if (!existsSync(path)) {
-    issues.push(issue('package_json.missing', 'package.json missing', relativePath))
-    return ''
-  }
-
-  const parsed = parseJson(readText(path), relativePath)
-  if (!parsed.ok) {
-    issues.push(parsed.issue)
-    return ''
-  }
-
-  const data = parsed.value
-  if (!isRecord(data)) {
-    issues.push(issue('package_json.invalid', 'package.json must be a JSON object', relativePath))
-    return ''
-  }
-
-  if (!nonEmptyString(data.version)) {
-    issues.push(issue('package_json.version_missing', 'package.json version is required', relativePath))
-    return ''
-  }
-
-  return data.version.trim()
-}
-
 function checkRouting(root: string, skills: ReadonlySet<string>): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   const routingPaths = [dispatcherRelativePath]
@@ -733,32 +601,6 @@ function checkFileProjectionMarker(root: string, text: string, relativePath: str
     : [issue('projection.file_drift', `file projection is out of sync with ${source}`, relativePath)]
 }
 
-function checkWikiFiles(root: string): ReadonlyArray<ValidationIssue> {
-  return requiredWikiFiles
-    .filter(path => !existsSync(join(root, path)))
-    .map(path => issue('wiki.missing_file', 'missing wiki file', path))
-}
-
-function checkRootMapFiles(root: string): ReadonlyArray<ValidationIssue> {
-  const issues: Array<ValidationIssue> = []
-  for (const path of requiredRootMapFiles) {
-    const absolutePath = join(root, path)
-    if (!existsSync(absolutePath)) {
-      issues.push(issue('root_map.missing_file', 'missing root map file', path))
-      continue
-    }
-
-    const text = readText(absolutePath)
-    if (!text.includes('packages/wiki/')) {
-      issues.push(issue('root_map.missing_wiki_route', 'root map must route readers into packages/wiki/', path))
-    }
-    if (text.includes('rules/') || text.includes('theory/')) {
-      issues.push(issue('root_map.old_layer_ref', 'root map must not route to removed rules/ or theory/ layers', path))
-    }
-  }
-  return issues
-}
-
 function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   for (const path of markdownFiles(root)) {
@@ -817,9 +659,21 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
     ['VERSION', 'deprecated VERSION file must not exist'],
     ['AGENTS.profile.md', 'removed profile file must not exist'],
     ['packaging.allowlist', 'removed package allowlist must not exist'],
+    ['.codex', 'repo-local Codex runtime state must not exist'],
+    ['.codex-plugin', 'Codex plugin metadata was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['CLAUDE.md', 'tool-specific instruction projection was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['CONTEXT.md', 'wiki root map was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['HARNESS.md', 'wiki harness map was migrated to /Users/sayori/Desktop/partita-ref'],
     ['rules', 'removed rules directory must not exist'],
     ['theory', 'removed theory directory must not exist'],
-    ['wiki', 'root wiki directory must not exist; use packages/wiki'],
+    ['wiki', 'root wiki directory must not exist'],
+    ['packages/wiki', 'wiki layer was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['runtime/references', 'runtime references were migrated to /Users/sayori/Desktop/partita-ref'],
+    ['harness/skills/checks.md', 'harness checks reference was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['harness/skills/family.md', 'harness family reference was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['harness/skills/policy.md', 'harness policy reference was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['harness/skills/routing.md', 'harness routing reference was migrated to /Users/sayori/Desktop/partita-ref'],
+    ['harness/skills/shape.md', 'harness shape reference was migrated to /Users/sayori/Desktop/partita-ref'],
     ['skills/RESOLVER.md', 'removed resolver registry must not exist'],
     ['skills/skill-write', 'removed skill-write path must not exist; use skills/primitive/notate'],
     ['skills/skill-patch', 'removed skill-patch path must not exist; use skills/primitive/retune'],
@@ -1070,25 +924,8 @@ function readText(path: string): string {
   return readFileSync(path, 'utf8')
 }
 
-function parseJson(text: string, path: string): { readonly ok: true, readonly value: unknown } | { readonly ok: false, readonly issue: ValidationIssue } {
-  try {
-    return { ok: true, value: JSON.parse(text) }
-  }
-  catch (error) {
-    return { issue: issue('json.invalid', `invalid JSON: ${errorMessage(error)}`, path), ok: false }
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
-}
-
-function stringifyField(value: unknown): string {
-  return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
 function relativePathFrom(root: string, path: string): string {
@@ -1098,11 +935,4 @@ function relativePathFrom(root: string, path: string): string {
 
 function issue(code: string, message: string, path?: string): ValidationIssue {
   return path ? { code, message, path } : { code, message }
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message
-  }
-  return String(error)
 }
