@@ -1,16 +1,18 @@
-import type { SourceEntryContract } from '../src/partita/source-entry.ts'
+import type { GitHubSubtreePinContract } from '../src/partita/source-entry.ts'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
+import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {
   buildSourceEntryPlan,
+  defaultSourceContractPath,
   inspectSourceEntries,
 } from '../src/partita/source-entry.ts'
 
 describe('Partita source entries', () => {
-  it.effect('plans a generic source entry with separate editor settings shapes', () =>
+  it.effect('plans a GitHub subtree pin with sibling contract path and separate editor settings shapes', () =>
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, 'AGENTS.md', '# Agents\n')
@@ -22,10 +24,15 @@ describe('Partita source entries', () => {
         root,
       })
 
-      const entry = plan.contract.sources[0]
-      assert.strictEqual(entry?.local.prefix, 'repos/effect')
-      assert.strictEqual(entry?.anchor.llmDocument, 'repos/effect/LLMS.md')
-      assert.strictEqual(entry?.agent.route, 'AGENTS.md')
+      assert.strictEqual(plan.contractPath, 'repos/effect.subtree.json')
+      assert.strictEqual(defaultSourceContractPath({ name: 'effect', prefix: 'repos/effect' }), 'repos/effect.subtree.json')
+      assert.strictEqual(plan.contract.github.repository, 'https://github.com/Effect-TS/effect-smol.git')
+      assert.strictEqual(plan.contract.local.prefix, 'repos/effect')
+      assert.strictEqual(plan.contract.mechanism, 'git-subtree')
+      assert.strictEqual(plan.contract.anchor.llmDocument, 'repos/effect/LLMS.md')
+      assert.strictEqual(plan.contract.agent.route, 'AGENTS.md')
+      assert.include(plan.contract.commands.update, '--contract repos/effect.subtree.json')
+      assert.include(plan.contract.commands.verify, '--contract repos/effect.subtree.json')
       assert.include(plan.editorSettings.vscode, '"typescript.preferences.autoImportFileExcludePatterns"')
       assert.include(plan.editorSettings.vscode, '"files.watcherExclude"')
       assert.include(plan.editorSettings.vscode, '"search.exclude"')
@@ -33,9 +40,9 @@ describe('Partita source entries', () => {
       assert.include(plan.editorSettings.zed, '"vtsls"')
       assert.include(plan.editorSettings.zed, '"typescript-language-server"')
       assert.notInclude(plan.editorSettings.zed, '"file_scan_exclusions"')
-    }))
+    }).pipe(Effect.provide(NodeServices.layer)))
 
-  it.effect('accepts a valid source-entry contract', () =>
+  it.effect('accepts a valid GitHub subtree pin contract from the default path', () =>
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, 'AGENTS.md', '# Agents\n')
@@ -64,12 +71,13 @@ describe('Partita source entries', () => {
       }, null, 2))
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ root })
+      const report = yield* inspectSourceEntries({ name: 'effect', root })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
-      assert.deepStrictEqual(report.entries.map(entry => entry.name), ['effect'])
-    }))
+      assert.strictEqual(report.contractPath, 'repos/effect.subtree.json')
+      assert.strictEqual(report.entry.name, 'effect')
+    }).pipe(Effect.provide(NodeServices.layer)))
 
   it.effect('hard-blocks missing source prefixes', () =>
     Effect.gen(function* () {
@@ -77,14 +85,14 @@ describe('Partita source entries', () => {
       write(root, 'AGENTS.md', '# Agents\n')
       writeContract(root, validContract())
 
-      const report = yield* inspectSourceEntries({ root })
+      const report = yield* inspectSourceEntries({ name: 'effect', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('source.missing'))
-    }))
+    }).pipe(Effect.provide(NodeServices.layer)))
 
-  it.effect('hard-blocks unsafe source-entry contracts', () =>
+  it.effect('hard-blocks unsafe GitHub subtree pin contracts', () =>
     Effect.gen(function* () {
       const root = makeFixture()
       write(root, '.prelude/manifest.json', '{}\n')
@@ -92,26 +100,26 @@ describe('Partita source entries', () => {
       write(root, 'src/app.ts', 'import { Effect } from "../repos/effect/packages/effect/src/Effect.ts"\n')
       write(root, '.vscode/settings.json', '{}\n')
       writeContract(root, {
-        schemaVersion: 1,
-        sources: [{
-          ...validEntry(),
-          agent: { route: 'missing/AGENTS.md' },
-          anchor: { llmDocument: 'repos/effect/LLMS.md' },
-          boundaries: { importBlock: true, readOnly: false },
-          ownership: { mode: 'direct' },
-          pin: { ref: '', trailer: '' },
-          upstream: {
-            branch: 'main',
-            ref: '',
-            repository: 'https://github.com/Effect-TS/effect-smol.git',
-          },
-        }],
+        ...validContract(),
+        agent: { route: 'missing/AGENTS.md' },
+        anchor: { llmDocument: 'repos/effect/LLMS.md' },
+        boundaries: { importBlock: true, readOnly: false },
+        github: {
+          branch: 'main',
+          ref: '',
+          repository: 'https://example.com/not-github.git',
+        },
+        mechanism: '',
+        ownership: { mode: 'direct' },
+        subtree: { split: '', trailer: '' },
       })
 
-      const report = yield* inspectSourceEntries({ root })
+      const report = yield* inspectSourceEntries({ name: 'effect', root })
       const codes = report.issues.map(issue => issue.code)
 
       assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('source.github_only'))
+      assert.isTrue(codes.includes('source.mechanism_invalid'))
       assert.isTrue(codes.includes('source.gitlink'))
       assert.isTrue(codes.includes('source.pin_missing'))
       assert.isTrue(codes.includes('source.anchor_missing'))
@@ -120,22 +128,16 @@ describe('Partita source entries', () => {
       assert.isTrue(codes.includes('source.prelude_direct_write'))
       assert.isTrue(codes.includes('source.import_blocked'))
       assert.isTrue(codes.includes('source.editor_vscode_auto_import_missing'))
-    }))
+    }).pipe(Effect.provide(NodeServices.layer)))
 })
 
 function makeFixture(): string {
   return mkdtempSync(join(tmpdir(), 'partita-source-entry-'))
 }
 
-function validContract(): SourceEntryContract {
+function validContract(): GitHubSubtreePinContract {
   return {
     schemaVersion: 1,
-    sources: [validEntry()],
-  }
-}
-
-function validEntry(): SourceEntryContract['sources'][number] {
-  return {
     agent: {
       route: 'AGENTS.md',
     },
@@ -164,11 +166,11 @@ function validEntry(): SourceEntryContract['sources'][number] {
     ownership: {
       mode: 'provider',
     },
-    pin: {
-      ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
+    subtree: {
+      split: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
       trailer: 'git-subtree-split: 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
     },
-    upstream: {
+    github: {
       branch: 'main',
       ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
       repository: 'https://github.com/Effect-TS/effect-smol.git',
@@ -176,8 +178,8 @@ function validEntry(): SourceEntryContract['sources'][number] {
   }
 }
 
-function writeContract(root: string, contract: SourceEntryContract) {
-  write(root, '.partita/source-entries.json', `${JSON.stringify(contract, null, 2)}\n`)
+function writeContract(root: string, contract: GitHubSubtreePinContract) {
+  write(root, 'repos/effect.subtree.json', `${JSON.stringify(contract, null, 2)}\n`)
 }
 
 function write(root: string, path: string, contents: string) {

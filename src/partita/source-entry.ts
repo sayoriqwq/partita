@@ -1,28 +1,24 @@
-import { spawnSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+/* eslint-disable ts/no-use-before-define */
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
+import * as Stream from 'effect/Stream'
+import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 import { PartitaError } from './errors.ts'
 
-export const defaultSourceContractPath = '.partita/source-entries.json'
+type SourceOwnershipMode = 'direct' | 'provider' | 'prelude-maintain'
 
-type SourceMechanism = 'git-subtree'
-export type SourceOwnershipMode = 'direct' | 'provider' | 'prelude-maintain'
 type SourcePolicyDecision = 'enabled' | 'recommended' | 'disabled'
-type ParsedSourceMechanism = SourceMechanism | ''
+type SourceFilesExcludeDecision = 'enabled' | 'disabled'
 type ParsedSourceOwnershipMode = SourceOwnershipMode | ''
 type ParsedSourcePolicyDecision = SourcePolicyDecision | ''
-type ParsedSourceFilesExcludeDecision = 'enabled' | 'disabled' | ''
+type ParsedSourceFilesExcludeDecision = SourceFilesExcludeDecision | ''
 
-export interface SourceEntryContract {
+export interface GitHubSubtreePinContract {
   readonly schemaVersion: 1
-  readonly sources: ReadonlyArray<SourceEntry>
-}
-
-export interface SourceEntry {
   readonly name: string
-  readonly upstream: {
+  readonly github: {
     readonly repository: string
     readonly branch: string
     readonly ref: string
@@ -30,7 +26,11 @@ export interface SourceEntry {
   readonly local: {
     readonly prefix: string
   }
-  readonly mechanism: ParsedSourceMechanism
+  readonly mechanism: 'git-subtree' | ''
+  readonly subtree: {
+    readonly split: string
+    readonly trailer: string
+  }
   readonly anchor: {
     readonly llmDocument: string
   }
@@ -54,10 +54,6 @@ export interface SourceEntry {
     readonly readOnly: boolean
     readonly importBlock: boolean
   }
-  readonly pin: {
-    readonly ref: string
-    readonly trailer: string
-  }
 }
 
 export interface SourcePlanOptions {
@@ -72,17 +68,17 @@ export interface SourcePlanOptions {
   readonly updateCommand?: string
   readonly verifyCommand?: string
   readonly agentRoute?: string
-  readonly mechanism?: SourceMechanism
   readonly ownershipMode?: SourceOwnershipMode
   readonly watcherExclude?: SourcePolicyDecision
   readonly searchExclude?: SourcePolicyDecision
-  readonly filesExclude?: Exclude<SourcePolicyDecision, 'recommended'>
+  readonly filesExclude?: SourceFilesExcludeDecision
 }
 
 export interface SourceCommandOptions {
   readonly root: string
   readonly contractPath?: string
   readonly name?: string
+  readonly prefix?: string
 }
 
 export interface SourceEntryIssue {
@@ -93,25 +89,27 @@ export interface SourceEntryIssue {
 
 export interface SourceEntryStatus {
   readonly name: string
+  readonly repository: string
   readonly prefix: string
   readonly mechanism: string
   readonly ownershipMode: string
-  readonly pinnedRef: string
+  readonly subtreeSplit: string
+  readonly contractPath: string
   readonly sourceExists: boolean
   readonly anchorExists: boolean
   readonly routeExists: boolean
 }
 
-export interface SourceEntryReport {
+interface SourceEntryReport {
   readonly ok: boolean
   readonly contractPath: string
-  readonly entries: ReadonlyArray<SourceEntryStatus>
+  readonly entry: SourceEntryStatus
   readonly issues: ReadonlyArray<SourceEntryIssue>
 }
 
 export interface SourceEntryPlan {
   readonly contractPath: string
-  readonly contract: SourceEntryContract
+  readonly contract: GitHubSubtreePinContract
   readonly contractJson: string
   readonly editorSettings: {
     readonly vscode: string
@@ -145,76 +143,91 @@ const sideEffectImportPattern = /^\s*import\s*['"]([^'"]+)['"]/gmu
 const dynamicImportPattern = /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/gu
 const requirePattern = /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/gu
 
+export function defaultSourceContractPath(options: {
+  readonly name?: string
+  readonly prefix?: string
+}): string {
+  const name = nonEmpty(options.name) ?? lastPathSegment(nonEmpty(options.prefix) ?? '') ?? 'source'
+  const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
+  return siblingSubtreeContractPath(prefix, name)
+}
+
 export const buildSourceEntryPlan = Effect.fn('buildSourceEntryPlan')(function* (options: SourcePlanOptions) {
-  return yield* Effect.sync(() => {
-    const root = resolve(options.root)
-    const name = nonEmpty(options.name) ?? 'source'
-    const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
-    const ref = nonEmpty(options.ref) ?? '<TODO:pinned-ref-or-subtree-split>'
-    const entry: SourceEntry = {
-      name,
-      upstream: {
-        repository: nonEmpty(options.repository) ?? '<TODO:upstream-repository>',
-        branch: nonEmpty(options.branch) ?? 'main',
-        ref,
-      },
-      local: {
-        prefix,
-      },
-      mechanism: options.mechanism ?? 'git-subtree',
-      anchor: {
-        llmDocument: normalizeRelativePath(nonEmpty(options.anchor) ?? `${prefix}/LLMS.md`),
-      },
-      commands: {
-        update: nonEmpty(options.updateCommand) ?? `partita source update --name ${name} --dry-run`,
-        verify: nonEmpty(options.verifyCommand) ?? `partita source verify --name ${name}`,
-      },
-      agent: {
-        route: normalizeRelativePath(nonEmpty(options.agentRoute) ?? defaultAgentRoute(root)),
-      },
-      editorPolicy: {
-        autoImportExclude: 'block',
-        watcherExclude: options.watcherExclude ?? 'recommended',
-        searchExclude: options.searchExclude ?? 'recommended',
-        filesExclude: options.filesExclude ?? 'disabled',
-      },
-      ownership: {
-        mode: options.ownershipMode ?? defaultOwnershipMode(root),
-      },
-      boundaries: {
-        importBlock: true,
-        readOnly: true,
-      },
-      pin: {
-        ref,
-        trailer: ref.startsWith('<TODO:') ? '<TODO:git-subtree-split-trailer>' : `git-subtree-split: ${ref}`,
-      },
-    }
-    const contract: SourceEntryContract = {
-      schemaVersion: 1,
-      sources: [entry],
-    }
-    return {
-      contract,
-      contractJson: `${JSON.stringify(contract, null, 2)}\n`,
-      contractPath: normalizeRelativePath(options.contractPath ?? defaultSourceContractPath),
-      editorSettings: renderEditorSettings(entry),
-    } satisfies SourceEntryPlan
-  })
+  const root = resolve(options.root)
+  const name = nonEmpty(options.name) ?? 'source'
+  const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
+  const contractPath = normalizeRelativePath(nonEmpty(options.contractPath) ?? defaultSourceContractPath({ name, prefix }))
+  const ownershipMode = options.ownershipMode ?? (yield* defaultOwnershipMode(root))
+  const agentRoute = normalizeRelativePath(nonEmpty(options.agentRoute) ?? (yield* defaultAgentRoute(root)))
+  const split = nonEmpty(options.ref) ?? '<TODO:github-ref-or-subtree-split>'
+  const contract: GitHubSubtreePinContract = {
+    schemaVersion: 1,
+    name,
+    github: {
+      repository: nonEmpty(options.repository) ?? '<TODO:github-repository>',
+      branch: nonEmpty(options.branch) ?? 'main',
+      ref: split,
+    },
+    local: {
+      prefix,
+    },
+    mechanism: 'git-subtree',
+    subtree: {
+      split,
+      trailer: split.startsWith('<TODO:') ? '<TODO:git-subtree-split-trailer>' : `git-subtree-split: ${split}`,
+    },
+    anchor: {
+      llmDocument: normalizeRelativePath(nonEmpty(options.anchor) ?? `${prefix}/LLMS.md`),
+    },
+    commands: {
+      update: nonEmpty(options.updateCommand) ?? `partita source update --name ${name} --prefix ${prefix} --contract ${contractPath} --dry-run`,
+      verify: nonEmpty(options.verifyCommand) ?? `partita source verify --name ${name} --prefix ${prefix} --contract ${contractPath}`,
+    },
+    agent: {
+      route: agentRoute,
+    },
+    editorPolicy: {
+      autoImportExclude: 'block',
+      watcherExclude: options.watcherExclude ?? 'recommended',
+      searchExclude: options.searchExclude ?? 'recommended',
+      filesExclude: options.filesExclude ?? 'disabled',
+    },
+    ownership: {
+      mode: ownershipMode,
+    },
+    boundaries: {
+      importBlock: true,
+      readOnly: true,
+    },
+  }
+
+  return {
+    contract,
+    contractJson: `${JSON.stringify(contract, null, 2)}\n`,
+    contractPath,
+    editorSettings: renderEditorSettings(contract),
+  } satisfies SourceEntryPlan
 })
 
 export const inspectSourceEntries = Effect.fn('inspectSourceEntries')(function* (options: SourceCommandOptions) {
-  return yield* Effect.sync(() => {
-    const root = resolve(options.root)
-    const contractPath = normalizeRelativePath(options.contractPath ?? defaultSourceContractPath)
-    const contract = parseSourceContractFile(root, contractPath)
-    return buildSourceEntryReport(root, contractPath, filterSources(contract.sources, options.name))
-  })
+  const root = resolve(options.root)
+  const defaultPathOptions: { name?: string, prefix?: string } = {}
+  const name = nonEmpty(options.name)
+  const prefix = nonEmpty(options.prefix)
+  if (name !== undefined) {
+    defaultPathOptions.name = name
+  }
+  if (prefix !== undefined) {
+    defaultPathOptions.prefix = prefix
+  }
+  const contractPath = normalizeRelativePath(nonEmpty(options.contractPath) ?? defaultSourceContractPath(defaultPathOptions))
+  const contract = yield* readGitHubSubtreeContract(root, contractPath)
+  return yield* buildSourceEntryReport(root, contractPath, contract)
 })
 
 export const printSourcePlan = Effect.fn('printSourcePlan')(function* (options: SourcePlanOptions) {
   const plan = yield* buildSourceEntryPlan(options)
-  yield* Console.log(`Source entry plan: ${plan.contractPath}`)
+  yield* Console.log(`GitHub subtree pin plan: ${plan.contractPath}`)
   yield* Console.log('')
   yield* Console.log(plan.contractJson.trimEnd())
   yield* Console.log('')
@@ -228,13 +241,8 @@ export const printSourcePlan = Effect.fn('printSourcePlan')(function* (options: 
 
 export const printSourceStatus = Effect.fn('printSourceStatus')(function* (options: SourceCommandOptions) {
   const report = yield* inspectSourceEntries(options)
-  yield* Console.log(`Source contract: ${report.contractPath}`)
-  if (report.entries.length === 0) {
-    yield* Console.log('No source entries matched.')
-  }
-  for (const entry of report.entries) {
-    yield* Console.log(formatSourceEntryStatus(entry))
-  }
+  yield* Console.log(`GitHub subtree pin contract: ${report.contractPath}`)
+  yield* Console.log(formatSourceEntryStatus(report.entry))
   if (report.issues.length > 0) {
     yield* Console.log('Issues:')
     for (const issue of report.issues) {
@@ -247,82 +255,143 @@ export const printSourceStatus = Effect.fn('printSourceStatus')(function* (optio
 export const verifySourceEntries = Effect.fn('verifySourceEntries')(function* (options: SourceCommandOptions) {
   const report = yield* inspectSourceEntries(options)
   if (!report.ok) {
-    yield* Console.error('Source-entry verification failed:')
+    yield* Console.error('GitHub subtree pin verification failed:')
     for (const issue of report.issues) {
       yield* Console.error(`- ${formatSourceIssue(issue)}`)
     }
-    return yield* Effect.fail(new PartitaError('Source-entry verification failed.'))
+    return yield* Effect.fail(new PartitaError('GitHub subtree pin verification failed.'))
   }
 
-  yield* Console.log(`Source entries verified: ${report.contractPath}`)
+  yield* Console.log(`GitHub subtree pin verified: ${report.contractPath}`)
   return report
 })
 
-function parseSourceContractFile(root: string, contractPath: string): SourceEntryContract {
+const readGitHubSubtreeContract = Effect.fn('readGitHubSubtreeContract')(function* (
+  root: string,
+  contractPath: string,
+) {
+  const fs = yield* FileSystem.FileSystem
   const relativePath = normalizeRelativePath(contractPath)
   const absolutePath = resolve(root, relativePath)
-  if (!existsSync(absolutePath)) {
-    throw new PartitaError(`Source contract missing: ${relativePath}`)
+  const exists = yield* fileExists(absolutePath)
+  if (!exists) {
+    return yield* Effect.fail(new PartitaError(`GitHub subtree pin contract missing: ${relativePath}`))
   }
-  const raw = parseJson(readFileSync(absolutePath, 'utf8'), relativePath)
-  return normalizeSourceContract(raw, relativePath)
-}
+  const text = yield* fs.readFileString(absolutePath).pipe(
+    Effect.mapError(cause => new PartitaError(`Read ${relativePath}: ${formatUnknown(cause)}`)),
+  )
+  const raw = yield* parseJson(text, relativePath)
+  return normalizeGitHubSubtreeContract(raw)
+})
 
-function normalizeSourceContract(raw: unknown, path: string): SourceEntryContract {
-  if (!isRecord(raw)) {
-    throw new PartitaError(`Source contract must be a JSON object: ${path}`)
+const buildSourceEntryReport = Effect.fn('buildSourceEntryReport')(function* (
+  root: string,
+  contractPath: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const issues = yield* checkGitHubSubtreeContract(root, contractPath, contract)
+  return {
+    contractPath,
+    entry: yield* sourceEntryStatus(root, contractPath, contract),
+    issues,
+    ok: issues.length === 0,
+  } satisfies SourceEntryReport
+})
+
+const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(function* (
+  root: string,
+  contractPath: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const issues: Array<SourceEntryIssue> = [
+    ...checkRequiredContractFields(contract),
+    ...checkRelativeContractPaths(contract),
+    ...checkGitHubOnly(contract),
+    ...checkGitSubtreeOnly(contract),
+    ...checkContractPathOutsidePrefix(contractPath, contract),
+  ]
+  const prefix = contract.local.prefix
+  const prefixPath = resolve(root, prefix)
+
+  if (!isMissingValue(prefix) && !(yield* fileExists(prefixPath))) {
+    issues.push(issue('source.missing', `source prefix is missing: ${prefix}`, prefix))
+  }
+  if (!isMissingValue(prefix) && (yield* sourcePrefixIsGitlink(root, prefix))) {
+    issues.push(issue('source.gitlink', `source prefix must be a git subtree checkout, not a submodule or gitlink: ${prefix}`, prefix))
+  }
+  if (!isMissingValue(prefix) && (yield* fileExists(join(prefixPath, '.git')))) {
+    issues.push(issue('source.gitlink', `source prefix contains nested git metadata: ${prefix}/.git`, `${prefix}/.git`))
   }
 
-  if (Array.isArray(raw.sources)) {
-    return {
-      schemaVersion: 1,
-      sources: raw.sources.map((entry, index) => normalizeSourceEntry(entry, `${path}#sources[${index}]`)),
-    }
+  if (isMissingValue(contract.github.ref) && isMissingValue(contract.subtree.split) && isMissingValue(contract.subtree.trailer)) {
+    issues.push(issue('source.pin_missing', 'missing GitHub ref or git-subtree split/trailer', prefix))
   }
+
+  if (!isMissingValue(contract.anchor.llmDocument) && !(yield* fileExists(resolve(root, contract.anchor.llmDocument)))) {
+    issues.push(issue('source.anchor_missing', `anchor LLM document is missing: ${contract.anchor.llmDocument}`, contract.anchor.llmDocument))
+  }
+  if (!isMissingValue(contract.agent.route) && !(yield* fileExists(resolve(root, contract.agent.route)))) {
+    issues.push(issue('source.agent_route_missing', `agent route is missing: ${contract.agent.route}`, contract.agent.route))
+  }
+
+  if (!contract.boundaries.readOnly) {
+    issues.push(issue('source.read_only_missing', 'GitHub subtree pin must be marked read-only', prefix))
+  }
+  if (!contract.boundaries.importBlock) {
+    issues.push(issue('source.import_block_missing', 'GitHub subtree pin must enable import blocking', prefix))
+  }
+  if ((yield* preludeManaged(root)) && contract.ownership.mode === 'direct') {
+    issues.push(issue('source.prelude_direct_write', 'prelude-managed targets must not use direct GitHub subtree writes', '.prelude/manifest.json'))
+  }
+
+  if (contract.boundaries.importBlock && !isMissingValue(prefix)) {
+    issues.push(...(yield* checkForbiddenImports(root, contract)))
+  }
+  issues.push(...(yield* checkEditorPolicy(root, contract)))
+
+  return issues
+})
+
+function normalizeGitHubSubtreeContract(raw: unknown): GitHubSubtreePinContract {
+  const value = recordAt(raw)
+  const github = recordAt(value.github)
+  const upstream = recordAt(value.upstream)
+  const local = recordAt(value.local)
+  const subtree = recordAt(value.subtree)
+  const anchor = recordAt(value.anchor)
+  const commands = recordAt(value.commands)
+  const agent = recordAt(value.agent)
+  const editorPolicy = recordAt(value.editorPolicy)
+  const ownership = recordAt(value.ownership)
+  const boundaries = recordAt(value.boundaries)
+  const legacyPin = recordAt(value.pin)
+  const split = stringAt(subtree.split) ?? stringAt(value.split) ?? stringAt(legacyPin.ref) ?? ''
 
   return {
-    schemaVersion: 1,
-    sources: [normalizeSourceEntry(raw, path)],
-  }
-}
-
-function normalizeSourceEntry(raw: unknown, path: string): SourceEntry {
-  if (!isRecord(raw)) {
-    throw new PartitaError(`Source entry must be a JSON object: ${path}`)
-  }
-
-  const upstream = recordAt(raw.upstream)
-  const local = recordAt(raw.local)
-  const anchor = recordAt(raw.anchor)
-  const commands = recordAt(raw.commands)
-  const agent = recordAt(raw.agent)
-  const editorPolicy = recordAt(raw.editorPolicy)
-  const ownership = recordAt(raw.ownership)
-  const boundaries = recordAt(raw.boundaries)
-  const pin = recordAt(raw.pin)
-  const split = stringAt(raw.split)
-  const ref = stringAt(pin.ref) ?? stringAt(upstream.ref) ?? split ?? ''
-
-  return {
-    name: stringAt(raw.name) ?? 'source',
-    upstream: {
-      repository: stringAt(upstream.repository) ?? stringAt(raw.repository) ?? '',
-      branch: stringAt(upstream.branch) ?? stringAt(raw.branch) ?? '',
-      ref,
+    schemaVersion: value.schemaVersion === 1 ? 1 : 1,
+    name: stringAt(value.name) ?? lastPathSegment(stringAt(local.prefix) ?? stringAt(value.prefix) ?? '') ?? '',
+    github: {
+      repository: stringAt(github.repository) ?? stringAt(upstream.repository) ?? stringAt(value.repository) ?? '',
+      branch: stringAt(github.branch) ?? stringAt(upstream.branch) ?? stringAt(value.branch) ?? '',
+      ref: stringAt(github.ref) ?? stringAt(upstream.ref) ?? split,
     },
     local: {
-      prefix: normalizeRelativePath(stringAt(local.prefix) ?? stringAt(raw.prefix) ?? ''),
+      prefix: normalizeRelativePath(stringAt(local.prefix) ?? stringAt(value.prefix) ?? ''),
     },
-    mechanism: normalizeMechanism(stringAt(raw.mechanism) ?? 'git-subtree'),
+    mechanism: stringAt(value.mechanism) === 'git-subtree' ? 'git-subtree' : '',
+    subtree: {
+      split,
+      trailer: stringAt(subtree.trailer) ?? stringAt(legacyPin.trailer) ?? stringAt(value.trailer) ?? (split ? `git-subtree-split: ${split}` : ''),
+    },
     anchor: {
-      llmDocument: normalizeRelativePath(stringAt(anchor.llmDocument) ?? stringAt(raw.llmDocument) ?? ''),
+      llmDocument: normalizeRelativePath(stringAt(anchor.llmDocument) ?? stringAt(value.llmDocument) ?? ''),
     },
     commands: {
-      update: stringAt(commands.update) ?? stringAt(raw.updateCommand) ?? '',
-      verify: stringAt(commands.verify) ?? stringAt(raw.verifyCommand) ?? '',
+      update: stringAt(commands.update) ?? stringAt(value.updateCommand) ?? '',
+      verify: stringAt(commands.verify) ?? stringAt(value.verifyCommand) ?? '',
     },
     agent: {
-      route: normalizeRelativePath(stringAt(agent.route) ?? stringAt(raw.agentRoute) ?? ''),
+      route: normalizeRelativePath(stringAt(agent.route) ?? stringAt(value.agentRoute) ?? ''),
     },
     editorPolicy: {
       autoImportExclude: stringAt(editorPolicy.autoImportExclude) === 'block' ? 'block' : '',
@@ -331,108 +400,45 @@ function normalizeSourceEntry(raw: unknown, path: string): SourceEntry {
       filesExclude: normalizeFilesExclude(stringAt(editorPolicy.filesExclude)),
     },
     ownership: {
-      mode: normalizeOwnershipMode(stringAt(ownership.mode) ?? stringAt(raw.ownershipMode)),
+      mode: normalizeOwnershipMode(stringAt(ownership.mode) ?? stringAt(value.ownershipMode)),
     },
     boundaries: {
-      importBlock: booleanAt(boundaries.importBlock) ?? booleanAt(raw.importBlock) ?? false,
-      readOnly: booleanAt(boundaries.readOnly) ?? booleanAt(raw.readOnly) ?? false,
-    },
-    pin: {
-      ref,
-      trailer: stringAt(pin.trailer) ?? stringAt(raw.trailer) ?? (split ? `git-subtree-split: ${split}` : ''),
+      importBlock: booleanAt(boundaries.importBlock) ?? booleanAt(value.importBlock) ?? false,
+      readOnly: booleanAt(boundaries.readOnly) ?? booleanAt(value.readOnly) ?? false,
     },
   }
 }
 
-function buildSourceEntryReport(
-  root: string,
-  contractPath: string,
-  sources: ReadonlyArray<SourceEntry>,
-): SourceEntryReport {
-  const issues = sources.flatMap(entry => checkSourceEntry(root, entry))
-  return {
-    contractPath,
-    entries: sources.map(entry => sourceEntryStatus(root, entry)),
-    issues,
-    ok: issues.length === 0,
-  }
-}
-
-function checkSourceEntry(root: string, entry: SourceEntry): ReadonlyArray<SourceEntryIssue> {
-  const issues: Array<SourceEntryIssue> = []
-  const prefix = entry.local.prefix
-  const prefixPath = prefix ? resolve(root, prefix) : root
-
-  issues.push(...checkRequiredEntryFields(entry))
-  issues.push(...checkRelativeEntryPaths(entry))
-
-  if (!isMissingValue(prefix) && !existsSync(prefixPath)) {
-    issues.push(issue('source.missing', `source prefix is missing: ${prefix}`, prefix))
-  }
-  if (!isMissingValue(prefix) && sourcePrefixIsGitlink(root, prefix)) {
-    issues.push(issue('source.gitlink', `source prefix must be a git subtree checkout, not a submodule or gitlink: ${prefix}`, prefix))
-  }
-  if (!isMissingValue(prefix) && existsSync(join(prefixPath, '.git'))) {
-    issues.push(issue('source.gitlink', `source prefix contains nested git metadata: ${prefix}/.git`, `${prefix}/.git`))
-  }
-
-  if (isMissingValue(entry.upstream.ref) && isMissingValue(entry.pin.ref) && isMissingValue(entry.pin.trailer)) {
-    issues.push(issue('source.pin_missing', 'missing verifiable pin ref or git-subtree trailer', prefix))
-  }
-
-  if (!isMissingValue(entry.anchor.llmDocument) && !existsSync(resolve(root, entry.anchor.llmDocument))) {
-    issues.push(issue('source.anchor_missing', `anchor LLM document is missing: ${entry.anchor.llmDocument}`, entry.anchor.llmDocument))
-  }
-  if (!isMissingValue(entry.agent.route) && !existsSync(resolve(root, entry.agent.route))) {
-    issues.push(issue('source.agent_route_missing', `agent route is missing: ${entry.agent.route}`, entry.agent.route))
-  }
-
-  if (!entry.boundaries.readOnly) {
-    issues.push(issue('source.read_only_missing', 'source entry must be marked read-only', prefix))
-  }
-  if (!entry.boundaries.importBlock) {
-    issues.push(issue('source.import_block_missing', 'source entry must enable import blocking', prefix))
-  }
-  if (preludeManaged(root) && entry.ownership.mode === 'direct') {
-    issues.push(issue('source.prelude_direct_write', 'prelude-managed targets must not use direct source-entry writes', '.prelude/manifest.json'))
-  }
-
-  if (entry.boundaries.importBlock && !isMissingValue(prefix)) {
-    issues.push(...checkForbiddenImports(root, entry))
-  }
-  issues.push(...checkEditorPolicy(root, entry))
-
-  return issues
-}
-
-function checkRequiredEntryFields(entry: SourceEntry): ReadonlyArray<SourceEntryIssue> {
+function checkRequiredContractFields(contract: GitHubSubtreePinContract): ReadonlyArray<SourceEntryIssue> {
   const fields = [
-    ['source.name', entry.name],
-    ['source.upstream.repository', entry.upstream.repository],
-    ['source.upstream.branch', entry.upstream.branch],
-    ['source.upstream.ref', entry.upstream.ref || entry.pin.ref || entry.pin.trailer],
-    ['source.local.prefix', entry.local.prefix],
-    ['source.mechanism', entry.mechanism],
-    ['source.anchor.llmDocument', entry.anchor.llmDocument],
-    ['source.commands.update', entry.commands.update],
-    ['source.commands.verify', entry.commands.verify],
-    ['source.agent.route', entry.agent.route],
-    ['source.editorPolicy.autoImportExclude', entry.editorPolicy.autoImportExclude],
-    ['source.editorPolicy.watcherExclude', entry.editorPolicy.watcherExclude],
-    ['source.editorPolicy.searchExclude', entry.editorPolicy.searchExclude],
-    ['source.editorPolicy.filesExclude', entry.editorPolicy.filesExclude],
-    ['source.ownership.mode', entry.ownership.mode],
+    ['source.name', contract.name],
+    ['source.github.repository', contract.github.repository],
+    ['source.github.branch', contract.github.branch],
+    ['source.github.ref', contract.github.ref || contract.subtree.split || contract.subtree.trailer],
+    ['source.local.prefix', contract.local.prefix],
+    ['source.mechanism', contract.mechanism],
+    ['source.subtree.split', contract.subtree.split || contract.github.ref],
+    ['source.subtree.trailer', contract.subtree.trailer],
+    ['source.anchor.llmDocument', contract.anchor.llmDocument],
+    ['source.commands.update', contract.commands.update],
+    ['source.commands.verify', contract.commands.verify],
+    ['source.agent.route', contract.agent.route],
+    ['source.editorPolicy.autoImportExclude', contract.editorPolicy.autoImportExclude],
+    ['source.editorPolicy.watcherExclude', contract.editorPolicy.watcherExclude],
+    ['source.editorPolicy.searchExclude', contract.editorPolicy.searchExclude],
+    ['source.editorPolicy.filesExclude', contract.editorPolicy.filesExclude],
+    ['source.ownership.mode', contract.ownership.mode],
   ] as const
   return fields
     .filter(([, value]) => isMissingValue(value))
-    .map(([field]) => issue('source.contract_missing', `missing source-entry contract field: ${field}`))
+    .map(([field]) => issue('source.contract_missing', `missing GitHub subtree pin contract field: ${field}`))
 }
 
-function checkRelativeEntryPaths(entry: SourceEntry): ReadonlyArray<SourceEntryIssue> {
+function checkRelativeContractPaths(contract: GitHubSubtreePinContract): ReadonlyArray<SourceEntryIssue> {
   const paths = [
-    ['source.local.prefix', entry.local.prefix],
-    ['source.anchor.llmDocument', entry.anchor.llmDocument],
-    ['source.agent.route', entry.agent.route],
+    ['source.local.prefix', contract.local.prefix],
+    ['source.anchor.llmDocument', contract.anchor.llmDocument],
+    ['source.agent.route', contract.agent.route],
   ] as const
   return paths.flatMap(([field, value]) => {
     if (isMissingValue(value) || validRelativePath(value)) {
@@ -442,76 +448,108 @@ function checkRelativeEntryPaths(entry: SourceEntry): ReadonlyArray<SourceEntryI
   })
 }
 
-function checkForbiddenImports(root: string, entry: SourceEntry): ReadonlyArray<SourceEntryIssue> {
-  const files = collectSourceCodeFiles(root, [entry.local.prefix])
+function checkGitHubOnly(contract: GitHubSubtreePinContract): ReadonlyArray<SourceEntryIssue> {
+  if (isMissingValue(contract.github.repository) || githubRepositoryUrl(contract.github.repository)) {
+    return []
+  }
+  return [issue('source.github_only', `source repository must be a GitHub URL: ${contract.github.repository}`)]
+}
+
+function checkGitSubtreeOnly(contract: GitHubSubtreePinContract): ReadonlyArray<SourceEntryIssue> {
+  if (contract.mechanism === 'git-subtree') {
+    return []
+  }
+  return [issue('source.mechanism_invalid', 'source mechanism must be git-subtree')]
+}
+
+function checkContractPathOutsidePrefix(contractPath: string, contract: GitHubSubtreePinContract): ReadonlyArray<SourceEntryIssue> {
+  if (isMissingValue(contract.local.prefix) || !pathIsSameOrInside(contractPath, contract.local.prefix)) {
+    return []
+  }
+  return [issue('source.contract_path_inside_prefix', 'GitHub subtree pin contract must not live inside the subtree prefix', contractPath)]
+}
+
+const checkForbiddenImports = Effect.fn('checkForbiddenImports')(function* (
+  root: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const files = yield* collectSourceCodeFiles(root, [contract.local.prefix])
   const issues: Array<SourceEntryIssue> = []
+  const fs = yield* FileSystem.FileSystem
   for (const file of files) {
-    const text = readFileSync(file, 'utf8')
+    const text = yield* fs.readFileString(file).pipe(
+      Effect.mapError(cause => new PartitaError(`Read ${relativePathFrom(root, file)}: ${formatUnknown(cause)}`)),
+    )
     for (const specifier of importedSpecifiers(text)) {
-      if (specifierTargetsPrefix(root, file, specifier, entry.local.prefix)) {
+      if (specifierTargetsPrefix(root, file, specifier, contract.local.prefix)) {
         const relativeFile = relativePathFrom(root, file)
         issues.push(issue(
           'source.import_blocked',
-          `application/test code must not import from source prefix ${entry.local.prefix}: ${specifier}`,
+          `application/test code must not import from GitHub subtree prefix ${contract.local.prefix}: ${specifier}`,
           relativeFile,
         ))
       }
     }
   }
   return issues
-}
+})
 
-function checkEditorPolicy(root: string, entry: SourceEntry): ReadonlyArray<SourceEntryIssue> {
+const checkEditorPolicy = Effect.fn('checkEditorPolicy')(function* (
+  root: string,
+  contract: GitHubSubtreePinContract,
+) {
   const issues: Array<SourceEntryIssue> = []
-  if (entry.editorPolicy.autoImportExclude !== 'block') {
-    issues.push(issue('source.editor_auto_import_missing', 'editor policy must block auto-import from the source prefix'))
+  if (contract.editorPolicy.autoImportExclude !== 'block') {
+    issues.push(issue('source.editor_auto_import_missing', 'editor policy must block auto-import from the GitHub subtree prefix'))
   }
 
   const vscodeSettings = join(root, '.vscode', 'settings.json')
-  if (existsSync(vscodeSettings)) {
-    const value = parseSettingsFile(vscodeSettings, '.vscode/settings.json')
-    if (value instanceof PartitaError) {
-      issues.push(issue('source.editor_settings_invalid', value.message, '.vscode/settings.json'))
-    }
-    else if (!vscodeAutoImportExcluded(value, entry.local.prefix)) {
-      issues.push(issue('source.editor_vscode_auto_import_missing', 'VSCode settings must exclude the source prefix from TypeScript and JavaScript auto-imports', '.vscode/settings.json'))
+  if (yield* fileExists(vscodeSettings)) {
+    const value = yield* parseSettingsFile(vscodeSettings, '.vscode/settings.json')
+    if (!vscodeAutoImportExcluded(value, contract.local.prefix)) {
+      issues.push(issue('source.editor_vscode_auto_import_missing', 'VSCode settings must exclude the GitHub subtree prefix from TypeScript and JavaScript auto-imports', '.vscode/settings.json'))
     }
   }
 
   const zedSettings = join(root, '.zed', 'settings.json')
-  if (existsSync(zedSettings)) {
-    const value = parseSettingsFile(zedSettings, '.zed/settings.json')
-    if (value instanceof PartitaError) {
-      issues.push(issue('source.editor_settings_invalid', value.message, '.zed/settings.json'))
-    }
-    else if (!zedAutoImportExcluded(value, entry.local.prefix)) {
-      issues.push(issue('source.editor_zed_auto_import_missing', 'Zed settings must exclude the source prefix through nested TypeScript LSP auto-import preferences', '.zed/settings.json'))
+  if (yield* fileExists(zedSettings)) {
+    const value = yield* parseSettingsFile(zedSettings, '.zed/settings.json')
+    if (!zedAutoImportExcluded(value, contract.local.prefix)) {
+      issues.push(issue('source.editor_zed_auto_import_missing', 'Zed settings must exclude the GitHub subtree prefix through nested TypeScript LSP auto-import preferences', '.zed/settings.json'))
     }
   }
 
   return issues
-}
+})
 
-function sourceEntryStatus(root: string, entry: SourceEntry): SourceEntryStatus {
+const sourceEntryStatus = Effect.fn('sourceEntryStatus')(function* (
+  root: string,
+  contractPath: string,
+  contract: GitHubSubtreePinContract,
+) {
   return {
-    anchorExists: !isMissingValue(entry.anchor.llmDocument) && existsSync(resolve(root, entry.anchor.llmDocument)),
-    mechanism: entry.mechanism,
-    name: entry.name,
-    ownershipMode: entry.ownership.mode,
-    pinnedRef: entry.pin.ref || entry.upstream.ref || entry.pin.trailer,
-    prefix: entry.local.prefix,
-    routeExists: !isMissingValue(entry.agent.route) && existsSync(resolve(root, entry.agent.route)),
-    sourceExists: !isMissingValue(entry.local.prefix) && existsSync(resolve(root, entry.local.prefix)),
-  }
-}
+    anchorExists: !isMissingValue(contract.anchor.llmDocument) && (yield* fileExists(resolve(root, contract.anchor.llmDocument))),
+    contractPath,
+    mechanism: contract.mechanism,
+    name: contract.name,
+    ownershipMode: contract.ownership.mode,
+    prefix: contract.local.prefix,
+    repository: contract.github.repository,
+    routeExists: !isMissingValue(contract.agent.route) && (yield* fileExists(resolve(root, contract.agent.route))),
+    sourceExists: !isMissingValue(contract.local.prefix) && (yield* fileExists(resolve(root, contract.local.prefix))),
+    subtreeSplit: contract.subtree.split || contract.github.ref || contract.subtree.trailer,
+  } satisfies SourceEntryStatus
+})
 
 function formatSourceEntryStatus(entry: SourceEntryStatus): string {
   return [
     `- ${entry.name}`,
+    `repository=${entry.repository}`,
     `prefix=${entry.prefix}`,
+    `contract=${entry.contractPath}`,
     `mechanism=${entry.mechanism}`,
     `ownership=${entry.ownershipMode}`,
-    `pin=${entry.pinnedRef || '<missing>'}`,
+    `split=${entry.subtreeSplit || '<missing>'}`,
     `source=${entry.sourceExists ? 'present' : 'missing'}`,
     `anchor=${entry.anchorExists ? 'present' : 'missing'}`,
     `route=${entry.routeExists ? 'present' : 'missing'}`,
@@ -522,19 +560,19 @@ function formatSourceIssue(issue: SourceEntryIssue): string {
   return issue.path ? `${issue.path}: ${issue.code}: ${issue.message}` : `${issue.code}: ${issue.message}`
 }
 
-function renderEditorSettings(entry: SourceEntry): SourceEntryPlan['editorSettings'] {
-  const glob = `${entry.local.prefix}/**`
+function renderEditorSettings(contract: GitHubSubtreePinContract): SourceEntryPlan['editorSettings'] {
+  const glob = `${contract.local.prefix}/**`
   const vscode: JsonRecord = {
     'javascript.preferences.autoImportFileExcludePatterns': [glob],
     'typescript.preferences.autoImportFileExcludePatterns': [glob],
   }
-  if (entry.editorPolicy.watcherExclude !== 'disabled') {
+  if (contract.editorPolicy.watcherExclude !== 'disabled') {
     vscode['files.watcherExclude'] = { [glob]: true }
   }
-  if (entry.editorPolicy.searchExclude !== 'disabled') {
+  if (contract.editorPolicy.searchExclude !== 'disabled') {
     vscode['search.exclude'] = { [glob]: true }
   }
-  if (entry.editorPolicy.filesExclude === 'enabled') {
+  if (contract.editorPolicy.filesExclude === 'enabled') {
     vscode['files.exclude'] = { [glob]: true }
   }
 
@@ -563,7 +601,7 @@ function renderEditorSettings(entry: SourceEntry): SourceEntryPlan['editorSettin
       },
     },
   }
-  if (entry.editorPolicy.filesExclude === 'enabled') {
+  if (contract.editorPolicy.filesExclude === 'enabled') {
     zed.file_scan_exclusions = [glob]
   }
 
@@ -595,43 +633,49 @@ function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
   return vtslsConfigured || tlsConfigured
 }
 
-function sourcePrefixIsGitlink(root: string, prefix: string): boolean {
-  const result = spawnSync('git', ['ls-files', '--stage', '--', prefix], {
+const sourcePrefixIsGitlink = Effect.fn('sourcePrefixIsGitlink')(function* (root: string, prefix: string) {
+  const result = yield* runCommand({
+    args: ['ls-files', '--stage', '--', prefix],
+    command: 'git',
     cwd: root,
-    encoding: 'utf8',
   })
-  if (result.status !== 0) {
+  if (result.exitCode !== 0) {
     return false
   }
-  return result.stdout.split(/\r?\n/u).some(line => line.startsWith('160000 '))
-}
+  return result.output.split(/\r?\n/u).some(line => line.startsWith('160000 '))
+})
 
-function collectSourceCodeFiles(root: string, sourcePrefixes: ReadonlyArray<string>): ReadonlyArray<string> {
+const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (
+  root: string,
+  sourcePrefixes: ReadonlyArray<string>,
+) {
+  const fs = yield* FileSystem.FileSystem
+  const entries = yield* fs.readDirectory(root, { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Read directory ${root}: ${formatUnknown(cause)}`)),
+  )
   const files: Array<string> = []
-
-  function visit(directory: string) {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const absolutePath = join(directory, entry.name)
-      const relativePath = relativePathFrom(root, absolutePath)
-      if (entry.isDirectory()) {
-        if (ignoredDirectoryNames.has(entry.name) || sourcePrefixes.some(prefix => pathIsSameOrInside(relativePath, prefix))) {
-          continue
-        }
-        visit(absolutePath)
-        continue
-      }
-      if (!entry.isFile() || sourcePrefixes.some(prefix => pathIsSameOrInside(relativePath, prefix))) {
-        continue
-      }
-      if (sourceCodeExtensions.has(extensionOf(entry.name))) {
-        files.push(absolutePath)
-      }
+  for (const entry of entries) {
+    const relativePath = normalizeRelativePath(entry)
+    const name = lastPathSegment(relativePath) ?? ''
+    if (ignoredDirectoryNames.has(name) || sourcePrefixes.some(prefix => pathIsSameOrInside(relativePath, prefix))) {
+      continue
+    }
+    if (relativePath.split('/').some(segment => ignoredDirectoryNames.has(segment))) {
+      continue
+    }
+    if (!sourceCodeExtensions.has(extensionOf(relativePath))) {
+      continue
+    }
+    const absolutePath = resolve(root, relativePath)
+    const stat = yield* fs.stat(absolutePath).pipe(
+      Effect.catchTag('PlatformError', () => Effect.succeed(undefined)),
+    )
+    if (stat?.type === 'File') {
+      files.push(absolutePath)
     }
   }
-
-  visit(root)
   return files
-}
+})
 
 function importedSpecifiers(text: string): ReadonlyArray<string> {
   const specifiers: Array<string> = []
@@ -657,32 +701,24 @@ function specifierTargetsPrefix(root: string, importer: string, specifier: strin
   return pathIsSameOrInside(relativePathFrom(root, resolved), prefix)
 }
 
-function filterSources(sources: ReadonlyArray<SourceEntry>, name: string | undefined): ReadonlyArray<SourceEntry> {
-  const target = nonEmpty(name)
-  return target === undefined ? sources : sources.filter(source => source.name === target)
-}
+const parseJson = Effect.fn('parseJson')(function* (text: string, path: string) {
+  return yield* Effect.try({
+    try: () => JSON.parse(text) as unknown,
+    catch: cause => new PartitaError(`Invalid JSON in ${path}: ${formatUnknown(cause)}`),
+  })
+})
 
-function parseJson(text: string, path: string): unknown {
-  try {
-    return JSON.parse(text)
+const parseSettingsFile = Effect.fn('parseSettingsFile')(function* (path: string, relativePath: string) {
+  const fs = yield* FileSystem.FileSystem
+  const text = yield* fs.readFileString(path).pipe(
+    Effect.mapError(cause => new PartitaError(`Read ${relativePath}: ${formatUnknown(cause)}`)),
+  )
+  const parsed = yield* parseJson(stripJsonComments(text), relativePath)
+  if (!isRecord(parsed)) {
+    return yield* Effect.fail(new PartitaError(`${relativePath} must contain a JSON object`))
   }
-  catch (cause) {
-    throw new PartitaError(`Invalid JSON in ${path}: ${cause instanceof Error ? cause.message : String(cause)}`)
-  }
-}
-
-function parseSettingsFile(path: string, relativePath: string): JsonRecord | PartitaError {
-  try {
-    const parsed = JSON.parse(stripJsonComments(readFileSync(path, 'utf8'))) as unknown
-    if (!isRecord(parsed)) {
-      return new PartitaError(`${relativePath} must contain a JSON object`)
-    }
-    return parsed
-  }
-  catch (cause) {
-    return new PartitaError(`Invalid JSON in ${relativePath}: ${cause instanceof Error ? cause.message : String(cause)}`)
-  }
-}
+  return parsed
+})
 
 function stripJsonComments(text: string): string {
   let output = ''
@@ -731,41 +767,73 @@ function stripJsonComments(text: string): string {
   return output
 }
 
-function normalizeMechanism(value: string | undefined): ParsedSourceMechanism {
-  return value === 'git-subtree' ? 'git-subtree' : ''
+interface CommandResult {
+  readonly exitCode: number
+  readonly output: string
 }
 
-function normalizeOwnershipMode(value: string | undefined): ParsedSourceOwnershipMode {
-  if (value === 'provider' || value === 'prelude-maintain') {
-    return value
+interface SourceCommand {
+  readonly command: string
+  readonly args: ReadonlyArray<string>
+  readonly cwd: string
+}
+
+const runCommand = Effect.fn('runSourceCommand')(function* (command: SourceCommand) {
+  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
+  const handle = yield* spawner.spawn(
+    ChildProcess.make(command.command, command.args, {
+      cwd: command.cwd,
+      extendEnv: true,
+    }),
+  ).pipe(
+    Effect.mapError(cause => new PartitaError(`Spawn ${command.command}: ${formatUnknown(cause)}`)),
+  )
+  const output = yield* handle.all.pipe(
+    Stream.decodeText(),
+    Stream.mkString,
+    Effect.mapError(cause => new PartitaError(`Collect ${command.command} output: ${formatUnknown(cause)}`)),
+  )
+  const exitCode = Number(yield* handle.exitCode.pipe(
+    Effect.mapError(cause => new PartitaError(`Wait for ${command.command}: ${formatUnknown(cause)}`)),
+  ))
+  return {
+    exitCode,
+    output,
+  } satisfies CommandResult
+})
+
+const fileExists = Effect.fn('fileExists')(function* (path: string) {
+  const fs = yield* FileSystem.FileSystem
+  return yield* fs.exists(path).pipe(
+    Effect.catchTag('PlatformError', () => Effect.succeed(false)),
+  )
+})
+
+const defaultAgentRoute = Effect.fn('defaultAgentRoute')(function* (root: string) {
+  return (yield* fileExists(join(root, 'AGENTS.md'))) ? 'AGENTS.md' : '<TODO:agent-route>'
+})
+
+const defaultOwnershipMode = Effect.fn('defaultOwnershipMode')(function* (root: string) {
+  return (yield* preludeManaged(root)) ? 'prelude-maintain' : 'direct'
+})
+
+const preludeManaged = Effect.fn('preludeManaged')(function* (root: string) {
+  return yield* fileExists(join(root, '.prelude', 'manifest.json'))
+})
+
+function githubRepositoryUrl(value: string): boolean {
+  return /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+$/u.test(value)
+    || /^git@github\.com:[^/\s]+\/[^/\s]+$/u.test(value)
+}
+
+function siblingSubtreeContractPath(prefix: string, name: string): string {
+  const normalizedPrefix = normalizeRelativePath(prefix)
+  const parent = dirname(normalizedPrefix).replaceAll('\\', '/')
+  const basename = lastPathSegment(normalizedPrefix) ?? name
+  if (parent === '.' || parent.length === 0) {
+    return `${basename}.subtree.json`
   }
-  return value === 'direct' ? 'direct' : ''
-}
-
-function normalizePolicyDecision(value: string | undefined): ParsedSourcePolicyDecision {
-  if (value === 'enabled' || value === 'recommended' || value === 'disabled') {
-    return value
-  }
-  return ''
-}
-
-function normalizeFilesExclude(value: string | undefined): ParsedSourceFilesExcludeDecision {
-  if (value === 'enabled' || value === 'disabled') {
-    return value
-  }
-  return ''
-}
-
-function defaultAgentRoute(root: string): string {
-  return existsSync(join(root, 'AGENTS.md')) ? 'AGENTS.md' : '<TODO:agent-route>'
-}
-
-function defaultOwnershipMode(root: string): SourceOwnershipMode {
-  return preludeManaged(root) ? 'prelude-maintain' : 'direct'
-}
-
-function preludeManaged(root: string): boolean {
-  return existsSync(join(root, '.prelude', 'manifest.json'))
+  return `${parent}/${basename}.subtree.json`
 }
 
 function nonEmpty(value: string | undefined): string | undefined {
@@ -805,6 +873,35 @@ function extensionOf(path: string): string {
   return index === -1 ? '' : path.slice(index)
 }
 
+function lastPathSegment(path: string): string | undefined {
+  const normalized = normalizeRelativePath(path)
+  if (normalized.length === 0) {
+    return undefined
+  }
+  return normalized.split('/').filter(Boolean).at(-1)
+}
+
+function normalizeOwnershipMode(value: string | undefined): ParsedSourceOwnershipMode {
+  if (value === 'provider' || value === 'prelude-maintain') {
+    return value
+  }
+  return value === 'direct' ? 'direct' : ''
+}
+
+function normalizePolicyDecision(value: string | undefined): ParsedSourcePolicyDecision {
+  if (value === 'enabled' || value === 'recommended' || value === 'disabled') {
+    return value
+  }
+  return ''
+}
+
+function normalizeFilesExclude(value: string | undefined): ParsedSourceFilesExcludeDecision {
+  if (value === 'enabled' || value === 'disabled') {
+    return value
+  }
+  return ''
+}
+
 function recordAt(value: unknown): JsonRecord {
   return isRecord(value) ? value : {}
 }
@@ -823,6 +920,13 @@ function stringArrayIncludes(value: unknown, expected: string): boolean {
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function formatUnknown(cause: unknown): string {
+  if (cause instanceof Error) {
+    return cause.message
+  }
+  return String(cause)
 }
 
 function issue(code: string, message: string, path?: string): SourceEntryIssue {

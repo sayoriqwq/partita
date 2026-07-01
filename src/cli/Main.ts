@@ -7,7 +7,6 @@ import * as Flag from 'effect/unstable/cli/Flag'
 import { generateProject } from '../partita/generator.ts'
 import { installCodexPlugin, installCodexSkill } from '../partita/install.ts'
 import {
-  defaultSourceContractPath,
   printSourcePlan,
   printSourceStatus,
   verifySourceEntries,
@@ -37,18 +36,13 @@ const checkFlag = Flag.boolean('check').pipe(
 )
 
 const sourceContractFlag = Flag.path('contract').pipe(
-  Flag.withDescription('Source-entry contract path'),
-  Flag.withDefault(defaultSourceContractPath),
+  Flag.withDescription('GitHub subtree pin contract path; defaults to repos/<name>.subtree.json from --name/--prefix'),
+  Flag.withDefault(''),
 )
 
 const sourceNameFlag = Flag.string('name').pipe(
   Flag.withDescription('Source entry name'),
   Flag.withDefault(''),
-)
-
-const sourceMechanismFlag = Flag.choice('mechanism', ['git-subtree'] as const).pipe(
-  Flag.withDescription('Source entry materialization mechanism'),
-  Flag.withDefault('git-subtree' as const),
 )
 
 const sourceOwnershipModeFlag = Flag.choice('ownership-mode', ['direct', 'provider', 'prelude-maintain'] as const).pipe(
@@ -74,7 +68,6 @@ const sourcePlanFlags = {
   branch: Flag.string('branch').pipe(Flag.withDescription('Upstream branch'), Flag.withDefault('main')),
   contractPath: sourceContractFlag,
   filesExclude: sourceFilesExcludeFlag,
-  mechanism: sourceMechanismFlag,
   name: sourceNameFlag,
   ownershipMode: sourceOwnershipModeFlag,
   prefix: Flag.string('prefix').pipe(Flag.withDescription('Local source prefix'), Flag.withDefault('')),
@@ -91,6 +84,7 @@ function makeCli(config: CliConfig) {
   const sourceReadFlags = {
     contractPath: sourceContractFlag,
     name: sourceNameFlag,
+    prefix: Flag.string('prefix').pipe(Flag.withDescription('Local source prefix used to derive the default contract path'), Flag.withDefault('')),
     root,
   }
 
@@ -138,25 +132,25 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* (options) {
     yield* printSourcePlan(options)
   })).pipe(
-    Command.withDescription('Plan a generic source-entry contract without writing files'),
+    Command.withDescription('Plan a GitHub git-subtree pin contract without writing files'),
   )
 
   const sourceStatus = Command.make('status', sourceReadFlags, Effect.fnUntraced(function* (options) {
     yield* printSourceStatus(options)
   })).pipe(
-    Command.withDescription('Show source-entry status and verification issues'),
+    Command.withDescription('Show GitHub git-subtree pin status and verification issues'),
   )
 
   const sourceVerify = Command.make('verify', sourceReadFlags, Effect.fnUntraced(function* (options) {
     yield* verifySourceEntries(options)
   })).pipe(
-    Command.withDescription('Hard-verify source-entry contracts'),
+    Command.withDescription('Hard-verify GitHub git-subtree pin contracts'),
   )
 
   const sourceAdd = Command.make('add', {
     ...sourcePlanFlags,
     dryRun: Flag.boolean('dry-run').pipe(
-      Flag.withDescription('Only print the add plan; direct source writes are intentionally not implemented'),
+      Flag.withDescription('Only print the add plan; direct git subtree writes are intentionally not implemented'),
       Flag.withDefault(true),
     ),
     root,
@@ -166,7 +160,7 @@ function makeCli(config: CliConfig) {
     }
     yield* printSourcePlan(options)
   })).pipe(
-    Command.withDescription('Dry-run a source-entry add plan'),
+    Command.withDescription('Dry-run a GitHub git-subtree pin add plan'),
   )
 
   const sourceUpdate = Command.make('update', {
@@ -176,6 +170,7 @@ function makeCli(config: CliConfig) {
       Flag.withDefault(true),
     ),
     name: sourceNameFlag,
+    prefix: Flag.string('prefix').pipe(Flag.withDescription('Local source prefix used to derive the default contract path'), Flag.withDefault('')),
     root,
   }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
     if (!dryRun) {
@@ -183,11 +178,11 @@ function makeCli(config: CliConfig) {
     }
     yield* printSourceStatus(options)
   })).pipe(
-    Command.withDescription('Dry-run source-entry update checks before a domain wrapper runs git subtree'),
+    Command.withDescription('Dry-run GitHub git-subtree update checks before a domain wrapper mutates the tree'),
   )
 
   const source = Command.make('source').pipe(
-    Command.withDescription('Manage generic source-entry pins for agent-readable upstream sources'),
+    Command.withDescription('Manage GitHub repository pins materialized with git subtree'),
     Command.withSubcommands([sourcePlan, sourceStatus, sourceVerify, sourceAdd, sourceUpdate]),
   )
 
