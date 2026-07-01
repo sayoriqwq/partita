@@ -612,13 +612,11 @@ function renderEditorSettings(contract: GitHubSubtreePinContract): PinPlan['edit
 }
 
 function vscodeAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
-  const glob = `${prefix}/**`
-  return stringArrayIncludes(settings['typescript.preferences.autoImportFileExcludePatterns'], glob)
-    && stringArrayIncludes(settings['javascript.preferences.autoImportFileExcludePatterns'], glob)
+  return stringArrayCoversPrefix(settings['typescript.preferences.autoImportFileExcludePatterns'], prefix)
+    && stringArrayCoversPrefix(settings['javascript.preferences.autoImportFileExcludePatterns'], prefix)
 }
 
 function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
-  const glob = `${prefix}/**`
   const lsp = recordAt(settings.lsp)
   const vtslsSettings = recordAt(recordAt(recordAt(lsp.vtsls).settings))
   const tsPreferences = recordAt(recordAt(vtslsSettings.typescript).preferences)
@@ -627,9 +625,9 @@ function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
   const initializationOptions = recordAt(typescriptLanguageServer.initialization_options)
   const tlsPreferences = recordAt(initializationOptions.preferences)
 
-  const vtslsConfigured = stringArrayIncludes(tsPreferences.autoImportFileExcludePatterns, glob)
-    && stringArrayIncludes(jsPreferences.autoImportFileExcludePatterns, glob)
-  const tlsConfigured = stringArrayIncludes(tlsPreferences.autoImportFileExcludePatterns, glob)
+  const vtslsConfigured = stringArrayCoversPrefix(tsPreferences.autoImportFileExcludePatterns, prefix)
+    && stringArrayCoversPrefix(jsPreferences.autoImportFileExcludePatterns, prefix)
+  const tlsConfigured = stringArrayCoversPrefix(tlsPreferences.autoImportFileExcludePatterns, prefix)
   return vtslsConfigured || tlsConfigured
 }
 
@@ -780,26 +778,28 @@ interface PinGitCommand {
 
 const runCommand = Effect.fn('runPinGitCommand')(function* (command: PinGitCommand) {
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-  const handle = yield* spawner.spawn(
-    ChildProcess.make(command.command, command.args, {
-      cwd: command.cwd,
-      extendEnv: true,
-    }),
-  ).pipe(
-    Effect.mapError(cause => new PartitaError(`Spawn ${command.command}: ${formatUnknown(cause)}`)),
-  )
-  const output = yield* handle.all.pipe(
-    Stream.decodeText(),
-    Stream.mkString,
-    Effect.mapError(cause => new PartitaError(`Collect ${command.command} output: ${formatUnknown(cause)}`)),
-  )
-  const exitCode = Number(yield* handle.exitCode.pipe(
-    Effect.mapError(cause => new PartitaError(`Wait for ${command.command}: ${formatUnknown(cause)}`)),
-  ))
-  return {
-    exitCode,
-    output,
-  } satisfies CommandResult
+  return yield* Effect.scoped(Effect.gen(function* () {
+    const handle = yield* spawner.spawn(
+      ChildProcess.make(command.command, command.args, {
+        cwd: command.cwd,
+        extendEnv: true,
+      }),
+    ).pipe(
+      Effect.mapError(cause => new PartitaError(`Spawn ${command.command}: ${formatUnknown(cause)}`)),
+    )
+    const output = yield* handle.all.pipe(
+      Stream.decodeText(),
+      Stream.mkString,
+      Effect.mapError(cause => new PartitaError(`Collect ${command.command} output: ${formatUnknown(cause)}`)),
+    )
+    const exitCode = Number(yield* handle.exitCode.pipe(
+      Effect.mapError(cause => new PartitaError(`Wait for ${command.command}: ${formatUnknown(cause)}`)),
+    ))
+    return {
+      exitCode,
+      output,
+    } satisfies CommandResult
+  }))
 })
 
 const fileExists = Effect.fn('fileExists')(function* (path: string) {
@@ -914,8 +914,17 @@ function booleanAt(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined
 }
 
-function stringArrayIncludes(value: unknown, expected: string): boolean {
-  return Array.isArray(value) && value.includes(expected)
+function stringArrayCoversPrefix(value: unknown, prefix: string): boolean {
+  if (!Array.isArray(value)) {
+    return false
+  }
+  return value.some((entry) => {
+    if (typeof entry !== 'string') {
+      return false
+    }
+    const normalized = normalizeRelativePath(entry.endsWith('/**') ? entry.slice(0, -3) : entry)
+    return normalized === normalizeRelativePath(prefix) || pathIsSameOrInside(prefix, normalized)
+  })
 }
 
 function isRecord(value: unknown): value is JsonRecord {
