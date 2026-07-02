@@ -49,11 +49,14 @@ Soft:
 
 Hard:
 
-- When: 修改 local references、generated files 或 skill metadata。
-  Do: MUST 运行 `pnpm verify`。
+- When: 当前 repo 明确声明了覆盖本次 Markdown 变更 surface 的本地 verifier。
+  Do: MUST 运行该 repo-local verifier；`pnpm verify` 只在当前 repo 存在 `package.json` 且声明 `scripts.verify`，或本地指令明确要求它时使用。
 
 - When: 完成 repo 变更前。
-  Do: MUST 运行 `pnpm verify`。
+  Do: MUST 运行已发现的 repo-local verifier；如果没有可发现 verifier，MUST 报告未发现本地 verifier，并且 MUST NOT 反复运行硬编码的全局命令。
+
+- When: 在 Partita landing 中修改 `score` source、local references、generated files、frontmatter 或 `agents/openai.yaml`。
+  Do: MUST 从 Partita repo root 运行 `pnpm verify`。
 
 ## Effects
 
@@ -69,7 +72,7 @@ Hard:
 4. 在组织正文前，选择或维护 metadata，尤其是 `audience`。
 5. 用 sections 组织 assertions；heading 只打开 section，不当作 assertion。
 6. 应用 language、keywords、pattern、path 和 links preferences。
-7. 运行当前变更 surface 需要的 checks，或报告准确 blocker。
+7. 根据 AGENTS、README、package scripts 或同级项目指令发现当前变更 surface 需要的 repo-local verifier；只在当前 repo 明确支持时运行 `pnpm verify`，否则运行本地已有验证命令，或报告未发现 verifier。
 
 ## References
 

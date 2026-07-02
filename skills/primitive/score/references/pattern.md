@@ -8,7 +8,7 @@ reviewed_by:
 purpose: 定义 Markdown 中可被 agent 稳定识别和复用的结构模式。
 status: active
 sources: []
-updated: 2026-06-29
+updated: 2026-07-02
 ---
 
 # Pattern
@@ -53,6 +53,9 @@ skill runtime 的 `Hard:` 区 SHOULD 使用 `When:` / `Do:` pattern。
 `Do:` 只写必须执行或禁止执行的动作。
 
 ```md
-- When: 修改 skill frontmatter、`agents/openai.yaml` 或 generated files。
-  Do: MUST 运行 `pnpm verify`。
+- When: repo-local verifier 覆盖当前变更 surface。
+  Do: MUST 运行该 verifier；`pnpm verify` 只在当前 repo 明确声明它时使用。
+
+- When: 没有可发现 repo-local verifier。
+  Do: MUST 报告未发现 verifier，而不是运行硬编码的全局命令。
 ```
