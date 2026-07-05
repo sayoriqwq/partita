@@ -8,7 +8,9 @@ case feedback 说明为什么这次 patch 存在、旧 skill 怎样失败、以�
 
 ## Location
 
-case feedback SHOULD 写在 target skill 的 `references/` 目录。
+case feedback SHOULD 写在治理失败的 target skill 的 `references/` 目录。
+
+通常 target skill 就是被 patch 的 leaf skill。若 recurrence 暴露的是 creation、patching、routing 或 source governance skill 的失败，case feedback MUST 写入 owning governance skill，而不是只写入被创建、被移动或被路由到的 leaf skill。
 
 case feedback 文件名 SHOULD 使用 `<short-kebab-case>-case.md`。
 
@@ -73,6 +75,8 @@ retune patch target skill 时，MUST 添加或更新 case feedback，除非目�
 case feedback MUST 写入 target skill source truth。
 
 case feedback MUST NOT 只写入 installed runtime copy。
+
+case feedback MUST NOT 分散写入无治理职责的 leaf skill；如果同一个 recurrence 说明 creation 或 patch workflow 规则缺失，MUST patch owning workflow skill 的 references。
 
 case feedback SHOULD 避免本机绝对路径，除非该路径本身就是 case 的关键事实。
 

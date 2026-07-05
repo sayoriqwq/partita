@@ -51,6 +51,8 @@ creation:
   identity:
     name: skill folder 和 frontmatter name
     title: Markdown H1
+    family: Partita landing 中的 source family；非 Partita target 可省略
+    handle: Partita landing 中的 namespaced handle；非 Partita target 可省略
     marker: 激活时第一条用户可见行使用的 marker
     primary_pressure: 只写一个 primary pressure
     primary_governance_action: 只写一个 primary governance action
@@ -70,6 +72,8 @@ creation:
 任一字段不足以填写时，MUST 打回并只询问最小缺失材料。
 
 marker 不属于 optional Conversation effect。marker 的规则写在激活行、Hard boundary 或 Validation；Effects 的 Conversation 只写 skill 可能输出的业务信息。
+
+Partita landing 中，family、handle 和 marker MUST 在创建文件前确定，并与 target behavior 对齐。agent MUST NOT 把 Partita source skill 默认放进 primitive family。
 
 ## Template
 
@@ -146,7 +150,7 @@ Before done:
 interface:
   display_name: "<Display Name>"
   short_description: "<短描述>"
-  default_prompt: "Use <name> to <do the governed behavior>."
+  default_prompt: "Use <handle-or-name> to <do the governed behavior>."
 policy:
   allow_implicit_invocation: false
 ```

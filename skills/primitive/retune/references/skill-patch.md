@@ -24,7 +24,9 @@ case:
 
 `identity` 是 target skill 仍然成立的核心职责和治理动作。
 
-`stale surface` 是 case 暴露出的局部过时面，例如 trigger、boundary、workflow、effects、reference、metadata 或 validation。
+`stale surface` 是 case 暴露出的局部过时面，例如 trigger、boundary、workflow、effects、reference、metadata、validation 或 Partita source structure。
+
+`source structure` 是 Partita source skill 的 family、path、handle、marker、metadata default prompt、reference placement 或 generated projection shape。
 
 `minimum patch` 是能防止该 recurrence 复发的最小修改。
 
@@ -39,5 +41,7 @@ case:
 - identity invalid 时，agent MUST 停止并报告 blocker。
 - patch MUST 小于 rewrite。
 - patch MUST 只更新 stale surface 和直接需要的支撑文件。
+- 当 stale surface 是 source structure 时，patch MAY move source skill folder，但 MUST 保持 target identity、runtime shape 和 references self-contained。
+- case feedback MUST 写到治理失败的 target skill；如果 recurrence 暴露的是 creation/patch workflow 失败，不能只给 leaf skill 加局部 case。
 - 没有 patch case 时，agent MUST NOT 运行 structure audit。
 - agent MUST NOT 把 external skill migration 当作 patch。

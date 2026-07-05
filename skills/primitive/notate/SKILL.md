@@ -1,6 +1,6 @@
 ---
 name: notate
-description: "Use when creating a case-rooted OpenAI/Codex skill from a real case with enough material for default failure, pressure, governance action, and target runtime shape. In Partita landing, creates a Partita primitive source skill. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
+description: "Use when creating a case-rooted OpenAI/Codex skill from a real case with enough material for default failure, pressure, governance action, target runtime shape, and Partita family when applicable. In Partita landing, creates a source skill in the correct family with matching handle and marker. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
 ---
 
 # Notate
@@ -9,7 +9,7 @@ description: "Use when creating a case-rooted OpenAI/Codex skill from a real cas
 
 ## Rule
 
-面对足以创建 case-rooted runtime skill 的真实 case 时，MUST 先写出它的 default failure、pressure、governance action、target runtime shape 和本地概念定义，避免创建 task category prompt、泛能力文件，或 runtime 合法但不能治理行为的 skill。
+面对足以创建 case-rooted runtime skill 的真实 case 时，MUST 先写出它的 default failure、pressure、governance action、target runtime shape、本地概念定义，以及 Partita landing 中的 family、handle 和 marker，避免创建 task category prompt、泛能力文件、runtime 合法但不能治理行为的 skill，或 family/marker 错配的 source skill。
 
 ## Pattern
 
@@ -36,6 +36,10 @@ Soft:
 - MUST NOT 编造 case、pressure、governance action、target runtime shape 或本地概念定义。
 - MUST 默认创建 OpenAI/Codex skill，除非用户指定其他 target。
 - MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
+- MUST 在 Partita landing 中先判定 source family，再确定 path、handle、marker 和 `agents/openai.yaml` default prompt。
+- MUST NOT 把 Partita landing 的新 skill 默认放进 `skills/primitive/`；只有 Partita-managed base skill 才使用 primitive family。
+- MUST 对齐 Partita family marker convention；expression 使用 `💬`，link 使用 `🔗`，orientation 使用 `🧭`，maintenance 使用 `🧹`，primitive 使用 `🎼 <name>`。
+- MUST 在 skill family、handle 或 marker 有多种合理解读时先使用 interpretation gate。
 - MUST 保持每个 case-rooted skill 只有一个 primary pressure 和一个 primary governance action。
 - MUST 让 skill runtime 携带执行自身 Rule、Pattern、Boundary、Workflow 和 Validation 所需的本地概念定义。
 - MUST 只把外部 skill 和已删除旧 skill 当作参考，不能当作 source of truth。
@@ -52,7 +56,7 @@ Hard:
 ## Effects
 
 - Conversation: MAY 展示打回原因、governance rule、target runtime、skill path、handle 和验证结果。
-- Filesystem: MAY 创建一个 OpenAI/Codex skill folder；在 Partita landing 中 MAY 在 `skills/primitive/<name>/` 下创建 Partita primitive source skill、`agents/openai.yaml`、本地 references 和直接需要的 generated files。
+- Filesystem: MAY 创建一个 OpenAI/Codex skill folder；在 Partita landing 中 MAY 在 `skills/<family>/<name>/` 下创建 Partita source skill、`agents/openai.yaml`、本地 references 和直接需要的 generated files。
 - External: none.
 
 ## Workflow
@@ -61,7 +65,7 @@ Hard:
 2. 读取 [case](references/case.md)，确认输入是可治理的真实 skill case。
 3. 读取 [skill creation](references/skill-creation.md)，按 information collection flow 补齐 creation fields。
 4. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
-5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy 和 checks。
+5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、handle、marker、shape、policy 和 checks。
 6. 确认目标不是 public workflow skill 或已有 skill patch；否则路由到 `conduct` 或 `retune`。
 7. 使用 [skill creation](references/skill-creation.md) 中的可复制模板创建 `SKILL.md`；创建可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 8. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
@@ -73,6 +77,7 @@ Hard:
 - 创建 case-rooted skill 时，MUST 使用 [skill creation](references/skill-creation.md)。
 - 创建 OpenAI/Codex skill 时，MUST 使用 [OpenAI skill](references/openai-skill.md)。
 - 目标是 Partita landing 时，MUST 使用 [Partita skill](references/partita-skill.md)。
+- 修补 family、handle 或 marker 误判时，MUST 使用 [family marker case](references/family-marker-case.md)。
 
 ## Validation
 
@@ -82,7 +87,9 @@ Before done:
 - 创建文件前，default failure、pressure、governance action、target runtime shape、本地概念定义、trigger/use boundary/effects/workflow/validation 已明确；
 - `SKILL.md` 使用了本地可复制模板，且 marker 没有被写成 Conversation effect 的 optional display；
 - 创建的 OpenAI/Codex skill 满足 target shape；
-- Partita landing 中创建的是 `policy.allow_implicit_invocation: false` 的 primitive source skill；
+- Partita landing 中创建的 source skill family、path、handle、marker 和 metadata default prompt 一致；
+- Partita landing 中 expression/link/orientation/maintenance/primitive family 已按目标行为选择，没有默认回落到 primitive；
+- Partita landing 中创建的 source skill 有明确的 `policy.allow_implicit_invocation`；
 - `notate` 没有创建 public workflow skill、已有 skill patch、无真实 case 的外部迁移或 verifier implementation；
 - Effects 保持在声明的 filesystem scope 内；
 - target runtime 或 Partita landing 要求的 checks 已通过，或准确 blocker 已报告。

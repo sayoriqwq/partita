@@ -1,6 +1,0 @@
-interface:
-  display_name: "Border"
-  short_description: "显式调用后切出两个概念的核心边界"
-  default_prompt: "Use pm:border to explain the core difference between two concepts, using explicit concepts when provided or inferring them from context."
-policy:
-  allow_implicit_invocation: false

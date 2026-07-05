@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes border to separate two concep
 
 # Border
 
-激活时，第一条用户可见行 MUST 以内联 `🎼 border` 开头。
+激活时，第一条用户可见行 MUST 以内联 `💬 border` 开头。
 
 ## Rule
 
@@ -15,7 +15,7 @@ description: "Use when the user explicitly invokes border to separate two concep
 
 Use when:
 
-- 用户显式调用 `$border`、`border`、`pm:border` 或要求“用 border”解释概念差别。
+- 用户显式调用 `$border`、`border`、`ex:border` 或要求“用 border”解释概念差别。
 - 用户显式给出两个概念，并要求说明二者核心差别。
 - 用户显式调用 `border`，且当前上下文中能读出两个最相关、最需要隔开的概念。
 
@@ -42,7 +42,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `border`。
-  Do: MUST NOT 使用 `🎼 border` marker 或套用 `border` 协议。
+  Do: MUST NOT 使用 `💬 border` marker 或套用 `border` 协议。
 
 - When: 用户显式给出了两个概念。
   Do: MUST 使用用户给出的概念，不能替换为 agent 自己推断的 pair。
@@ -78,7 +78,7 @@ Hard:
 
 Before done:
 
-- 第一条用户可见行包含内联 `🎼 border`；
+- 第一条用户可见行包含内联 `💬 border`；
 - `border` 只在用户显式调用后使用；
 - 已优先尊重用户显式给出的两个概念；
 - 如果从上下文推断 A/B，推断依据在回复中可见；

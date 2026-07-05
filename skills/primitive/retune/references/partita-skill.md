@@ -8,6 +8,22 @@ Partita family 是 source 组织方式。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。
 
+## Structure Surface
+
+Partita source structure 包括 family、source path、namespaced handle、marker、metadata default prompt、local references placement 和 generated projection shape。
+
+当真实 patch case 暴露这些结构面错误时，retune MAY move source skill folder and update metadata，但 MUST 保持 target skill identity。
+
+Family marker convention:
+
+- `expression`: handle `ex:<name>`，marker `💬` 或 `💬 <name>`。
+- `link`: handle `lk:<name>`，marker `🔗` 或 `🔗 <name>`。
+- `orientation`: handle `og:<name>`，marker `🧭` 或 `🧭 <name>`。
+- `maintenance`: handle `mt:<name>`，marker `🧹` 或 `🧹 <name>`。
+- `primitive`: handle `pm:<name>`，marker `🎼 <name>`。
+
+If family、handle 或 marker 有多种合理解读，retune MUST use interpretation gate before changing convention.
+
 ## Shape
 
 Partita V1 `SKILL.md` shape MUST 保持不变。
