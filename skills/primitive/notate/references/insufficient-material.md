@@ -5,7 +5,7 @@ authors:
   - codex
 reviewed_by: []
 purpose: 说明 case-rooted skill 创建或修补在材料不足时如何打回。
-updated: 2026-06-27
+updated: 2026-07-07
 ---
 
 # 材料不足
@@ -16,9 +16,12 @@ case-rooted skill 工作在材料不足时 MUST 打回，MUST NOT 生成草案�
 
 材料不足包括：
 
-- 没有真实 case。
-- 不能读出 case pattern。
+- 没有真实发生或材料直接证明的 case。
+- 没有 evidence anchor。
+- 不能读出 case kind 或 case pattern。
 - 不能读出 default failure。
+- 不能读出 pressure。
+- 不能读出 recognition surface。
 - 不能读出 governance action。
 - 不能判断目标 skill 类型或目标已有 skill。
 
@@ -46,7 +49,14 @@ case-rooted skill 工作在材料不足时 MUST 打回，MUST NOT 生成草案�
 
 ```yaml
 case:
-  situation: 当时发生了什么
-  default_behavior: agent 无治理时实际怎样失败
-  governance_reference: 为什么这不符合当前要求
+  kind: skill | workflow | patch | feedback
+  evidence:
+    source: 可审计的稳定材料来源
+  situation: 真实发生或由材料直接证明的情境
+  default_failure: agent 无目标治理时实际怎样失败或漂移
+  pressure: 为什么该失败值得治理
+  recognition:
+    triggers:
+      - 未来应该召回该 case 的信号
+  governance_action: 目标治理应改变 agent 行为的介入点
 ```

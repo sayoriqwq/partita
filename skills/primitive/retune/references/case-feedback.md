@@ -4,7 +4,9 @@
 
 `case feedback` 是 retune 写回 target skill 的 durable recurrence record。
 
-case feedback 说明为什么这次 patch 存在、旧 skill 怎样失败、以及未来 agent 应该怎样避免复发。
+case feedback 说明哪个失败再次发生、它匹配哪个已有 case/rule/stale surface，以及未来 agent 应如何更容易召回这条治理经验。
+
+case feedback 不是新的 patch case。若 recurrence 暴露的是治理规则缺口，retune MUST 升级为 patch case；若 recurrence 只是证明已有治理仍重要，retune MAY 写回 case feedback。
 
 ## Location
 
@@ -17,6 +19,21 @@ case feedback 文件名 SHOULD 使用 `<short-kebab-case>-case.md`。
 如果 target skill 没有 `references/` 目录，retune MAY 创建它。
 
 ## Format
+
+case feedback SHOULD 能还原以下 schema：
+
+```yaml
+case:
+  kind: feedback
+  target_skill: 要写回 recurrence 的 skill
+  evidence:
+    source: stable material pointer
+    note: optional minimal excerpt or description
+  recurrence: 哪个失败再次发生
+  matched_surface: 复发对应的已有 case、rule 或 stale surface
+  feedback_action: 写回 references、examples、anti-examples、trigger notes，还是升级为 patch case
+  patch_required: true | false
+```
 
 case feedback SHOULD 使用以下 section shape：
 
@@ -62,11 +79,11 @@ agent MUST NOT <forbidden behavior>.
 case feedback MUST 能读出：
 
 - target skill。
-- situation。
-- stale surface。
-- stale behavior。
-- expected governance。
-- minimum validation。
+- evidence source。
+- recurrence。
+- matched case、rule 或 stale surface。
+- feedback action。
+- patch required 判断。
 
 ## Rules
 

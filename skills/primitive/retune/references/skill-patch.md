@@ -6,15 +6,25 @@
 
 ## Patch Case
 
-`patch case` 是真实 recurrence case，说明已有 skill 在某个局部表面已经 stale。
+`patch case` 是 evidence-anchored governance sample，说明已有 skill identity 仍成立，但某个局部 surface 已经 stale。
 
 最小 patch case：
 
 ```yaml
 case:
+  kind: patch
   target_skill: 要修补的已有 skill
-  situation: 当时发生了什么
+  evidence:
+    source: stable material pointer
+    note: optional minimal excerpt or description
+  situation: 真实发生或由材料直接证明的情境
   stale_behavior: target skill 现在怎样失败
+  pressure: 为什么该 stale behavior 值得修补
+  recognition:
+    triggers:
+      - future signal that should recall this patch case
+    non_triggers:
+      - optional boundary that should not recall this patch case
   expected_governance: 应该怎样防止复发
 ```
 
@@ -34,9 +44,9 @@ case:
 
 ## Rules
 
-- target skill、recurrence、stale surface 或 expected governance 不可读时，材料不足。
+- target skill、evidence、recurrence、stale surface、pressure、recognition surface 或 expected governance 不可读时，材料不足。
 - 材料不足时，MUST 打回，并列出最小缺失字段。
-- agent MUST NOT 编造 patch case、target identity、stale surface 或 expected governance。
+- agent MUST NOT 编造 patch case、evidence、target identity、stale surface、pressure、recognition surface 或 expected governance。
 - patch MUST 保持 target skill identity。
 - identity invalid 时，agent MUST 停止并报告 blocker。
 - patch MUST 小于 rewrite。

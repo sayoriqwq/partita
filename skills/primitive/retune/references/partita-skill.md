@@ -12,7 +12,7 @@ Partita family 是 source 组织方式。
 
 Partita source structure 包括 family、source path、namespaced handle、marker、metadata default prompt、local references placement 和 generated projection shape。
 
-当真实 patch case 暴露这些结构面错误时，retune MAY move source skill folder and update metadata，但 MUST 保持 target skill identity。
+当 evidence-anchored patch case 暴露这些结构面错误时，retune MAY move source skill folder and update metadata，但 MUST 保持 target skill identity。
 
 Family marker convention:
 

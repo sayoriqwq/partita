@@ -2,13 +2,13 @@
 
 ## Definition
 
-`workflow creation` 是根据真实 workflow case 创建一个对用户暴露的 workflow skill。
+`workflow creation` 是根据 evidence-anchored workflow case 创建一个对用户暴露的 workflow skill。
 
 workflow skill 不是多个 internal skills 的松散集合。
 
 ## Workflow Case
 
-`workflow case` 是证明一个 workflow skill 为什么需要存在的真实情境。
+`workflow case` 是用于创建 public workflow skill 的 evidence-anchored governance sample。
 
 workflow case 关注多步骤推进如何失败，以及 workflow 应该如何 gate、routing、disclosure 和 stop。
 
@@ -16,13 +16,25 @@ workflow case 关注多步骤推进如何失败，以及 workflow 应该如何 g
 
 ```yaml
 case:
-  situation: 当时发生了什么
-  workflow_default_failure: agent 无 workflow 治理时会怎样失败
-  gate_pressure: 哪些阶段判断会失败或缺失
-  routing_pressure: 哪些内部 skill、步骤或子流程会误用、漏用或乱序
-  disclosure_pressure: 哪些过程、状态或结果会错误展示或隐藏
+  kind: workflow
+  evidence:
+    source: stable material pointer
+    note: optional minimal excerpt or description
+  situation: 真实发生或由材料直接证明的情境
+  default_failure: agent 无 workflow 治理时会怎样失败或漂移
+  workflow_pressure:
+    gate: 哪些阶段判断会失败或缺失
+    routing: 哪些内部 skill、步骤或子流程会误用、漏用或乱序
+    disclosure: 哪些过程、状态或结果会错误展示或隐藏
+  recognition:
+    triggers:
+      - future signal that should recall this case
+    non_triggers:
+      - optional boundary that should not recall this case
   orchestration_action: workflow 应该怎样改变 agent 行为
 ```
+
+`workflow_pressure.gate`、`workflow_pressure.routing` 和 `workflow_pressure.disclosure` 至少一个 MUST 成立；agent MUST NOT 为了填字段编造不存在的 pressure。
 
 ## Terms
 
@@ -43,5 +55,5 @@ case:
 - workflow skill MUST 先定义 gate logic，再定义 internal routing。
 - workflow skill MUST 定义什么展示给用户，什么保持 internal。
 - workflow skill MUST 定义完成前可检查的 validation。
-- 无法识别 workflow default failure、gate logic、routing 和 disclosure boundary 的材料 MUST 被打回。
-- agent MUST NOT 编造 workflow case、gate logic、internal routing、disclosure boundary 或 A/Y/X。
+- 无法识别 evidence、workflow default failure、至少一个 workflow pressure、recognition surface 或 orchestration action 的材料 MUST 被打回。
+- agent MUST NOT 编造 workflow case、evidence、gate logic、internal routing、disclosure boundary、recognition surface 或 A/Y/X。
