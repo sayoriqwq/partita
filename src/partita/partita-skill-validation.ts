@@ -1,9 +1,17 @@
 import type { SkillMetadata } from './model.ts'
+import type {
+  InvocationSelectorForm,
+  OpenAiMetadataProjection,
+} from './projection.ts'
 import type { ValidationIssue } from './validation.ts'
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { validateOpenAiSkillText } from './openai-skill-validation.ts'
+import {
+  projectSkillForm,
+  validateInvocationSelectorEnglish,
+} from './projection.ts'
 import { issue } from './validation.ts'
 
 const namespaceShorthands = {
@@ -59,6 +67,7 @@ const descriptionSchedulingPollution = [
   'recommended',
 ] as const
 const requiredOpenAiInterfaceFields = ['display_name', 'short_description', 'default_prompt'] as const
+type ExpectedOpenAiInterfaceProjection = OpenAiMetadataProjection['interface']
 
 export function checkOpenAiRuntimeSkillFiles(root: string): SkillFileValidationResult {
   const descriptions: Record<string, string> = {}
@@ -99,6 +108,8 @@ export function checkPartitaSourceSkillFiles(root: string): SkillFileValidationR
       continue
     }
 
+    const title = firstMarkdownTitle(text)
+    const projection = checkPartitaSkillProjection(validation.fields, descriptor, text, relativePath, title)
     const description = validation.fields.description.trim()
     issues.push(...checkPartitaSkillDescription(description, relativePath))
     if (!hasLoadedSkillMarker(text)) {
@@ -106,13 +117,140 @@ export function checkPartitaSourceSkillFiles(root: string): SkillFileValidationR
     }
 
     issues.push(...checkPartitaSkillBodyShape(text, relativePath))
-    issues.push(...checkOpenAiMetadata(root, validation.fields.name, path))
+    issues.push(...projection.issues)
+    issues.push(...checkOpenAiMetadata(root, validation.fields.name, path, title, projection.openAiInterface))
   }
 
   return {
     descriptions: runtime.descriptions,
     issues,
   }
+}
+
+interface PartitaSkillProjectionCheck {
+  readonly issues: ReadonlyArray<ValidationIssue>
+  readonly openAiInterface: ExpectedOpenAiInterfaceProjection | undefined
+}
+
+function checkPartitaSkillProjection(
+  fields: SkillMetadata,
+  descriptor: SkillFileDescriptor,
+  text: string,
+  relativePath: string,
+  title: string | undefined,
+): PartitaSkillProjectionCheck {
+  if (descriptor.namespace === undefined || title === undefined) {
+    return { issues: [], openAiInterface: undefined }
+  }
+
+  const parsedSelector = parsePatternSelector(text, relativePath)
+  const issues = [...parsedSelector.issues]
+  if (parsedSelector.selector === undefined) {
+    return { issues, openAiInterface: undefined }
+  }
+
+  for (const message of validateInvocationSelectorEnglish(parsedSelector.selector)) {
+    issues.push(issue('partita_projection.selector_language', message, relativePath))
+  }
+
+  const projection = projectSkillForm({
+    identity: {
+      family: descriptor.namespace,
+      slug: descriptor.name,
+      title,
+    },
+    invocation: {
+      policy: {
+        allowImplicitInvocation: false,
+      },
+      selector: parsedSelector.selector,
+    },
+  })
+
+  if (fields.description.trim() !== projection.skillFrontmatter.description) {
+    issues.push(issue(
+      'partita_projection.description',
+      `frontmatter description must equal projected selector description: ${projection.skillFrontmatter.description}`,
+      relativePath,
+    ))
+  }
+
+  if (!projection.identity.acceptedMarkers.some(marker => text.includes(`\`${marker}\``))) {
+    issues.push(issue(
+      'partita_projection.marker',
+      `skill marker must match family projection: ${projection.identity.acceptedMarkers.join(' or ')}`,
+      relativePath,
+    ))
+  }
+
+  return {
+    issues,
+    openAiInterface: projection.openAiMetadata.interface,
+  }
+}
+
+interface ParsedPatternSelector {
+  readonly issues: ReadonlyArray<ValidationIssue>
+  readonly selector: InvocationSelectorForm | undefined
+}
+
+function parsePatternSelector(text: string, relativePath: string): ParsedPatternSelector {
+  const pattern = sectionBetween(text, '## Pattern', '## Boundary')
+  if (!pattern) {
+    return { issues: [], selector: undefined }
+  }
+
+  const useWhen: Array<string> = []
+  const doNotUseWhen: Array<string> = []
+  let currentList: 'do_not_use_when' | 'use_when' | undefined
+
+  for (const rawLine of pattern.split(/\r?\n/u)) {
+    const line = rawLine.trim()
+    if (line === 'Use when:') {
+      currentList = 'use_when'
+      continue
+    }
+    if (line === 'Do not use when:') {
+      currentList = 'do_not_use_when'
+      continue
+    }
+    if (!line.startsWith('- ') || currentList === undefined) {
+      continue
+    }
+
+    const value = normalizePatternBullet(line.slice(2))
+    if (value === '') {
+      continue
+    }
+    if (currentList === 'use_when') {
+      useWhen.push(value)
+    }
+    else {
+      doNotUseWhen.push(value)
+    }
+  }
+
+  const issues: Array<ValidationIssue> = []
+  if (useWhen.length === 0) {
+    issues.push(issue('partita_projection.pattern_missing_use_when', 'Pattern must include at least one Use when bullet', relativePath))
+  }
+  if (doNotUseWhen.length === 0) {
+    issues.push(issue('partita_projection.pattern_missing_do_not_use_when', 'Pattern must include at least one Do not use when bullet', relativePath))
+  }
+
+  return {
+    issues,
+    selector: useWhen.length > 0 && doNotUseWhen.length > 0
+      ? {
+          doNotUseWhen,
+          useWhen,
+        }
+      : undefined,
+  }
+}
+
+function normalizePatternBullet(value: string): string {
+  return value.trim().replace(/[.。]+$/u, '')
 }
 
 function checkRuntimeSkillIdentity(
@@ -210,6 +348,8 @@ function checkOpenAiMetadata(
   root: string,
   skillName: string,
   skillPath: string,
+  expectedDisplayName: string | undefined,
+  expectedInterface: ExpectedOpenAiInterfaceProjection | undefined,
 ): ReadonlyArray<ValidationIssue> {
   const metadataPath = join(dirname(skillPath), 'agents', 'openai.yaml')
   const relativeMetadataPath = relativePathFrom(root, metadataPath)
@@ -235,6 +375,39 @@ function checkOpenAiMetadata(
       issues.push(issue('openai_metadata.interface_field_missing', `interface.${field} is required`, relativeMetadataPath))
     }
   }
+  if (
+    expectedDisplayName !== undefined
+    && nonEmptyString(metadata.interfaceFields.display_name)
+    && metadata.interfaceFields.display_name !== expectedDisplayName
+  ) {
+    issues.push(issue(
+      'openai_metadata.display_name_projection',
+      `interface.display_name must match SKILL.md title: ${expectedDisplayName}`,
+      relativeMetadataPath,
+    ))
+  }
+  if (
+    expectedInterface !== undefined
+    && nonEmptyString(metadata.interfaceFields.short_description)
+    && metadata.interfaceFields.short_description !== expectedInterface.shortDescription
+  ) {
+    issues.push(issue(
+      'openai_metadata.short_description_projection',
+      `interface.short_description must match selector projection: ${expectedInterface.shortDescription}`,
+      relativeMetadataPath,
+    ))
+  }
+  if (
+    expectedInterface !== undefined
+    && nonEmptyString(metadata.interfaceFields.default_prompt)
+    && metadata.interfaceFields.default_prompt !== expectedInterface.defaultPrompt
+  ) {
+    issues.push(issue(
+      'openai_metadata.default_prompt_projection',
+      `interface.default_prompt must match selector projection: ${expectedInterface.defaultPrompt}`,
+      relativeMetadataPath,
+    ))
+  }
 
   if (metadata.topLevelScalars.allow_implicit_invocation !== undefined) {
     issues.push(issue('openai_metadata.policy_location', 'allow_implicit_invocation must be nested under policy', relativeMetadataPath))
@@ -248,6 +421,16 @@ function checkOpenAiMetadata(
   }
 
   return issues
+}
+
+function firstMarkdownTitle(text: string): string | undefined {
+  for (const line of text.split(/\r?\n/u)) {
+    if (line.startsWith('# ')) {
+      const title = line.slice(2).trim()
+      return title.length > 0 ? title : undefined
+    }
+  }
+  return undefined
 }
 
 interface OpenAiMetadata {

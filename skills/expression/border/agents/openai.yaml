@@ -1,6 +1,6 @@
 interface:
   display_name: "Border"
-  short_description: "显式调用后切出两个概念的核心边界"
-  default_prompt: "Use ex:border to explain the core difference between two concepts, using explicit concepts when provided or inferring them from context."
+  short_description: "The user explicitly invokes border to separate two concepts by their core difference, either inferred from context or named by the user"
+  default_prompt: "Use ex:border when the user explicitly invokes border to separate two concepts by their core difference, either inferred from context or named by the user."
 policy:
   allow_implicit_invocation: false

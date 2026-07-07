@@ -15,19 +15,11 @@ description: "Use when a completed and verified task phase may still contain gar
 
 Use when:
 
-- 用户显式要求 reconcile、清理垃圾状态、扫 residue、收尾清理或阶段结束清理。
-- 一个 task phase 已完成，并且 tests、verifier、CI 或用户确认已经形成闭环。
-- 旧入口、旧路径、旧术语、旧依赖、旧文档、旧生成物或旧 workflow 可能仍然存在。
-- 当前系统有明确 authority，可用于判断哪些 surface 已经 obsolete。
-- 用户需要 cleanup 前的 suspicious-item list。
+- a completed and verified task phase may still contain garbage state, residue, obsolete surfaces, stale dependencies, or stale authority that could mislead future agents. Audits before cleanup.
 
 Do not use when:
 
-- task phase 尚未完成，或验证闭环尚未成立。
-- 没有 current topic、accepted authority、source document 或 task change surface。
-- 用户只是要普通 formatting、lint cleanup、dead-code deletion 或 housekeeping。
-- 用户要 general code review、bug finding、CI repair 或 release readiness。
-- 用户已经批准具体 cleanup scope，只需要执行。
+- ordinary formatting, code review, bug finding, CI repair, or unapproved deletion.
 
 ## Boundary
 

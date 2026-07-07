@@ -15,20 +15,11 @@ description: "Use when the user explicitly asks to set, reset, sustain, or check
 
 Use when:
 
-- 用户显式要求 set、reset、sustain、检查或显示当前 aim、topic、target、focus。
-- 用户显式要求在当前推进中保持方向一致。
-- 已有 active aim，且当前回复需要轻量 marker 才能维持方向一致。
-- 已有 active aim，且 agent 或 user 明显偏离当前方向或已确认 baseline，需要可见提醒。
-- 另一个持续 mode 需要 conversation-local aim 作为锚点。
+- the user explicitly asks to set, reset, sustain, or check the current conversation aim or asks for visible alignment against a current direction.
 
 Do not use when:
 
-- 用户没有显式启用或要求 aim，且当前对话没有 active aim。
-- 用户需要 formal goal、task plan、todo、issue、PRD 或项目状态管理。
-- 用户要记录从 aim 开始到现在达成的共识；使用 `baseline`。
-- 用户要 pressure-test 一个未稳固 assertion；使用 `argue`。
-- 用户要做选择、生成候选、展开模糊 seed，且没有要求维护当前 aim。
-- 当前请求只需要普通执行、总结、代码审查、调试或回答。
+- formal goals, task planning, decision making, baseline snapshots, ordinary summaries, or implicit drift policing.
 
 ## Boundary
 

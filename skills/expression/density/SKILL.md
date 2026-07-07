@@ -15,17 +15,11 @@ description: "Use when the user explicitly invokes density or asks for sustained
 
 Use when:
 
-- 用户显式调用、加载或提到 `$density`。
-- 用户要求持续使用高密度中文、controlled language、稳定符号词表或低 filler 协作。
-- 用户要求当前会话进入 `density` 表达协议。
-- 已经激活的 `density` 表达协议仍在持续。
+- the user explicitly invokes density or asks for sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler.
 
 Do not use when:
 
-- 用户只要一次性总结、摘要、压缩文章或缩短某段内容。
-- 任务是 code minification、代码风格压缩或 token-budget 技术处理。
-- 用户要求古文、破碎短语、装饰性符号或纯粹文风润色。
-- 压缩会隐藏不确定性、风险、顺序、前提或 destructive consequences。
+- one-off summarization, code minification, classical Chinese, ordinary prose editing, hiding uncertainty, or compressing safety-critical meaning.
 
 ## Boundary
 

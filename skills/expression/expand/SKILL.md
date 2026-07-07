@@ -15,17 +15,11 @@ description: "Use when the user explicitly invokes expand to give concept A more
 
 Use when:
 
-- 用户显式调用 `$expand`、`expand`、`ex:expand` 或要求“用 expand”展开某个概念。
-- 用户给出 concept A，并要求更详细的信息来辅助解释清楚 concept A。
-- 用户显式调用 `expand`，且当前上下文中能读出要展开的单一 concept A。
+- the user explicitly invokes expand to give concept A more source-grounded detail and context-fit examples for clearer explanation.
 
 Do not use when:
 
-- 用户没有显式调用 `expand`，只是普通提问、解释、总结或润色。
-- 用户要的是两个概念的核心差别；使用 `border`。
-- 用户要的是完整研究、资料检索、论文综述、代码审计或多概念 taxonomy。
-- 用户要求压缩、改写、翻译、命名、类比故事或输出最终文章，而不是扩展 concept A 的理解材料。
-- 没有足够上下文定位 concept A，且用户没有给出可展开的概念。
+- broad research, border comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation.
 
 ## Boundary
 

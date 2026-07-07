@@ -15,22 +15,11 @@ description: "Use when the user explicitly asks to argue, challenge, or pressure
 
 Use when:
 
-- 用户显式要求 `argue`、challenge、反驳、压力测试或找最强问题。
-- 用户要判断某个 assertion、要求、定义、方案、结论或前提是否成立。
-- 用户不确定，要求在继续推进前检查风险、隐藏前提、反例或收窄条件。
-- 当前回复即将把一个未稳固 assertion 写入计划、要求、产物、优化方向或共同前提。
-- 已有 active `argue`，且当前回合继续测试同一个 assertion。
+- the user explicitly asks to argue, challenge, or pressure-test an unstable assertion under the current aim before treating it as a premise.
 
 Do not use when:
 
-- assertion 已经是当前 baseline，或已经被明确接受。
-- assertion 即使错误也不会改变下一步回答、方案、实现或决策。
-- assertion 只是风格、命名、审美或无害偏好，且当前 aim 不依赖它。
-- 用户已经选择方向并要求执行，而不是判断该方向是否成立。
-- 用户要 blank-page 候选生成，而不是 pressure-test 一条 assertion。
-- 用户有模糊 seed 要展开，而不是判断一条 assertion 是否成立。
-- 用户要记录已接受共识；使用 `baseline`。
-- 用户要普通代码审查、bug 排查、release check、辩论表演、角色扮演或赢得争论。
+- ordinary implementation, code review, blank-page brainstorming, expanding a vague seed, recording consensus, settled decisions, harmless preferences, or adversarial debate.
 
 ## Boundary
 

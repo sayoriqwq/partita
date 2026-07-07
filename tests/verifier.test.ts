@@ -4,6 +4,10 @@ import { dirname, join } from 'node:path'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {
+  primitiveReferenceCopySpecs,
+  syncPrimitiveReferences,
+} from '../src/partita/primitive.ts'
+import {
   verifyPartitaSourceSkills,
   verifyRuntimeSkills,
   verifySourceProject,
@@ -86,15 +90,15 @@ describe('Partita verifier', () => {
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       write(root, 'skills/expression/density/SKILL.md', validSkill().replace('name: demo', 'name: density').replace('🧭', '💬'))
-      write(root, 'skills/expression/density/agents/openai.yaml', validOpenAiMetadata())
+      write(root, 'skills/expression/density/agents/openai.yaml', validOpenAiMetadataFor('ex:density'))
       write(root, 'skills/link/pin/SKILL.md', validSkill().replace('name: demo', 'name: pin').replace('🧭', '🔗'))
-      write(root, 'skills/link/pin/agents/openai.yaml', validOpenAiMetadata())
+      write(root, 'skills/link/pin/agents/openai.yaml', validOpenAiMetadataFor('lk:pin'))
       write(root, 'skills/orientation/argue/SKILL.md', validSkill().replace('name: demo', 'name: argue'))
-      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadata())
-      write(root, 'skills/maintenance/reconcile/SKILL.md', validSkill().replace('name: demo', 'name: reconcile'))
-      write(root, 'skills/maintenance/reconcile/agents/openai.yaml', validOpenAiMetadata())
-      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
-      write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadata())
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue'))
+      write(root, 'skills/maintenance/reconcile/SKILL.md', validSkill().replace('name: demo', 'name: reconcile').replace('🧭', '🧹'))
+      write(root, 'skills/maintenance/reconcile/agents/openai.yaml', validOpenAiMetadataFor('mt:reconcile'))
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 notate'))
+      write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadataFor('pm:notate'))
 
       const report = yield* verifySourceProject({ root })
 
@@ -147,6 +151,79 @@ describe('Partita verifier', () => {
       assert.isTrue(codes.includes('openai_metadata.missing_invocation_policy'))
     }))
 
+  it.effect('reports OpenAI display name projection drift', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/agents/openai.yaml', [
+        'interface:',
+        '  display_name: "Wrong"',
+        '  short_description: "Demo skill fixture"',
+        '  default_prompt: "Use $demo for verifier tests."',
+        'policy:',
+        '  allow_implicit_invocation: true',
+      ].join('\n'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.display_name_projection'))
+    }))
+
+  it.effect('reports Partita projection drift from Pattern to frontmatter and marker', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', validSkill()
+        .replace('name: demo', 'name: argue')
+        .replace(
+          'Use when verifying Partita skill shape in tests. Not for production behavior or broad review.',
+          'Use when unrelated selector text is present. Not for production behavior or broad review.',
+        )
+        .replace('verifying Partita skill shape in tests', '验证 Partita skill shape'))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('partita_projection.description'))
+      assert.isTrue(codes.includes('partita_projection.selector_language'))
+    }))
+
+  it.effect('reports OpenAI metadata projection drift from Pattern', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 notate'))
+      write(root, 'skills/primitive/notate/agents/openai.yaml', [
+        'interface:',
+        '  display_name: "Demo"',
+        '  short_description: "Wrong"',
+        '  default_prompt: "Wrong"',
+        'policy:',
+        '  allow_implicit_invocation: true',
+      ].join('\n'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.short_description_projection'))
+      assert.isTrue(codes.includes('openai_metadata.default_prompt_projection'))
+    }))
+
+  it.effect('reports primitive marker projection drift', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate'))
+      write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadataFor('pm:notate'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('partita_projection.marker'))
+    }))
+
   it.effect('reports unsupported skill directory shape', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
@@ -175,6 +252,83 @@ describe('Partita verifier', () => {
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
+    }))
+
+  it.effect('accepts primitive reference copies', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      const spec = primitiveReferenceCopySpec('primitive/case.md')
+      const ruleSpec = primitiveReferenceCopySpec('primitive/rule.md')
+      write(root, 'primitive/case.md', '# Case\n\nShared case definition.\n')
+      write(root, 'primitive/rule.md', '# Rule\n\nShared rule definition.\n')
+      for (const targetPath of spec.targetPaths) {
+        write(root, targetPath, '# Case\n\nShared case definition.\n')
+      }
+      for (const targetPath of ruleSpec.targetPaths) {
+        write(root, targetPath, '# Rule\n\nShared rule definition.\n')
+      }
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
+    }))
+
+  it.effect('reports primitive reference copy drift', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      const spec = primitiveReferenceCopySpec('primitive/case.md')
+      write(root, 'primitive/case.md', '# Case\n\nShared case definition.\n')
+      for (const targetPath of spec.targetPaths) {
+        write(root, targetPath, '# Case\n\nShared case definition.\n')
+      }
+      write(root, firstTargetPath(spec.targetPaths), '# Case\n\nLocal drift.\n')
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('primitive_reference.copy_drift'))
+    }))
+
+  it.effect('syncs primitive reference copies without source frontmatter', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      const caseSpec = primitiveReferenceCopySpec('primitive/case.md')
+      const ruleSpec = primitiveReferenceCopySpec('primitive/rule.md')
+      write(root, 'primitive/case.md', [
+        '---',
+        'updated: 2026-07-07',
+        '---',
+        '',
+        '# Case',
+        '',
+        'Shared case definition.',
+        '',
+      ].join('\n'))
+      write(root, 'primitive/rule.md', [
+        '---',
+        'updated: 2026-07-07',
+        '---',
+        '',
+        '# Rule',
+        '',
+        'Shared rule definition.',
+        '',
+      ].join('\n'))
+
+      const syncReport = yield* syncPrimitiveReferences({ root })
+
+      assert.deepStrictEqual(syncReport.copied, [
+        ...caseSpec.targetPaths,
+        ...ruleSpec.targetPaths,
+      ])
+      for (const targetPath of caseSpec.targetPaths) {
+        assert.strictEqual(readFileSync(join(root, targetPath), 'utf8'), '# Case\n\nShared case definition.\n')
+      }
+      for (const targetPath of ruleSpec.targetPaths) {
+        assert.strictEqual(readFileSync(join(root, targetPath), 'utf8'), '# Rule\n\nShared rule definition.\n')
+      }
     }))
 
   it.effect('reports removed source surfaces', () =>
@@ -259,7 +413,7 @@ function validSkill(): string {
     '',
     '# Demo',
     '',
-    `Prefix your first user-facing line with ${marker} inline when this Partita skill is active.`,
+    `Prefix your first user-facing line with \`${marker}\` inline when this Partita skill is active.`,
     '',
     '## Rule',
     '',
@@ -269,11 +423,11 @@ function validSkill(): string {
     '',
     'Use when:',
     '',
-    '- the verifier tests need a valid skill.',
+    '- verifying Partita skill shape in tests.',
     '',
     'Do not use when:',
     '',
-    '- production behavior or broad review is being tested.',
+    '- production behavior or broad review.',
     '',
     '## Boundary',
     '',
@@ -320,6 +474,33 @@ function validOpenAiMetadata(): string {
     'policy:',
     '  allow_implicit_invocation: true',
   ].join('\n')
+}
+
+function validOpenAiMetadataFor(handle: string): string {
+  return [
+    'interface:',
+    '  display_name: "Demo"',
+    '  short_description: "Verifying Partita skill shape in tests"',
+    `  default_prompt: "Use ${handle} when verifying Partita skill shape in tests."`,
+    'policy:',
+    '  allow_implicit_invocation: true',
+  ].join('\n')
+}
+
+function primitiveReferenceCopySpec(sourcePath: string) {
+  const spec = primitiveReferenceCopySpecs.find(spec => spec.sourcePath === sourcePath)
+  if (spec === undefined) {
+    throw new Error(`missing primitive copy spec: ${sourcePath}`)
+  }
+  return spec
+}
+
+function firstTargetPath(paths: ReadonlyArray<string>) {
+  const path = paths[0]
+  if (path === undefined) {
+    throw new Error('missing primitive copy target')
+  }
+  return path
 }
 
 function write(root: string, path: string, contents: string) {

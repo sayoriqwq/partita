@@ -1,6 +1,6 @@
 ---
 name: conduct
-description: "Use when creating a public workflow skill from a real workflow case with gate logic, internal skill routing, disclosure boundary, and target runtime shape. Defaults to OpenAI/Codex skill target; in Partita landing creates a public workflow source skill. Not for case-rooted non-workflow skill creation, patching existing skills, running workflows, abstract workflow wishes, or verifier implementation."
+description: "Use when creating a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape. Defaults to OpenAI/Codex skill target; in Partita landing creates a public workflow source skill. Not for case-rooted non-workflow skill creation, patching existing skills, running workflows, abstract workflow wishes, or verifier implementation."
 ---
 
 # Conduct
@@ -9,31 +9,25 @@ description: "Use when creating a public workflow skill from a real workflow cas
 
 ## Rule
 
-面对足以创建 public workflow skill 的真实 workflow case 时，MUST 先写出 workflow rule、gate logic、internal skill routing、disclosure boundary、target runtime shape 和本地概念定义，避免创建 task category、大 prompt，或没有治理动作的 internal skill bundle。
+面对足以创建 public workflow skill 的 evidence-anchored workflow case 时，MUST 先写出 evidence、default failure、至少一个 workflow pressure、recognition surface、orchestration action、target runtime shape 和本地概念定义，避免创建 task category、大 prompt，或没有治理动作的 internal skill bundle。
 
 ## Pattern
 
 Use when:
 
-- 用户提供真实 workflow case，且材料足以读出 workflow default failure 和 orchestration action。
-- 用户要创建对用户暴露的 public workflow skill。
-- 材料包含或足以确定 gate logic、internal skill routing、disclosure boundary、target runtime shape，以及 public workflow 的 invocation policy。
+- creating a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape. Defaults to OpenAI/Codex skill target; in Partita landing creates a public workflow source skill.
 
 Do not use when:
 
-- 用户要创建非 workflow 的 case-rooted skill；使用 `notate`。
-- 用户要 patch 已有且 identity 成立的 skill；使用 `retune`。
-- 用户只是要运行某个 workflow，而不是创建 workflow skill。
-- 用户只有抽象 workflow 愿望、task category、假设场景，或没有真实 workflow case 的外部 skill 迁移材料。
-- 用户要实现 verifier、CLI、schema、安装流程，或普通项目文档。
+- case-rooted non-workflow skill creation, patching existing skills, running workflows, abstract workflow wishes, or verifier implementation.
 
 ## Boundary
 
 Soft:
 
-- MUST 在创建 public workflow skill 前要求真实 workflow case。
-- MUST 打回不能支撑 workflow A/Y/X、gate logic、internal skill routing、disclosure boundary 和 target runtime shape 的材料。
-- MUST NOT 编造 workflow case、routing、gate logic、disclosure boundary、target runtime shape 或 A/Y/X。
+- MUST 在创建 public workflow skill 前要求 evidence-anchored workflow case。
+- MUST 打回不能支撑 evidence、default failure、至少一个 workflow pressure、recognition surface、orchestration action 和 target runtime shape 的材料。
+- MUST NOT 编造 workflow case、evidence、routing、gate logic、disclosure boundary、recognition surface、target runtime shape 或 A/Y/X。
 - MUST 默认创建 OpenAI/Codex skill，除非用户指定其他 target。
 - MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
 - MUST 保持 public workflow skill 自己的 governance rule，不把它和被路由的 internal skills 混在一起。
@@ -58,19 +52,21 @@ Hard:
 
 ## Workflow
 
-1. 读取真实 workflow case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
-2. 读取 [case](references/case.md)，确认输入是可治理的真实 workflow case。
+1. 读取 evidence-anchored workflow case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
+2. 读取 [case](references/case.md)，确认输入是可治理的 evidence-anchored workflow case。
 3. 读取 [workflow creation](references/workflow-creation.md)，读出 workflow A/Y/X、gate logic、internal skill routing 和 disclosure boundary。
-4. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
-5. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy 和 checks。
-6. 确认目标是 public workflow skill；否则路由到 `notate` 或 `retune`。
-7. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
-8. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
+4. 读取 [rule](references/rule.md)，确保 public workflow skill 的 `## Rule` 是单一 runtime imperative，不是 workflow steps。
+5. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
+6. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy 和 checks。
+7. 确认目标是 public workflow skill；否则路由到 `notate` 或 `retune`。
+8. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
+9. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 
 ## References
 
 - 材料不足时，MUST 使用 [insufficient material](references/insufficient-material.md)。
 - 判断 case 概念和最小字段时，MUST 使用 [case](references/case.md)。
+- 定义 runtime `## Rule` 时，MUST 使用 [rule](references/rule.md)。
 - 创建 workflow skill 时，MUST 使用 [workflow creation](references/workflow-creation.md)。
 - 创建 OpenAI/Codex skill 时，MUST 使用 [OpenAI skill](references/openai-skill.md)。
 - 目标是 Partita landing 时，MUST 使用 [Partita skill](references/partita-skill.md)。
@@ -79,10 +75,11 @@ Hard:
 
 Before done:
 
-- 输入是真实 workflow case，或材料不足已被打回；
-- 创建文件前，workflow A/Y/X、gate logic、internal skill routing、disclosure boundary、target runtime shape 和本地概念定义已明确；
+- 输入是 evidence-anchored workflow case，或材料不足已被打回；
+- 创建文件前，evidence、default failure、至少一个 workflow pressure、recognition surface、workflow A/Y/X、gate logic、internal skill routing、disclosure boundary、target runtime shape 和本地概念定义已明确；
+- 创建的 `## Rule` 是单一 runtime governance constraint，没有展开 workflow、validation、boundary 或 effects；
 - 创建的 OpenAI/Codex public workflow skill 满足 target shape；
 - Partita landing 中创建的 public workflow skill 有 `agents/openai.yaml`，且 `policy.allow_implicit_invocation` 决策明确；
-- `conduct` 没有创建非 workflow skill、已有 skill patch、无真实 case 的外部迁移或 verifier implementation；
+- `conduct` 没有创建非 workflow skill、已有 skill patch、无 evidence anchor 的外部迁移或 verifier implementation；
 - Effects 保持在声明的 filesystem scope 内；
 - target runtime 或 Partita landing 要求的 checks 已通过，或准确 blocker 已报告。

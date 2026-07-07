@@ -17,20 +17,11 @@ description: "Use when the user explicitly asks to pin a GitHub repository into 
 
 Use when:
 
-- 用户显式要求 `pin`、link 或接入 GitHub repository 作为长期 agent source。
-- 当前项目需要通过 `git subtree` 把 GitHub 仓库放到本地 prefix，例如 `repos/<name>`，并让 agent 从 anchor/LLM doc 读取它。
-- 已有临时 clone、下载件、copied material 或 URL 记录需要升级为可更新、可验证的 `repos/<name>.subtree.json` contract。
-- 需要约束应用/测试代码不得从 pinned prefix import。
-- 需要把 editor auto-import、watch/search 和隐藏策略明确成 project decision。
+- the user explicitly asks to pin a GitHub repository into the current project as a git-subtree pin with sibling subtree contract, anchor, route, editor policy, update path, verify path, and import block.
 
 Do not use when:
 
-- 用户只是要一次性读取、比较或总结外部内容，不需要接入当前项目。
-- 请求只是 pin npm、pnpm、Docker、toolchain 或 package version。
-- source 不是 GitHub repository，或用户要求使用 submodule、普通 clone、archive、HTTP fetch、package install、download cache 或其他 mechanism。
-- 用户要求从 `node_modules`、web cache、临时 clone 或粘贴内容推断真源。
-- `pin` 指 UI 项、线程、笔记、任务或本地工作状态。
-- 用户要做 skill-local copy 分发或 runtime copy 管理；这属于 owning materialization/sync mechanism。
+- non-GitHub sources, non-subtree mechanisms, temporary clones, web fetches, node_modules lookup, package-version pins, or UI/thread pinning.
 
 ## Boundary
 

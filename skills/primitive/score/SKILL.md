@@ -15,20 +15,11 @@ description: "Use when the user explicitly invokes score or asks to apply sayori
 
 Use when:
 
-- 用户显式调用 `$score`、`score` 或 `pm:score`。
-- 用户明确要求按 sayoriqwq 的 Markdown 写作偏好、文档规范或 `score` 处理 Markdown。
-- 用户显式调用 `score`，且当前任务需要判断 Markdown 中的 `assertion` 是否清晰、原子或可 review。
-- 用户显式调用 `score`，且当前任务需要维护 Markdown metadata、audience、section、path、links、pattern 或 normative keywords。
+- the user explicitly invokes score or asks to apply sayoriqwq-style Markdown writing preferences to Markdown docs.
 
 Do not use when:
 
-- 用户没有显式调用 `score`，只是普通创建或修改 Markdown。
-- 目标不是 Markdown。
-- 用户要普通润色、去 AI 味、产品文案、release notes、社交文案、翻译或本地化文案。
-- 用户要写代码注释、commit message、PR 描述或 issue 回复。
-- 用户要创建 case-rooted skill；使用 `notate`。
-- 用户要创建 public workflow skill；使用 `conduct`。
-- 用户要 patch 已有且 identity 成立的 skill；使用 `retune`。
+- implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching.
 
 ## Boundary
 

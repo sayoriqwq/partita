@@ -15,16 +15,11 @@ description: "Use when the user explicitly asks to record, capture, or summarize
 
 Use when:
 
-- 用户显式要求记录、整理、捕获或总结当前 baseline。
-- 用户要求记录从当前 aim 开始到现在达成的共识。
-- 用户要求把已确认约束压缩成后续可继续使用的基线。
+- the user explicitly asks to record, capture, or summarize the accepted consensus since the current conversation aim began.
 
 Do not use when:
 
-- 用户只是要设置、重设、维持或检查当前 aim；使用 `aim`。
-- 用户要 pressure-test 未稳固 assertion、未解决争议或 open question；使用 `argue`。
-- 用户要做选择、生成候选、展开模糊 seed、写会议纪要或普通摘要。
-- 用户要把 baseline 写入文件、wiki、issue、PRD 或其他 durable artifact。
+- setting aims, maintaining direction, unresolved questions, decision making, meeting notes, durable documentation, or ordinary summaries.
 
 ## Boundary
 

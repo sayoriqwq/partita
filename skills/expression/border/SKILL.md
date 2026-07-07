@@ -15,16 +15,11 @@ description: "Use when the user explicitly invokes border to separate two concep
 
 Use when:
 
-- 用户显式调用 `$border`、`border`、`ex:border` 或要求“用 border”解释概念差别。
-- 用户显式给出两个概念，并要求说明二者核心差别。
-- 用户显式调用 `border`，且当前上下文中能读出两个最相关、最需要隔开的概念。
+- the user explicitly invokes border to separate two concepts by their core difference, either inferred from context or named by the user.
 
 Do not use when:
 
-- 用户没有显式调用 `border`，只是普通提问、解释、总结或比较。
-- 用户要的是完整 taxonomy、历史综述、优缺点矩阵、辩论稿或多维 compare-and-contrast。
-- 用户要求同时比较三个或更多概念，而没有指定要先隔开的两者。
-- 用户要求类比、故事化解释、风格化表达或概念命名，而不是切出核心差别。
+- broad compare-and-contrast, taxonomy surveys, analogy writing, debate, or implicit concept explanation.
 
 ## Boundary
 

@@ -15,19 +15,11 @@ description: "Use when the user wants to keep a first version or current topic f
 
 Use when:
 
-- 用户显式要求 activate、set、维持或检查 `land`。
-- 用户已经有 v1、draft、skill、feature 或 current topic 的 landing target。
-- 用户想在 v1 落地前阻断 scope expansion。
-- active landing target 下出现新点，且不确定它是否属于当前 v1。
-- `aim` 已存在，且当前推进需要比 `aim` 更强的 landing scope gate。
+- the user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic.
 
 Do not use when:
 
-- 用户只是需要方向一致性提醒；使用 `aim`。
-- 用户正在 open brainstorming，且没有 landing target。
-- 没有 current landing topic、v1 target 或 done condition。
-- v1 已经落地，当前是在做 later-version planning。
-- 新点是真正阻塞当前 v1 的 blocker。
+- open brainstorming, later-version planning, ordinary aim drift warnings, or when no landing topic exists yet.
 
 ## Boundary
 
