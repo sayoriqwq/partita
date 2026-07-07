@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { assert, describe, it } from '@effect/vitest'
@@ -12,6 +12,12 @@ import {
 const marker = '🧭'
 
 describe('Partita verifier', () => {
+  it('keeps score explicit invocation only', () => {
+    const metadata = readFileSync('skills/primitive/score/agents/openai.yaml', 'utf8')
+
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  })
+
   it.effect('accepts a valid source fixture', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()

@@ -1,6 +1,6 @@
 ---
 name: score
-description: "Use when creating or modifying Markdown docs that should follow sayoriqwq-style Markdown writing preferences. Not for non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
+description: "Use when the user explicitly invokes score or asks to apply sayoriqwq-style Markdown writing preferences to Markdown docs. Not for implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
 ---
 
 # Score
@@ -9,19 +9,20 @@ description: "Use when creating or modifying Markdown docs that should follow sa
 
 ## Rule
 
-面对创建或修改 Markdown 时，MUST 按 sayoriqwq-style Markdown preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。
+面对用户显式调用 `score` 处理 Markdown 时，MUST 按 sayoriqwq-style Markdown preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。
 
 ## Pattern
 
 Use when:
 
-- agent 将要创建或修改 `.md` 文件，且当前用户要求没有覆盖该偏好。
-- 用户明确要求按 sayoriqwq 的 Markdown 写作偏好、文档规范或 `score` 处理。
-- 当前任务需要判断 Markdown 中的 `assertion` 是否清晰、原子或可 review。
-- 当前任务需要维护 Markdown metadata、audience、section、path、links、pattern 或 normative keywords。
+- 用户显式调用 `$score`、`score` 或 `pm:score`。
+- 用户明确要求按 sayoriqwq 的 Markdown 写作偏好、文档规范或 `score` 处理 Markdown。
+- 用户显式调用 `score`，且当前任务需要判断 Markdown 中的 `assertion` 是否清晰、原子或可 review。
+- 用户显式调用 `score`，且当前任务需要维护 Markdown metadata、audience、section、path、links、pattern 或 normative keywords。
 
 Do not use when:
 
+- 用户没有显式调用 `score`，只是普通创建或修改 Markdown。
 - 目标不是 Markdown。
 - 用户要普通润色、去 AI 味、产品文案、release notes、社交文案、翻译或本地化文案。
 - 用户要写代码注释、commit message、PR 描述或 issue 回复。
@@ -49,6 +50,9 @@ Soft:
 
 Hard:
 
+- When: 用户没有显式调用 `score`。
+  Do: MUST NOT 使用 `🎼 score` marker 或套用 `score` protocol。
+
 - When: 当前 repo 明确声明了覆盖本次 Markdown 变更 surface 的本地 verifier。
   Do: MUST 运行该 repo-local verifier；`pnpm verify` 只在当前 repo 存在 `package.json` 且声明 `scripts.verify`，或本地指令明确要求它时使用。
 
@@ -66,13 +70,14 @@ Hard:
 
 ## Workflow
 
-1. 读取与当前 Markdown surface 相关的本地 preference references。
-2. 识别 target module 及其 boundary。
-3. 查找同一文档集是否已有 index、README、routing table 或模块清单；需要描述文档职责或阅读路线时，先更新该入口。
-4. 在组织正文前，选择或维护 metadata，尤其是 `audience`。
-5. 用 sections 组织 assertions；heading 只打开 section，不当作 assertion。
-6. 应用 language、keywords、pattern、path 和 links preferences。
-7. 根据 AGENTS、README、package scripts 或同级项目指令发现当前变更 surface 需要的 repo-local verifier；只在当前 repo 明确支持时运行 `pnpm verify`，否则运行本地已有验证命令，或报告未发现 verifier。
+1. 确认用户显式调用了 `score`；否则不激活。
+2. 读取与当前 Markdown surface 相关的本地 preference references。
+3. 识别 target module 及其 boundary。
+4. 查找同一文档集是否已有 index、README、routing table 或模块清单；需要描述文档职责或阅读路线时，先更新该入口。
+5. 在组织正文前，选择或维护 metadata，尤其是 `audience`。
+6. 用 sections 组织 assertions；heading 只打开 section，不当作 assertion。
+7. 应用 language、keywords、pattern、path 和 links preferences。
+8. 根据 AGENTS、README、package scripts 或同级项目指令发现当前变更 surface 需要的 repo-local verifier；只在当前 repo 明确支持时运行 `pnpm verify`，否则运行本地已有验证命令，或报告未发现 verifier。
 
 ## References
 
@@ -94,6 +99,7 @@ Hard:
 
 Before done:
 
+- `score` 只在用户显式调用后使用；
 - target surface 是 Markdown；
 - 相关本地 preference references 已应用；
 - 当变更触及 metadata、audience、module boundary、sections、assertions、language、keywords、pattern、path 或 links 时，这些面已被处理；
