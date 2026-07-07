@@ -9,6 +9,10 @@ import {
   checkOpenAiRuntimeSkillFiles,
   checkPartitaSourceSkillFiles,
 } from './partita-skill-validation.ts'
+import {
+  primitiveReferenceBody,
+  primitiveReferenceCopySpecs,
+} from './primitive.ts'
 import { issue, reportFromIssues } from './validation.ts'
 
 export interface VerifyProjectOptions {
@@ -71,6 +75,7 @@ function buildSourceReport(root: string, level: VerifyLevel): ValidationReport {
     ...skillResult.issues,
     ...checkMarkdownLinks(root),
     ...checkWikiLinks(root),
+    ...checkPrimitiveReferenceCopies(root),
     ...checkRemovedSurfaces(root),
     ...checkNoRootSkill(root),
   ]
@@ -170,6 +175,45 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
   return removed
     .filter(([path]) => existsSync(join(root, path)))
     .map(([path, message]) => issue('surface.removed_exists', message, path))
+}
+
+function checkPrimitiveReferenceCopies(root: string): ReadonlyArray<ValidationIssue> {
+  const issues: Array<ValidationIssue> = []
+
+  for (const copy of primitiveReferenceCopySpecs) {
+    const sourcePath = join(root, copy.sourcePath)
+    const targets = copy.targetPaths.map(targetPath => join(root, targetPath))
+    if (!existsSync(sourcePath) && targets.every(targetPath => !existsSync(targetPath))) {
+      continue
+    }
+
+    if (!existsSync(sourcePath)) {
+      issues.push(issue('primitive_reference.missing_source', 'missing primitive reference source', copy.sourcePath))
+      continue
+    }
+
+    const sourceText = primitiveReferenceBody(readText(sourcePath))
+    for (const referencePath of targets) {
+      const relativeReferencePath = relativePathFrom(root, referencePath)
+      if (!existsSync(referencePath)) {
+        issues.push(issue(
+          'primitive_reference.missing_target',
+          `missing skill-local copy for ${copy.sourcePath}`,
+          relativeReferencePath,
+        ))
+        continue
+      }
+      if (readText(referencePath) !== sourceText) {
+        issues.push(issue(
+          'primitive_reference.copy_drift',
+          `skill-local reference must match ${copy.sourcePath} exactly`,
+          relativeReferencePath,
+        ))
+      }
+    }
+  }
+
+  return issues
 }
 
 function checkNoRootSkill(root: string): ReadonlyArray<ValidationIssue> {

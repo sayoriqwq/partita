@@ -9,6 +9,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 ## State
 
 - `skills/` 是 self-owned skill source input。
+- `primitive/` 存放可复制到 skill-local references 的 primitive reference body source。
 - `src/partita/` 负责 Partita-specific verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
 - `tests/` 承载 executable behavior checks。
 - root operating docs 是 `README.md` 和 `AGENTS.md`。
@@ -33,6 +34,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `src/partita/verifier.ts` 校验 Partita source shape，并阻止迁出 surfaces 回流。
 - `src/partita/openai-skill-validation.ts` 校验 OpenAI/Codex runtime skill folder 的基础可用性。
 - `src/partita/partita-skill-validation.ts` 在 runtime 层之上校验 Partita source skill contract。
+- `src/partita/projection.ts` 定义 identity、invocation、metadata 和 selector 的 deterministic projections。
 - `src/partita/pin.ts` 管理 GitHub git-subtree pins。
 - `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
@@ -43,6 +45,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 pnpm verify
 pnpm verify-runtime
 pnpm verify-source
+pnpm primitive-sync
 pnpm skill-sync
 pnpm skill-status
 pnpm skill-verify
@@ -148,6 +151,18 @@ partita verify --level project
 
 创建或修改 skill 时，直接维护 skill-local source 和 references。
 
+`primitive/` 是 authoring-time copy source。它保存可复制到 skill-local `references/` 的概念正文，例如 `primitive/case.md`。
+
+`primitive/` 不是 runtime shared reference layer。installed runtime skills MUST NOT 依赖 `primitive/`，需要的材料必须复制到自己的 `references/` 中。
+
+更新 primitive reference copies 时运行：
+
+```bash
+pnpm primitive-sync
+```
+
+`partita primitive sync` 会按内置 copy registry 把 `primitive/<name>.md` 的正文复制到对应 skill-local `references/`；如果 source 带 frontmatter，copy 时会剥离 frontmatter。`partita verify` 会检查这些 copies 没有 drift。
+
 runtime skill MUST 自包含执行所需 references；MUST NOT 依赖另一个 skill 的 `references/`。
 
 minimum shape：
@@ -176,6 +191,14 @@ skills/primitive/<name>/{scripts,references,assets}/...
 每个 Partita skill MUST 有 `agents/openai.yaml`，因为它承载 skill 的 invocation policy runtime metadata。
 
 `description` 是 Codex selector surface：保持 40-500 characters，以 `Use when` 或 `Use for` 开头，并包含 `Not for`。
+
+Partita skill creation form 使用 projection 生成 runtime surfaces：
+
+- `identity.slug` 投影为 `SKILL.md` frontmatter `name`。
+- `identity.title` 投影为 `agents/openai.yaml` 的 `interface.display_name`。
+- `identity.family + identity.slug` 投影为 handle、marker 和 source path。
+- `invocation.selector.use_when` / `do_not_use_when` 投影为 frontmatter `description` 和 `## Pattern`。
+- `invocation.policy.allow_implicit_invocation` 投影为 `agents/openai.yaml` 的 `policy.allow_implicit_invocation`。
 
 Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 

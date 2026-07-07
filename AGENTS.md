@@ -13,6 +13,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 本 repo owns：
 
 - `skills/` 下的 self-owned skill source；
+- `primitive/` 下的 skill-local reference copy source；
 - `src/partita/` 下的 TypeScript/Effect CLI、verifier、skills.sh skill runtime wrapper、chezmoi home adapter 和 pin code；
 - `tests/` 下的 executable behavior checks；
 - root operating docs：`README.md` 和 `AGENTS.md`；
@@ -40,6 +41,9 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。
 - `skills/` 是 self-owned skill source input。
 - `skills/` 下的 Partita `SKILL.md` files 是 runtime-installable skill source。
+- `primitive/` 是 Partita primitive reference body source，用来复制到 skill-local `references/`。
+- `primitive/` copy MUST 通过 `partita primitive sync` 或 `pnpm primitive-sync` 更新。
+- `primitive/` MUST NOT 被 runtime skill 当作共享 dependency；runtime skill 仍 MUST 自包含执行所需 references。
 - runtime skill MUST 自包含执行所需 references；MUST NOT 依赖另一个 skill 的 `references/`。
 - `docs/skills/`、`harness/skills/dispatcher.md`、`partita.materialize.json` 和 `MIGRATION.md` MUST NOT 恢复，除非用户显式要求从第一性原理重建设计。
 - verifier MUST hard-block removed surfaces 回流，但 MUST NOT 继续维护 dispatcher routing 或 materialization drift 规则。
@@ -80,6 +84,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 pnpm verify
 pnpm verify-runtime
 pnpm verify-source
+pnpm primitive-sync
 pnpm skill-sync
 pnpm skill-status
 pnpm skill-verify

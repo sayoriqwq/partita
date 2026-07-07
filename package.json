@@ -38,6 +38,7 @@
     "build": "rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
     "home:diff": "pnpm build && node dist/bin/partita.js home diff",
     "home:status": "pnpm build && node dist/bin/partita.js home status",
+    "primitive-sync": "pnpm build && node dist/bin/partita.js primitive sync",
     "skill-sync": "pnpm build && node dist/bin/partita.js skill sync",
     "skill-status": "pnpm build && node dist/bin/partita.js skill status",
     "skill-verify": "pnpm build && node dist/bin/partita.js skill verify",

@@ -14,6 +14,7 @@ import {
   printPinStatus,
   verifyPins,
 } from '../partita/pin.ts'
+import { printPrimitiveReferenceSync } from '../partita/primitive.ts'
 import {
   printSkillRuntimeStatus,
   printSkillRuntimeVerify,
@@ -168,6 +169,19 @@ function makeCli(config: CliConfig) {
     Command.withSubcommands([homeStatus, homeDiff, homeApply]),
   )
 
+  const primitiveSync = Command.make('sync', {
+    root,
+  }, Effect.fnUntraced(function* ({ root }) {
+    yield* printPrimitiveReferenceSync({ root })
+  })).pipe(
+    Command.withDescription('Copy primitive reference bodies into skill-local references'),
+  )
+
+  const primitive = Command.make('primitive').pipe(
+    Command.withDescription('Manage Partita primitive reference copy sources'),
+    Command.withSubcommands([primitiveSync]),
+  )
+
   const pinPlan = Command.make('plan', {
     ...pinPlanFlags,
     root,
@@ -230,7 +244,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('partita').pipe(
     Command.withDescription('Partita skill harness CLI'),
-    Command.withSubcommands([verify, skill, home, pin]),
+    Command.withSubcommands([verify, skill, home, primitive, pin]),
   )
 }
 
