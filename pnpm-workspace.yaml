@@ -1,6 +1,9 @@
 packages:
   - packages/*
 
+overrides:
+  '@sayoriqwq/prelude-contract': file:vendor/prelude-v1/sayoriqwq-prelude-contract-0.1.0.tgz
+
 allowBuilds:
   msgpackr-extract: true
 

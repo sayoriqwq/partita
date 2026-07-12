@@ -1,0 +1,8 @@
+{
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "repos/**"
+  ],
+  "javascript.preferences.autoImportFileExcludePatterns": [
+    "repos/**"
+  ]
+}

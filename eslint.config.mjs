@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config'
+import effectHarness from '@sayoriqwq/effect-harness/eslint'
 
 export default antfu(
   {
@@ -54,4 +55,4 @@ export default antfu(
       ],
     },
   },
-)
+).append(...effectHarness)

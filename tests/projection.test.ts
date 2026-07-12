@@ -1,11 +1,12 @@
 import { assert, describe, it } from '@effect/vitest'
+import * as Effect from 'effect/Effect'
 import {
   projectSkillForm,
   validateInvocationSelectorEnglish,
 } from '../src/partita/projection.ts'
 
 describe('Partita projection', () => {
-  it('projects identity from slug, family, and title', () => {
+  it.effect('projects identity from slug, family, and title', () => Effect.sync(() => {
     const projection = projectSkillForm({
       identity: {
         family: 'primitive',
@@ -38,9 +39,9 @@ describe('Partita projection', () => {
       sourcePath: 'skills/primitive/notate/',
       title: 'Notate',
     })
-  })
+  }))
 
-  it('projects non-primitive markers using the family marker convention', () => {
+  it.effect('projects non-primitive markers using the family marker convention', () => Effect.sync(() => {
     const projection = projectSkillForm({
       identity: {
         family: 'orientation',
@@ -64,9 +65,9 @@ describe('Partita projection', () => {
 
     assert.strictEqual(projection.identity.marker, '🧭')
     assert.deepStrictEqual(projection.identity.acceptedMarkers, ['🧭', '🧭 argue'])
-  })
+  }))
 
-  it('projects invocation into frontmatter, pattern, and OpenAI metadata', () => {
+  it.effect('projects invocation into frontmatter, pattern, and OpenAI metadata', () => Effect.sync(() => {
     const projection = projectSkillForm({
       identity: {
         family: 'primitive',
@@ -114,9 +115,9 @@ describe('Partita projection', () => {
         allowImplicitInvocation: false,
       },
     })
-  })
+  }))
 
-  it('reports non-English invocation selector text', () => {
+  it.effect('reports non-English invocation selector text', () => Effect.sync(() => {
     const issues = validateInvocationSelectorEnglish({
       doNotUseWhen: [
         '创建 public workflow skill',
@@ -129,5 +130,5 @@ describe('Partita projection', () => {
     assert.deepStrictEqual(issues, [
       'do_not_use_when[0] must be English selector text',
     ])
-  })
+  }))
 })

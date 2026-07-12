@@ -23,7 +23,6 @@ export interface VerifyProjectOptions {
 export type VerifyLevel = 'project' | 'runtime' | 'source'
 
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
-const wikiLinkPattern = /\[\[([^\]\n]+)\]\]/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 
 export const verifyRuntimeSkills = Effect.fn('verifyRuntimeSkills')(function* (options: VerifyProjectOptions) {
@@ -74,7 +73,6 @@ function buildSourceReport(root: string, level: VerifyLevel): ValidationReport {
   const issues = [
     ...skillResult.issues,
     ...checkMarkdownLinks(root),
-    ...checkWikiLinks(root),
     ...checkPrimitiveReferenceCopies(root),
     ...checkRemovedSurfaces(root),
     ...checkNoRootSkill(root),
@@ -103,32 +101,6 @@ function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
       }
       if (!existsSync(join(dirname(path), clean))) {
         issues.push(issue('markdown.broken_link', `broken markdown link: ${target}`, relativePath))
-      }
-    }
-  }
-  return issues
-}
-
-function checkWikiLinks(root: string): ReadonlyArray<ValidationIssue> {
-  const issues: Array<ValidationIssue> = []
-  const wikiRoot = join(root, 'packages', 'wiki')
-  for (const path of markdownFiles(root)) {
-    const relativePath = relativePathFrom(root, path)
-    const text = readText(path)
-    for (const match of text.matchAll(wikiLinkPattern)) {
-      const target = match[1]
-      if (target === undefined) {
-        continue
-      }
-
-      const clean = cleanWikiTarget(target)
-      if (!clean) {
-        continue
-      }
-
-      const targetPath = clean.endsWith('.md') ? clean : `${clean}.md`
-      if (!existsSync(join(wikiRoot, targetPath))) {
-        issues.push(issue('wiki.broken_link', `broken wiki link: ${target}`, relativePath))
       }
     }
   }
@@ -252,14 +224,6 @@ function shouldSkipPath(path: string): boolean {
 
 function isExternalLink(target: string): boolean {
   return urlPrefixes.some(prefix => target.startsWith(prefix))
-}
-
-function cleanWikiTarget(target: string): string {
-  const aliasIndex = target.indexOf('|')
-  const withoutAlias = aliasIndex === -1 ? target : target.slice(0, aliasIndex)
-  const hashIndex = withoutAlias.indexOf('#')
-  const withoutHash = hashIndex === -1 ? withoutAlias : withoutAlias.slice(0, hashIndex)
-  return withoutHash.trim().replace(/^\/+|\/+$/g, '')
 }
 
 function readText(path: string): string {

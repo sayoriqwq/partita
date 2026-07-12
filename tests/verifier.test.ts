@@ -16,11 +16,11 @@ import {
 const marker = '🧭'
 
 describe('Partita verifier', () => {
-  it('keeps score explicit invocation only', () => {
+  it.effect('keeps score explicit invocation only', () => Effect.sync(() => {
     const metadata = readFileSync('skills/primitive/score/agents/openai.yaml', 'utf8')
 
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
-  })
+  }))
 
   it.effect('accepts a valid source fixture', () =>
     Effect.gen(function* () {
@@ -363,6 +363,22 @@ describe('Partita verifier', () => {
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('surface.removed_exists'))
+    }))
+
+  it.effect('does not interpret Psychogram wikilinks while rejecting the removed wiki package', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'psychogram/managed/harness/lead.md', 'Use [[prelude|Prelude]].\n')
+
+      const psychogramReport = yield* verifySourceProject({ root })
+      assert.isTrue(psychogramReport.ok)
+      assert.deepStrictEqual(psychogramReport.issues, [])
+
+      write(root, 'packages/wiki/index.md', '# Removed wiki package\n')
+      const removedSurfaceReport = yield* verifySourceProject({ root })
+
+      assert.isFalse(removedSurfaceReport.ok)
+      assert.isTrue(removedSurfaceReport.issues.some(issue => issue.path === 'packages/wiki'))
     }))
 
   it.effect('keeps runtime, source, and project verification as separate layers', () =>

@@ -91,3 +91,17 @@ pnpm skill-verify
 pnpm home:status
 pnpm home:diff
 ```
+
+<!-- prelude:effect-harness-routing:start -->
+## Effect Harness
+
+For Effect application, test, package, TypeScript, editor, or lint changes, read `effect/managed/docs/index.md` first. For ESLint or package-config repair, read `effect/managed/docs/package-config.md`; Antfu v9 integrations use its `antfu().append(...effectHarness)` form. Keep `effect/feedback/**` target-owned. Use installed Effect packages; never import pinned source diagnostics.
+<!-- prelude:effect-harness-routing:end -->
+
+<!-- prelude:psychogram-routing:start -->
+## Psychogram protocol
+
+Route Psychogram protocol work through `psychogram/managed/harness/agents/router.md`.
+The managed protocol is maintained by the Artifact; real concept-wiki content under
+`psychogram/wikis/` remains target-owned.
+<!-- prelude:psychogram-routing:end -->

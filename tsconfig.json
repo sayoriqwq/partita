@@ -28,11 +28,11 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "options": {
-          "diagnosticSeverity": {
-            "floatingEffect": "error"
-          }
-        }
+        "diagnostics": true,
+        "includeSuggestionsInTsc": true,
+        "ignoreEffectSuggestionsInTscExitCode": false,
+        "ignoreEffectWarningsInTscExitCode": false,
+        "ignoreEffectErrorsInTscExitCode": false
       }
     ]
   }
