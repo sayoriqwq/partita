@@ -7,7 +7,7 @@ import * as Stream from 'effect/Stream'
 import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 import { PartitaError } from './errors.ts'
 
-type PinOwnershipMode = 'direct' | 'provider' | 'prelude-maintain'
+type PinOwnershipMode = 'direct'
 
 type PinPolicyDecision = 'enabled' | 'recommended' | 'disabled'
 type PinFilesExcludeDecision = 'enabled' | 'disabled'
@@ -68,7 +68,6 @@ export interface PinPlanOptions {
   readonly updateCommand?: string
   readonly verifyCommand?: string
   readonly agentRoute?: string
-  readonly ownershipMode?: PinOwnershipMode
   readonly watcherExclude?: PinPolicyDecision
   readonly searchExclude?: PinPolicyDecision
   readonly filesExclude?: PinFilesExcludeDecision
@@ -157,7 +156,6 @@ export const buildPinPlan = Effect.fn('buildPinPlan')(function* (options: PinPla
   const name = nonEmpty(options.name) ?? 'pin'
   const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
   const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath({ name, prefix }))
-  const ownershipMode = options.ownershipMode ?? (yield* defaultOwnershipMode(root))
   const agentRoute = normalizeRelativePath(nonEmpty(options.agentRoute) ?? (yield* defaultAgentRoute(root)))
   const split = nonEmpty(options.ref) ?? '<TODO:github-ref-or-subtree-split>'
   const contract: GitHubSubtreePinContract = {
@@ -193,7 +191,7 @@ export const buildPinPlan = Effect.fn('buildPinPlan')(function* (options: PinPla
       filesExclude: options.filesExclude ?? 'disabled',
     },
     ownership: {
-      mode: ownershipMode,
+      mode: 'direct',
     },
     boundaries: {
       importBlock: true,
@@ -340,10 +338,6 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
   if (!contract.boundaries.importBlock) {
     issues.push(issue('pin.import_block_missing', 'GitHub subtree pin must enable import blocking', prefix))
   }
-  if ((yield* preludeManaged(root)) && contract.ownership.mode === 'direct') {
-    issues.push(issue('pin.prelude_direct_write', 'prelude-managed targets must not use direct GitHub subtree writes', '.prelude/manifest.json'))
-  }
-
   if (contract.boundaries.importBlock && !isMissingValue(prefix)) {
     issues.push(...(yield* checkForbiddenImports(root, contract)))
   }
@@ -813,14 +807,6 @@ const defaultAgentRoute = Effect.fn('defaultAgentRoute')(function* (root: string
   return (yield* fileExists(join(root, 'AGENTS.md'))) ? 'AGENTS.md' : '<TODO:agent-route>'
 })
 
-const defaultOwnershipMode = Effect.fn('defaultOwnershipMode')(function* (root: string) {
-  return (yield* preludeManaged(root)) ? 'prelude-maintain' : 'direct'
-})
-
-const preludeManaged = Effect.fn('preludeManaged')(function* (root: string) {
-  return yield* fileExists(join(root, '.prelude', 'manifest.json'))
-})
-
 function githubRepositoryUrl(value: string): boolean {
   return /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+$/u.test(value)
     || /^git@github\.com:[^/\s]+\/[^/\s]+$/u.test(value)
@@ -888,9 +874,6 @@ function lastPathSegment(path: string): string | undefined {
 }
 
 function normalizeOwnershipMode(value: string | undefined): ParsedPinOwnershipMode {
-  if (value === 'provider' || value === 'prelude-maintain') {
-    return value
-  }
   return value === 'direct' ? 'direct' : ''
 }
 

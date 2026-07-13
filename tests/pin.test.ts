@@ -29,6 +29,7 @@ describe('Partita pins', () => {
       assert.strictEqual(plan.contract.github.repository, 'https://github.com/example/upstream.git')
       assert.strictEqual(plan.contract.local.prefix, 'repos/upstream')
       assert.strictEqual(plan.contract.mechanism, 'git-subtree')
+      assert.strictEqual(plan.contract.ownership.mode, 'direct')
       assert.strictEqual(plan.contract.anchor.llmDocument, 'repos/upstream/LLMS.md')
       assert.strictEqual(plan.contract.agent.route, 'AGENTS.md')
       assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
@@ -111,10 +112,27 @@ describe('Partita pins', () => {
       assert.isTrue(codes.includes('pin.missing'))
     }).pipe(Effect.provide(NodeServices.layer)))
 
+  it.effect('hard-blocks non-direct source ownership', () =>
+    Effect.gen(function* () {
+      const root = makeFixture()
+      write(root, 'AGENTS.md', '# Agents\n')
+      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
+      writeContract(root, {
+        ...validContract(),
+        ownership: { mode: 'artifact' },
+      })
+
+      const report = yield* inspectPins({ name: 'upstream', root })
+
+      assert.isFalse(report.ok)
+      assert.isTrue(report.issues.some(issue =>
+        issue.code === 'pin.contract_missing'
+        && issue.message.includes('pin.ownership.mode')))
+    }).pipe(Effect.provide(NodeServices.layer)))
+
   it.effect('hard-blocks unsafe GitHub subtree pin contracts', () =>
     Effect.gen(function* () {
       const root = makeFixture()
-      write(root, '.prelude/manifest.json', '{}\n')
       write(root, 'repos/upstream/.git', 'gitdir: ../.git/modules/upstream\n')
       write(root, 'src/app.ts', 'import { value } from "../repos/upstream/packages/pkg/src/index.ts"\n')
       write(root, '.vscode/settings.json', '{}\n')
@@ -144,7 +162,6 @@ describe('Partita pins', () => {
       assert.isTrue(codes.includes('pin.anchor_missing'))
       assert.isTrue(codes.includes('pin.agent_route_missing'))
       assert.isTrue(codes.includes('pin.read_only_missing'))
-      assert.isTrue(codes.includes('pin.prelude_direct_write'))
       assert.isTrue(codes.includes('pin.import_blocked'))
       assert.isTrue(codes.includes('pin.editor_vscode_auto_import_missing'))
     }).pipe(Effect.provide(NodeServices.layer)))
@@ -183,7 +200,7 @@ function validContract(): GitHubSubtreePinContract {
     mechanism: 'git-subtree',
     name: 'upstream',
     ownership: {
-      mode: 'provider',
+      mode: 'direct',
     },
     subtree: {
       split: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
@@ -197,7 +214,7 @@ function validContract(): GitHubSubtreePinContract {
   }
 }
 
-function writeContract(root: string, contract: GitHubSubtreePinContract) {
+function writeContract(root: string, contract: unknown) {
   write(root, 'repos/upstream.subtree.json', `${JSON.stringify(contract, null, 2)}\n`)
 }
 

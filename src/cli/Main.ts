@@ -55,11 +55,6 @@ const pinNameFlag = Flag.string('name').pipe(
   Flag.withDefault(''),
 )
 
-const pinOwnershipModeFlag = Flag.choice('ownership-mode', ['direct', 'provider', 'prelude-maintain'] as const).pipe(
-  Flag.withDescription('Pin ownership mode'),
-  Flag.withDefault('direct' as const),
-)
-
 function pinPolicyDecisionFlag(name: string, description: string) {
   return Flag.choice(name, ['enabled', 'recommended', 'disabled'] as const).pipe(
     Flag.withDescription(description),
@@ -79,7 +74,6 @@ const pinPlanFlags = {
   contractPath: pinContractFlag,
   filesExclude: pinFilesExcludeFlag,
   name: pinNameFlag,
-  ownershipMode: pinOwnershipModeFlag,
   prefix: Flag.string('prefix').pipe(Flag.withDescription('Local pinned prefix'), Flag.withDefault('')),
   ref: Flag.string('ref').pipe(Flag.withDescription('Pinned upstream ref or subtree split'), Flag.withDefault('')),
   repository: Flag.string('repository').pipe(Flag.withDescription('Upstream repository URL'), Flag.withDefault('')),
