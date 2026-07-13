@@ -634,7 +634,10 @@ const pinPrefixIsGitlink = Effect.fn('pinPrefixIsGitlink')(function* (root: stri
   if (result.exitCode !== 0) {
     return false
   }
-  return result.output.split(/\r?\n/u).some(line => line.startsWith('160000 '))
+  return result.output.split(/\0|\r?\n/u).some((line) => {
+    const match = line.match(/^160000 [0-9a-f]{40,64} \d\t(.+)$/u)
+    return match !== null && normalizeRelativePath(match[1]!) === normalizeRelativePath(prefix)
+  })
 })
 
 const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (

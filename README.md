@@ -127,6 +127,8 @@ repos/effect.subtree.json
 
 `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
 
+Pinned upstream 内部的 gitlinks 是 opaque reference boundaries。`partita pin verify` 只 hard-block pin prefix 本身被 materialize 为 mode `160000` 的 gitlink；不会 follow、fetch、checkout、materialize 内部 gitlink，也不要求为它们创建额外 subtree contract。
+
 ## Verification
 
 `partita verify` 默认运行完整 project 层。

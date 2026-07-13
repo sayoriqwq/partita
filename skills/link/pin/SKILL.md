@@ -18,6 +18,8 @@ Pinned Reference Tree 是 Harness-owned、reference-only 的 Target 内容，不
 
 `pin` 不是非 GitHub source、任意 external source 抽象、非 subtree mechanism、临时 clone、一次性 web fetch、`node_modules` 猜测、普通 package version pin，也不是把外部内容复制进当前项目后失去 provenance。
 
+Pinned upstream tree 内部的 gitlink 只是该 upstream 选择保留的 opaque reference boundary。它不是新的 Source Pin，也不扩张当前 pin 的 API/guide/reference scope；MUST NOT follow、fetch、checkout、materialize，MUST NOT 为它建立第二个 contract 或 update lifecycle。
+
 ## Pattern
 
 Use when:
@@ -40,6 +42,7 @@ Soft:
 - SHOULD 检测现有 `.vscode/` 和 `.zed/`，存在什么维护什么；两者 settings shape 分开处理。
 - SHOULD 把 watch/search exclude 作为明确 decision；大仓库通常选择启用或保留为推荐状态。
 - SHOULD 把 `files.exclude` 或 Zed file-scan 隐藏视为偏好项，不默认写入。
+- SHOULD 在验证 Git index 时区分 pin prefix 本身与 prefix 内部路径：只有 prefix 本身为 mode `160000` 才表示错误的 submodule materialization；内部 gitlink 保持 opaque。
 
 Hard:
 
@@ -54,6 +57,9 @@ Hard:
 
 - When: 只有 web fetch、临时 clone、`node_modules` lookup、下载件或复制粘贴内容。
   Do: MUST NOT 称其为 GitHub subtree pin。
+
+- When: pinned upstream prefix 内部含 gitlink。
+  Do: MUST 允许其作为 opaque upstream reference boundary；MAY 验证 Git index entry shape，但 MUST NOT follow/fetch/checkout/materialize、要求 sibling contract、注入 provenance relation 或建立独立 update lifecycle。pin prefix 本身若为 gitlink 仍 MUST hard block。
 
 - When: editor policy 未决。
   Do: MUST 默认阻断 auto-import；MUST 把 watch/search exclude 作为明确 decision；MUST NOT 默认隐藏 repo。
@@ -74,7 +80,7 @@ Hard:
 
 - Conversation: MAY 展示 GitHub subtree pin contract、缺失 decisions、hard block issue codes、editor policy decisions 和验证结果。
 - Filesystem: Source Pin 阶段 MAY 在批准 scope 内写入 `repos/<name>.subtree.json` 或由 owning command materialize 的 pinned prefix；Prelude-managed Target 阶段 MUST 保持无 pin 写入。
-- External: Source Pin 阶段 MAY 通过 git/GitHub locator 读取 ref/trailer metadata，materialize、update 和 verify MUST 走 Partita CLI 或 owning command；Target delivery MUST 保持离线且不运行 Git。
+- External: Source Pin 阶段 MAY 通过 git/GitHub locator 读取当前 pin 的 ref/trailer metadata，materialize、update 和 verify MUST 走 Partita CLI 或 owning command；MUST NOT follow upstream-internal gitlinks；Target delivery MUST 保持离线且不运行 Git。
 
 ## Workflow
 
@@ -84,7 +90,7 @@ Hard:
 4. 决定 editor policy：auto-import exclude 默认 block；watch/search exclude 明确选择；files/repo hide 只有用户选择时启用；VSCode 和 Zed 分开处理。
 5. 运行 `partita pin plan` 生成只读 `repos/<name>.subtree.json` contract 和 editor settings shape。
 6. 使用 `partita pin status --name <name> --prefix repos/<name>` 检查当前 pinned prefix、anchor、route、subtree split/trailer 和 editor state。
-7. 使用 `partita pin verify --name <name> --prefix repos/<name>` hard block source 缺失、gitlink/submodule、缺 split/trailer、非 GitHub URL、非 subtree mechanism、错误 import 和缺 anchor/route。
+7. 使用 `partita pin verify --name <name> --prefix repos/<name>` hard block source 缺失、pin prefix 本身为 gitlink/submodule、缺 split/trailer、非 GitHub URL、非 subtree mechanism、错误 import 和缺 anchor/route；prefix 内部 gitlink 只作为 opaque upstream boundary，不 follow。
 8. 若 owning Harness 需要 Target delivery，向其 Artifact build 交付 Source Pin contract/prefix；Target 侧只接受 Prelude 离线 convergence 的 Pinned Reference Tree。
 9. 汇报 changed files、contract path、CLI commands、hard block 覆盖点和验证结果。
 
@@ -102,6 +108,7 @@ Before done:
 - 已明确区分 Source Pin 与 Prelude-managed Target delivery；
 - `repos/<name>.subtree.json` contract 明确 GitHub repository、branch/ref、local prefix、`git-subtree` mechanism、subtree split/trailer、anchor/LLM doc、update command、verify command、agent route、editor policy、`direct` ownership 和 read-only/import block；
 - 默认 contract path 与 subtree prefix 并列，且未回落到 `.partita`；
+- pin prefix 本身不是 gitlink/submodule；upstream-internal gitlinks 没有被 follow/fetch/materialize，也没有产生第二个 contract 或 lifecycle；
 - 没有接受非 GitHub source 或非 subtree mechanism；
 - 没有把 web fetch、临时 clone、`node_modules` lookup、下载件或 copied material 称为 pin；
 - editor policy 默认阻断 auto-import，watch/search exclude 有明确 decision，files/repo hide 没有默认启用；
