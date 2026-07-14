@@ -22,7 +22,7 @@ type ParsedPinPolicyDecision = PinPolicyDecision | ''
 type ParsedPinFilesExcludeDecision = PinFilesExcludeDecision | ''
 
 export interface GitHubSubtreePinContract {
-  readonly schemaVersion: 1
+  readonly schemaVersion: number
   readonly name: string
   readonly github: {
     readonly repository: string
@@ -247,6 +247,23 @@ export const inspectPins = Effect.fn('inspectPins')(function* (options: PinComma
   return yield* buildPinReport(root, contractPath, contract)
 })
 
+const inspectPublicationSource = Effect.fn('inspectPublicationSource')(function* (options: PinCommandOptions) {
+  const root = resolve(options.root)
+  const defaultPathOptions: { name?: string, prefix?: string } = {}
+  const name = nonEmpty(options.name)
+  const prefix = nonEmpty(options.prefix)
+  if (name !== undefined) {
+    defaultPathOptions.name = name
+  }
+  if (prefix !== undefined) {
+    defaultPathOptions.prefix = prefix
+  }
+  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath(defaultPathOptions))
+  const contract = yield* readGitHubSubtreeContract(root, contractPath)
+  const issues = yield* checkPublicationSourceContract(root, contractPath, contract)
+  return { contract, contractPath, issues, ok: issues.length === 0 }
+})
+
 export const printPinPlan = Effect.fn('printPinPlan')(function* (options: PinPlanOptions) {
   const plan = yield* buildPinPlan(options)
   yield* Console.log(`GitHub subtree pin plan: ${plan.contractPath}`)
@@ -290,7 +307,7 @@ export const verifyPins = Effect.fn('verifyPins')(function* (options: PinCommand
 
 const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOptions) {
   const root = resolve(options.root)
-  const report = yield* inspectPins(options)
+  const report = yield* inspectPublicationSource(options)
   if (!report.ok) {
     return yield* Effect.fail(new PartitaError([
       'GitHub subtree pin verification failed:',
@@ -298,10 +315,11 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
     ].join('\n')))
   }
 
-  const contract = yield* readGitHubSubtreeContract(root, report.contractPath)
-  const entries = yield* sourcePinArchiveEntries(root, contract)
+  const contract = report.contract
+  const snapshot = yield* sourcePinArchiveEntries(root, contract)
+  yield* assertSourcePinUnmodified(root, contract.local.prefix, snapshot.opaqueGitlinks)
   const encoded = yield* Effect.try({
-    try: () => encodeCanonicalTreeArchive(entries),
+    try: () => encodeCanonicalTreeArchive(snapshot.entries),
     catch: cause => new PartitaError(`Encode Source Pin archive: ${formatUnknown(cause)}`),
   })
   const publication: SourcePinPublication = {
@@ -317,16 +335,31 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
 
   const archive = yield* parsePublicationOutputPath(root, options.archivePath, 'archive')
   const provenance = yield* parsePublicationOutputPath(root, options.provenancePath, 'provenance')
+  for (const output of [archive, provenance]) {
+    if (pathIsSameOrInside(output.relativePath, contract.local.prefix)) {
+      return yield* Effect.fail(new PartitaError(
+        `Source Pin publication output must be outside Source Pin prefix ${contract.local.prefix}: ${output.relativePath}`,
+      ))
+    }
+  }
   if (archive.relativePath === provenance.relativePath) {
     return yield* Effect.fail(new PartitaError('Source Pin archive and provenance paths must be different.'))
   }
 
   const fs = yield* FileSystem.FileSystem
+  yield* assertPublicationOutputParentConfined(root, archive.absolutePath)
+  yield* assertPublicationOutputParentConfined(root, provenance.absolutePath)
   yield* fs.makeDirectory(dirname(archive.absolutePath), { recursive: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Create ${dirname(archive.relativePath)}: ${formatUnknown(cause)}`)),
   )
   yield* fs.makeDirectory(dirname(provenance.absolutePath), { recursive: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Create ${dirname(provenance.relativePath)}: ${formatUnknown(cause)}`)),
+  )
+  yield* fs.remove(archive.absolutePath, { force: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Replace ${archive.relativePath}: ${formatUnknown(cause)}`)),
+  )
+  yield* fs.remove(provenance.absolutePath, { force: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Replace ${provenance.relativePath}: ${formatUnknown(cause)}`)),
   )
   yield* fs.writeFile(archive.absolutePath, encoded.bytes).pipe(
     Effect.mapError(cause => new PartitaError(`Write ${archive.relativePath}: ${formatUnknown(cause)}`)),
@@ -383,6 +416,9 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
   contract: GitHubSubtreePinContract,
 ) {
   const issues: Array<PinIssue> = [
+    ...(contract.schemaVersion === 1
+      ? []
+      : [issue('pin.schema_version_invalid', `unsupported Source Pin contract schema version: ${contract.schemaVersion}`)]),
     ...checkRequiredContractFields(contract),
     ...checkRelativeContractPaths(contract),
     ...checkGitHubOnly(contract),
@@ -427,6 +463,57 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
   return issues
 })
 
+const checkPublicationSourceContract = Effect.fn('checkPublicationSourceContract')(function* (
+  root: string,
+  contractPath: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const issues: Array<PinIssue> = [
+    ...(contract.schemaVersion === 1
+      ? []
+      : [issue('pin.schema_version_invalid', `unsupported Source Pin contract schema version: ${contract.schemaVersion}`)]),
+    ...checkRequiredPublicationFields(contract),
+    ...(validRelativePath(contract.local.prefix)
+      ? []
+      : [issue('pin.path_invalid', `pin.local.prefix must be a relative path inside the source repo: ${contract.local.prefix}`, contract.local.prefix)]),
+    ...checkGitHubOnly(contract),
+    ...checkGitSubtreeOnly(contract),
+    ...checkContractPathOutsidePrefix(contractPath, contract),
+  ]
+  const prefix = contract.local.prefix
+  const prefixPath = resolve(root, prefix)
+  if (!isMissingValue(prefix) && !(yield* fileExists(prefixPath))) {
+    issues.push(issue('pin.missing', `pin prefix is missing: ${prefix}`, prefix))
+  }
+  if (!isMissingValue(prefix) && (yield* pinPrefixIsGitlink(root, prefix))) {
+    issues.push(issue('pin.gitlink', `pin prefix must be a git subtree checkout, not a submodule or gitlink: ${prefix}`, prefix))
+  }
+  if (!isMissingValue(prefix) && (yield* fileExists(join(prefixPath, '.git')))) {
+    issues.push(issue('pin.gitlink', `pin prefix contains nested git metadata: ${prefix}/.git`, `${prefix}/.git`))
+  }
+  if (!contract.boundaries.readOnly) {
+    issues.push(issue('pin.read_only_missing', 'GitHub subtree pin must be marked read-only', prefix))
+  }
+  return issues
+})
+
+function checkRequiredPublicationFields(contract: GitHubSubtreePinContract): ReadonlyArray<PinIssue> {
+  const fields = [
+    ['pin.name', contract.name],
+    ['pin.github.repository', contract.github.repository],
+    ['pin.github.branch', contract.github.branch],
+    ['pin.github.ref', contract.github.ref || contract.subtree.split || contract.subtree.trailer],
+    ['pin.local.prefix', contract.local.prefix],
+    ['pin.mechanism', contract.mechanism],
+    ['pin.subtree.split', contract.subtree.split || contract.github.ref],
+    ['pin.subtree.trailer', contract.subtree.trailer],
+    ['pin.ownership.mode', contract.ownership.mode],
+  ] as const
+  return fields
+    .filter(([, value]) => isMissingValue(value))
+    .map(([field]) => issue('pin.contract_missing', `missing GitHub subtree pin contract field: ${field}`))
+}
+
 function normalizeGitHubSubtreeContract(raw: unknown): GitHubSubtreePinContract {
   const value = recordAt(raw)
   const github = recordAt(value.github)
@@ -443,7 +530,7 @@ function normalizeGitHubSubtreeContract(raw: unknown): GitHubSubtreePinContract 
   const split = stringAt(subtree.split) ?? stringAt(value.split) ?? stringAt(legacyPin.ref) ?? ''
 
   return {
-    schemaVersion: value.schemaVersion === 1 ? 1 : 1,
+    schemaVersion: typeof value.schemaVersion === 'number' ? value.schemaVersion : 0,
     name: stringAt(value.name) ?? lastPathSegment(stringAt(local.prefix) ?? stringAt(value.prefix) ?? '') ?? '',
     github: {
       repository: stringAt(github.repository) ?? stringAt(upstream.repository) ?? stringAt(value.repository) ?? '',
@@ -707,18 +794,8 @@ function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
 }
 
 const pinPrefixIsGitlink = Effect.fn('pinPrefixIsGitlink')(function* (root: string, prefix: string) {
-  const executor = yield* CommandExecutor
-  const result = yield* executor.run({
-    args: ['ls-files', '--stage', '--', prefix],
-    command: 'git',
-    cwd: root,
-  })
-  if (result.exitCode !== 0) {
-    return yield* Effect.fail(new PartitaError(
-      `Inspect git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
-    ))
-  }
-  return result.output.split(/\0|\r?\n/u).some((line) => {
+  const output = yield* inspectSourcePinGitIndex(root, prefix)
+  return output.split(/\0|\r?\n/u).some((line) => {
     const match = line.match(/^160000 [0-9a-f]{40,64} \d\t(.+)$/u)
     return match !== null && normalizeRelativePath(match[1]!) === normalizeRelativePath(prefix)
   })
@@ -810,25 +887,15 @@ const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
     })
   }
 
-  return entries
+  return { entries, opaqueGitlinks }
 })
 
 const sourcePinGitIndex = Effect.fn('sourcePinGitIndex')(function* (root: string, prefix: string) {
-  const executor = yield* CommandExecutor
-  const result = yield* executor.run({
-    args: ['ls-files', '--stage', '--', prefix],
-    command: 'git',
-    cwd: root,
-  })
-  if (result.exitCode !== 0) {
-    return yield* Effect.fail(new PartitaError(
-      `Inspect Git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
-    ))
-  }
+  const output = yield* inspectSourcePinGitIndex(root, prefix)
 
   const entries: Array<GitIndexEntry> = []
   const seen = new Set<string>()
-  for (const line of result.output.split(/\0|\r?\n/u).filter(Boolean)) {
+  for (const line of output.split(/\0|\r?\n/u).filter(Boolean)) {
     const match = /^(\d{6}) [0-9a-f]{40,64} \d\t(.+)$/u.exec(line)
     if (match === null) {
       return yield* Effect.fail(new PartitaError(`Cannot decode Source Pin Git index entry: ${line}`))
@@ -854,6 +921,51 @@ const sourcePinGitIndex = Effect.fn('sourcePinGitIndex')(function* (root: string
   return entries
 })
 
+const inspectSourcePinGitIndex = Effect.fn('inspectSourcePinGitIndex')(function* (root: string, prefix: string) {
+  const executor = yield* CommandExecutor
+  const result = yield* executor.run({
+    args: ['ls-files', '--stage', '--', prefix],
+    command: 'git',
+    cwd: root,
+  })
+  if (result.exitCode !== 0) {
+    return yield* Effect.fail(new PartitaError(
+      `Inspect git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
+    ))
+  }
+  return result.output
+})
+
+const assertSourcePinUnmodified = Effect.fn('assertSourcePinUnmodified')(function* (
+  root: string,
+  prefix: string,
+  opaqueGitlinks: ReadonlyArray<string>,
+) {
+  const executor = yield* CommandExecutor
+  for (const check of [
+    { args: ['diff', '--name-only', '--', prefix], message: 'Source Pin working tree differs from its Git index' },
+    { args: ['diff', '--cached', '--name-only', '--', prefix], message: 'Source Pin Git index differs from its committed tree' },
+  ] as const) {
+    const result = yield* executor.run({ args: check.args, command: 'git', cwd: root })
+    if (result.exitCode !== 0) {
+      return yield* Effect.fail(new PartitaError(
+        `Inspect Git state for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
+      ))
+    }
+    const changedPaths = result.output.split(/\r?\n/u).filter(Boolean).filter((path) => {
+      const normalizedPath = normalizeRelativePath(path)
+      if (!normalizedPath.startsWith(`${prefix}/`)) {
+        return true
+      }
+      const sourcePath = normalizedPath.slice(prefix.length + 1)
+      return !opaqueGitlinks.some(gitlink => pathIsSameOrInside(sourcePath, gitlink))
+    })
+    if (changedPaths.length > 0) {
+      return yield* Effect.fail(new PartitaError(`${check.message}: ${prefix}`))
+    }
+  }
+})
+
 const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(function* (
   root: string,
   value: string,
@@ -864,6 +976,33 @@ const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(funct
     return yield* Effect.fail(new PartitaError(`Source Pin ${label} path must be relative to the repository root: ${value}`))
   }
   return { absolutePath: resolve(root, relativePath), relativePath }
+})
+
+const assertPublicationOutputParentConfined = Effect.fn('assertPublicationOutputParentConfined')(function* (
+  root: string,
+  outputPath: string,
+) {
+  const fs = yield* FileSystem.FileSystem
+  let existingParent = dirname(outputPath)
+  while (!(yield* fileExists(existingParent))) {
+    const next = dirname(existingParent)
+    if (next === existingParent) {
+      return yield* Effect.fail(new PartitaError(`Cannot resolve Source Pin publication output parent: ${outputPath}`))
+    }
+    existingParent = next
+  }
+  const [realRoot, realParent] = yield* Effect.all([
+    fs.realPath(root).pipe(
+      Effect.mapError(cause => new PartitaError(`Resolve repository root ${root}: ${formatUnknown(cause)}`)),
+    ),
+    fs.realPath(existingParent).pipe(
+      Effect.mapError(cause => new PartitaError(`Resolve output parent ${existingParent}: ${formatUnknown(cause)}`)),
+    ),
+  ])
+  const parentFromRoot = relative(realRoot, realParent)
+  if (isAbsolute(parentFromRoot) || parentFromRoot === '..' || parentFromRoot.startsWith(`..${sep}`)) {
+    return yield* Effect.fail(new PartitaError(`Source Pin publication output parent escapes the repository: ${outputPath}`))
+  }
 })
 
 function compareText(left: string, right: string): number {

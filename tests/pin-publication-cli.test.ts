@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process'
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -78,6 +79,17 @@ describe('partita pin publish CLI', () => {
     assertOutputsAbsent(root, 'missing')
   }))
 
+  it.effect('rejects tracked Source Pin content modified after the pinned commit', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream/README.md', 'locally modified\n')
+
+    const result = publish(root, 'modified')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'Source Pin working tree differs from its Git index')
+    assertOutputsAbsent(root, 'modified')
+  }))
+
   it.effect('rejects a Source Pin prefix materialized as a Gitlink', () => Effect.sync(() => {
     const root = makeFixture()
     git(root, 'rm', '-r', '--cached', 'repos/upstream')
@@ -88,6 +100,62 @@ describe('partita pin publish CLI', () => {
     assert.notEqual(result.status, 0)
     assert.include(result.stderr, 'pin prefix must be a git subtree checkout')
     assertOutputsAbsent(root, 'gitlink')
+  }))
+
+  it.effect('rejects an unsupported Source Pin contract schema version', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({ ...contract(), schemaVersion: 2 }, null, 2)}\n`)
+
+    const result = publish(root, 'schema-version')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'unsupported Source Pin contract schema version: 2')
+    assertOutputsAbsent(root, 'schema-version')
+  }))
+
+  it.effect('publishes independently of Harness delivery routes, anchors, and editor policy', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({
+      ...contract(),
+      agent: { route: 'delivery/missing-route.md' },
+      anchor: { llmDocument: 'delivery/missing-anchor.md' },
+      editorPolicy: {
+        autoImportExclude: '',
+        filesExclude: 'disabled',
+        searchExclude: 'disabled',
+        watcherExclude: 'disabled',
+      },
+    }, null, 2)}\n`)
+
+    const result = publish(root, 'policy-independent')
+
+    assert.equal(result.status, 0, result.stderr || result.stdout)
+  }))
+
+  it.effect('rejects publication outputs inside the read-only Source Pin prefix', () => Effect.sync(() => {
+    const root = makeFixture()
+    const archive = 'repos/upstream/out/archive.pta'
+    const provenance = 'repos/upstream/out/provenance.json'
+
+    const result = publish(root, 'inside-pin', { archive, provenance })
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'must be outside Source Pin prefix repos/upstream')
+    assert.isFalse(existsSync(join(root, archive)))
+    assert.isFalse(existsSync(join(root, provenance)))
+  }))
+
+  it.effect('rejects publication through an output parent symlink that escapes the repository', () => Effect.sync(() => {
+    const root = makeFixture()
+    const outside = mkdtempSync(join(tmpdir(), 'partita-pin-publication-outside-'))
+    symlinkSync(outside, join(root, 'out'))
+
+    const result = publish(root, 'escaping-output')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'output parent escapes the repository')
+    assert.isFalse(existsSync(join(outside, 'escaping-output.pta')))
+    assert.isFalse(existsSync(join(outside, 'escaping-output.json')))
   }))
 
   it.effect('rejects an escaping symbolic link', () => Effect.sync(() => {
@@ -122,7 +190,14 @@ describe('partita pin publish CLI', () => {
   }))
 })
 
-function publish(root: string, outputName: string) {
+function publish(
+  root: string,
+  outputName: string,
+  paths: { readonly archive: string, readonly provenance: string } = {
+    archive: `out/${outputName}.pta`,
+    provenance: `out/${outputName}.json`,
+  },
+) {
   return spawnSync(process.execPath, [
     '--experimental-strip-types',
     cliEntrypoint,
@@ -133,9 +208,9 @@ function publish(root: string, outputName: string) {
     '--name',
     'upstream',
     '--archive',
-    `out/${outputName}.pta`,
+    paths.archive,
     '--provenance',
-    `out/${outputName}.json`,
+    paths.provenance,
   ], {
     cwd: repositoryRoot,
     encoding: 'utf8',
