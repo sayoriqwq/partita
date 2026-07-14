@@ -1,9 +1,10 @@
-import type { ValidationIssue, ValidationReport } from './validation.ts'
+/* eslint-disable ts/no-use-before-define */
+import type { ValidationIssue } from './validation.ts'
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
 import { PartitaError } from './errors.ts'
 import {
   checkOpenAiRuntimeSkillFiles,
@@ -26,21 +27,17 @@ const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 
 export const verifyRuntimeSkills = Effect.fn('verifyRuntimeSkills')(function* (options: VerifyProjectOptions) {
-  return yield* Effect.sync(() => {
-    const root = resolve(options.root)
-    return reportFromIssues(checkOpenAiRuntimeSkillFiles(root).issues)
-  })
+  const result = yield* checkOpenAiRuntimeSkillFiles(resolve(options.root))
+  return reportFromIssues(result.issues)
 })
 
 export const verifyPartitaSourceSkills = Effect.fn('verifyPartitaSourceSkills')(function* (options: VerifyProjectOptions) {
-  return yield* Effect.sync(() => {
-    const root = resolve(options.root)
-    return reportFromIssues(checkPartitaSourceSkillFiles(root).issues)
-  })
+  const result = yield* checkPartitaSourceSkillFiles(resolve(options.root))
+  return reportFromIssues(result.issues)
 })
 
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {
-  return yield* Effect.sync(() => buildSourceReport(resolve(options.root), options.level ?? 'project'))
+  return yield* buildSourceReport(resolve(options.root), options.level ?? 'project')
 })
 
 export const verifyProject = Effect.fn('verifyProject')(function* (options: VerifyProjectOptions) {
@@ -61,30 +58,33 @@ function formatIssue(issue: ValidationIssue): string {
   return issue.path ? `${issue.path}: ${issue.message}` : issue.message
 }
 
-function buildSourceReport(root: string, level: VerifyLevel): ValidationReport {
+const buildSourceReport = Effect.fn('buildSourceReport')(function* (root: string, level: VerifyLevel) {
   if (level === 'runtime') {
-    return reportFromIssues(checkOpenAiRuntimeSkillFiles(root).issues)
+    const result = yield* checkOpenAiRuntimeSkillFiles(root)
+    return reportFromIssues(result.issues)
   }
   if (level === 'source') {
-    return reportFromIssues(checkPartitaSourceSkillFiles(root).issues)
+    const result = yield* checkPartitaSourceSkillFiles(root)
+    return reportFromIssues(result.issues)
   }
 
-  const skillResult = checkPartitaSourceSkillFiles(root)
+  const fs = yield* FileSystem.FileSystem
+  const skillResult = yield* checkPartitaSourceSkillFiles(root)
   const issues = [
     ...skillResult.issues,
-    ...checkMarkdownLinks(root),
-    ...checkPrimitiveReferenceCopies(root),
-    ...checkRemovedSurfaces(root),
-    ...checkNoRootSkill(root),
+    ...(yield* checkMarkdownLinks(fs, root)),
+    ...(yield* checkPrimitiveReferenceCopies(fs, root)),
+    ...(yield* checkRemovedSurfaces(fs, root)),
+    ...(yield* checkNoRootSkill(fs, root)),
   ]
   return reportFromIssues(issues)
-}
+})
 
-function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
+const checkMarkdownLinks = Effect.fn('checkMarkdownLinks')(function* (fs: FileSystem.FileSystem, root: string) {
   const issues: Array<ValidationIssue> = []
-  for (const path of markdownFiles(root)) {
+  for (const path of yield* markdownFiles(fs, root)) {
     const relativePath = relativePathFrom(root, path)
-    const text = readText(path)
+    const text = yield* readText(fs, path)
     for (const match of text.matchAll(linkPattern)) {
       const target = match[1]
       if (target === undefined) {
@@ -99,15 +99,15 @@ function checkMarkdownLinks(root: string): ReadonlyArray<ValidationIssue> {
       if (!clean) {
         continue
       }
-      if (!existsSync(join(dirname(path), clean))) {
+      if (!(yield* pathExists(fs, join(dirname(path), clean)))) {
         issues.push(issue('markdown.broken_link', `broken markdown link: ${target}`, relativePath))
       }
     }
   }
   return issues
-}
+})
 
-function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
+const checkRemovedSurfaces = Effect.fn('checkRemovedSurfaces')(function* (fs: FileSystem.FileSystem, root: string) {
   const removed = [
     ['VERSION', 'deprecated VERSION file must not exist'],
     ['AGENTS.profile.md', 'removed profile file must not exist'],
@@ -144,30 +144,42 @@ function checkRemovedSurfaces(root: string): ReadonlyArray<ValidationIssue> {
     ['dist/partita.zip', 'removed zip artifact must not exist'],
   ] as const
 
-  return removed
-    .filter(([path]) => existsSync(join(root, path)))
-    .map(([path, message]) => issue('surface.removed_exists', message, path))
-}
+  const issues: Array<ValidationIssue> = []
+  for (const [path, message] of removed) {
+    if (yield* pathExists(fs, join(root, path))) {
+      issues.push(issue('surface.removed_exists', message, path))
+    }
+  }
+  return issues
+})
 
-function checkPrimitiveReferenceCopies(root: string): ReadonlyArray<ValidationIssue> {
+const checkPrimitiveReferenceCopies = Effect.fn('checkPrimitiveReferenceCopies')(function* (
+  fs: FileSystem.FileSystem,
+  root: string,
+) {
   const issues: Array<ValidationIssue> = []
 
   for (const copy of primitiveReferenceCopySpecs) {
     const sourcePath = join(root, copy.sourcePath)
     const targets = copy.targetPaths.map(targetPath => join(root, targetPath))
-    if (!existsSync(sourcePath) && targets.every(targetPath => !existsSync(targetPath))) {
+    const sourceExists = yield* pathExists(fs, sourcePath)
+    const targetExists: Array<boolean> = []
+    for (const targetPath of targets) {
+      targetExists.push(yield* pathExists(fs, targetPath))
+    }
+    if (!sourceExists && targetExists.every(exists => !exists)) {
       continue
     }
 
-    if (!existsSync(sourcePath)) {
+    if (!sourceExists) {
       issues.push(issue('primitive_reference.missing_source', 'missing primitive reference source', copy.sourcePath))
       continue
     }
 
-    const sourceText = primitiveReferenceBody(readText(sourcePath))
-    for (const referencePath of targets) {
+    const sourceText = primitiveReferenceBody(yield* readText(fs, sourcePath))
+    for (const [index, referencePath] of targets.entries()) {
       const relativeReferencePath = relativePathFrom(root, referencePath)
-      if (!existsSync(referencePath)) {
+      if (!targetExists[index]) {
         issues.push(issue(
           'primitive_reference.missing_target',
           `missing skill-local copy for ${copy.sourcePath}`,
@@ -175,7 +187,7 @@ function checkPrimitiveReferenceCopies(root: string): ReadonlyArray<ValidationIs
         ))
         continue
       }
-      if (readText(referencePath) !== sourceText) {
+      if ((yield* readText(fs, referencePath)) !== sourceText) {
         issues.push(issue(
           'primitive_reference.copy_drift',
           `skill-local reference must match ${copy.sourcePath} exactly`,
@@ -186,29 +198,34 @@ function checkPrimitiveReferenceCopies(root: string): ReadonlyArray<ValidationIs
   }
 
   return issues
-}
+})
 
-function checkNoRootSkill(root: string): ReadonlyArray<ValidationIssue> {
-  return existsSync(join(root, 'SKILL.md'))
+const checkNoRootSkill = Effect.fn('checkNoRootSkill')(function* (fs: FileSystem.FileSystem, root: string) {
+  return (yield* pathExists(fs, join(root, 'SKILL.md')))
     ? [issue('root_skill.forbidden', 'source root SKILL.md is not allowed', 'SKILL.md')]
     : []
-}
+})
 
-function markdownFiles(root: string): ReadonlyArray<string> {
+const markdownFiles = Effect.fn('markdownFiles')(function* (fs: FileSystem.FileSystem, root: string) {
   const files: Array<string> = []
-  walk(root, files)
+  yield* walk(fs, root, files)
   return files.sort()
-}
+})
 
-function walk(path: string, files: Array<string>) {
+const walk = Effect.fn('walkMarkdownFiles')(function* (
+  fs: FileSystem.FileSystem,
+  path: string,
+  files: Array<string>,
+): Effect.fn.Return<void, PartitaError> {
   if (shouldSkipPath(path)) {
     return
   }
 
-  const stat = statSync(path)
-  if (stat.isDirectory()) {
-    for (const entry of readdirSync(path)) {
-      walk(join(path, entry), files)
+  const stat = yield* fs.stat(path).pipe(Effect.mapError(cause => fileSystemError(`Stat ${path}`, cause)))
+  if (stat.type === 'Directory') {
+    const entries = yield* fs.readDirectory(path).pipe(Effect.mapError(cause => fileSystemError(`Read directory ${path}`, cause)))
+    for (const entry of entries) {
+      yield* walk(fs, join(path, entry), files)
     }
     return
   }
@@ -216,7 +233,7 @@ function walk(path: string, files: Array<string>) {
   if (path.endsWith('.md')) {
     files.push(path)
   }
-}
+})
 
 function shouldSkipPath(path: string): boolean {
   return path.split(sep).some(part => part === '.git' || part === 'assets' || part === 'node_modules')
@@ -226,8 +243,14 @@ function isExternalLink(target: string): boolean {
   return urlPrefixes.some(prefix => target.startsWith(prefix))
 }
 
-function readText(path: string): string {
-  return readFileSync(path, 'utf8')
+const pathExists = Effect.fn('verifierPathExists')((fs: FileSystem.FileSystem, path: string) =>
+  fs.exists(path).pipe(Effect.mapError(cause => fileSystemError(`Check ${path}`, cause))))
+
+const readText = Effect.fn('verifierReadText')((fs: FileSystem.FileSystem, path: string) =>
+  fs.readFileString(path).pipe(Effect.mapError(cause => fileSystemError(`Read ${path}`, cause))))
+
+function fileSystemError(operation: string, cause: unknown): PartitaError {
+  return new PartitaError(`${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
 }
 
 function relativePathFrom(root: string, path: string): string {

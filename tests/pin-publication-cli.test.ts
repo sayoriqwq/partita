@@ -1,0 +1,213 @@
+import { execFileSync, spawnSync } from 'node:child_process'
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { assert, describe, it } from '@effect/vitest'
+import * as Effect from 'effect/Effect'
+
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const cliEntrypoint = join(repositoryRoot, 'bin/partita.ts')
+
+describe('partita pin publish CLI', () => {
+  it.effect('publishes byte-identical canonical archives and provenance for identical verified input', () => Effect.sync(() => {
+    const root = makeFixture()
+    const first = publish(root, 'first')
+    const second = publish(root, 'second')
+
+    assert.equal(first.status, 0, first.stderr || first.stdout)
+    assert.equal(second.status, 0, second.stderr || second.stdout)
+    assert.deepEqual(
+      readFileSync(join(root, 'out/first.pta')),
+      readFileSync(join(root, 'out/second.pta')),
+    )
+    assert.equal(
+      readFileSync(join(root, 'out/first.json'), 'utf8'),
+      readFileSync(join(root, 'out/second.json'), 'utf8'),
+    )
+    assert.deepEqual(JSON.parse(readFileSync(join(root, 'out/first.json'), 'utf8')), {
+      archive: {
+        format: 'prelude-canonical-tree-archive-v1',
+      },
+      name: 'upstream',
+      provenance: {
+        revision: 'a'.repeat(40),
+        sourceUrl: 'https://github.com/example/upstream',
+        treeDigest: 'c43c1959a0685c185aafa326973dadcf621cca636084a360564523fbb4ceea40',
+      },
+      schemaVersion: 1,
+    })
+  }))
+
+  it.effect('omits internal Gitlinks as opaque reference boundaries', () => Effect.sync(() => {
+    const root = makeFixture()
+    git(root, 'update-index', '--add', '--cacheinfo', `160000,${'b'.repeat(40)},repos/upstream/vendor`)
+
+    const result = publish(root, 'opaque')
+
+    assert.equal(result.status, 0, result.stderr || result.stdout)
+    assert.match(readFileSync(join(root, 'out/opaque.json'), 'utf8'), /"treeDigest": "[a-f0-9]{64}"/u)
+  }))
+
+  it.effect('rejects an untracked entry inside the Source Pin', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream/untracked.txt', 'not in the index\n')
+
+    const result = publish(root, 'untracked')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'Untracked Source Pin entry: untracked.txt')
+    assertOutputsAbsent(root, 'untracked')
+  }))
+
+  it.effect('rejects a tracked entry missing from the working tree', () => Effect.sync(() => {
+    const root = makeFixture()
+    execFileSync('rm', [join(root, 'repos/upstream/README.md')])
+
+    const result = publish(root, 'missing')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'Tracked Source Pin entry is missing: README.md')
+    assertOutputsAbsent(root, 'missing')
+  }))
+
+  it.effect('rejects a Source Pin prefix materialized as a Gitlink', () => Effect.sync(() => {
+    const root = makeFixture()
+    git(root, 'rm', '-r', '--cached', 'repos/upstream')
+    git(root, 'update-index', '--add', '--cacheinfo', `160000,${'b'.repeat(40)},repos/upstream`)
+
+    const result = publish(root, 'gitlink')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'pin prefix must be a git subtree checkout')
+    assertOutputsAbsent(root, 'gitlink')
+  }))
+
+  it.effect('rejects an escaping symbolic link', () => Effect.sync(() => {
+    const root = makeFixture()
+    symlinkSync('../../outside', join(root, 'repos/upstream/escape'))
+    git(root, 'add', 'repos/upstream/escape')
+
+    const result = publish(root, 'unsafe-link')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'Unsafe Source Pin symbolic link: escape -> ../../outside')
+    assertOutputsAbsent(root, 'unsafe-link')
+  }))
+
+  it.effect('rejects unsupported working-tree entries and Git inspection failures', () => Effect.sync(() => {
+    const unsupportedRoot = makeFixture()
+    const source = join(unsupportedRoot, 'repos/upstream/README.md')
+    execFileSync('rm', [source])
+    execFileSync('mkfifo', [source])
+    const unsupported = publish(unsupportedRoot, 'unsupported')
+
+    assert.notEqual(unsupported.status, 0)
+    assert.include(unsupported.stderr, 'Unsupported Source Pin entry: README.md')
+    assertOutputsAbsent(unsupportedRoot, 'unsupported')
+
+    const noGitRoot = makeFixture({ initializeGit: false })
+    const noGit = publish(noGitRoot, 'git-failure')
+
+    assert.notEqual(noGit.status, 0)
+    assert.include(noGit.stderr, 'Inspect git index for repos/upstream')
+    assertOutputsAbsent(noGitRoot, 'git-failure')
+  }))
+})
+
+function publish(root: string, outputName: string) {
+  return spawnSync(process.execPath, [
+    '--experimental-strip-types',
+    cliEntrypoint,
+    'pin',
+    'publish',
+    '--root',
+    root,
+    '--name',
+    'upstream',
+    '--archive',
+    `out/${outputName}.pta`,
+    '--provenance',
+    `out/${outputName}.json`,
+  ], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+    env: { ...process.env, NODE_NO_WARNINGS: '1' },
+  })
+}
+
+function makeFixture(options: { readonly initializeGit?: boolean } = {}): string {
+  const root = mkdtempSync(join(tmpdir(), 'partita-pin-publication-'))
+  write(root, 'AGENTS.md', '# Agents\n')
+  write(root, 'repos/upstream/LLMS.md', '# Upstream\n')
+  write(root, 'repos/upstream/README.md', 'hello\n')
+  write(root, 'repos/upstream/bin/run.sh', '#!/bin/sh\necho hello\n')
+  chmodSync(join(root, 'repos/upstream/bin/run.sh'), 0o755)
+  write(root, 'repos/upstream.subtree.json', `${JSON.stringify(contract(), null, 2)}\n`)
+  if (options.initializeGit !== false) {
+    git(root, 'init', '--quiet')
+    git(root, 'config', 'user.email', 'partita@example.invalid')
+    git(root, 'config', 'user.name', 'Partita Test')
+    git(root, 'add', '.')
+    git(root, 'commit', '--quiet', '-m', 'fixture')
+  }
+  return root
+}
+
+function contract() {
+  const revision = 'a'.repeat(40)
+  return {
+    schemaVersion: 1,
+    name: 'upstream',
+    github: {
+      repository: 'https://github.com/example/upstream',
+      branch: 'main',
+      ref: revision,
+    },
+    local: { prefix: 'repos/upstream' },
+    mechanism: 'git-subtree',
+    subtree: { split: revision, trailer: `git-subtree-split: ${revision}` },
+    anchor: { llmDocument: 'repos/upstream/LLMS.md' },
+    commands: {
+      update: 'partita pin update --name upstream --dry-run',
+      verify: 'partita pin verify --name upstream',
+    },
+    agent: { route: 'AGENTS.md' },
+    editorPolicy: {
+      autoImportExclude: 'block',
+      watcherExclude: 'recommended',
+      searchExclude: 'recommended',
+      filesExclude: 'disabled',
+    },
+    ownership: { mode: 'direct' },
+    boundaries: { importBlock: true, readOnly: true },
+  }
+}
+
+function assertOutputsAbsent(root: string, outputName: string): void {
+  const result = execFileSync('sh', [
+    '-c',
+    'test ! -e "$1" && test ! -e "$2"',
+    'sh',
+    join(root, `out/${outputName}.pta`),
+    join(root, `out/${outputName}.json`),
+  ])
+  assert.equal(result.length, 0)
+}
+
+function git(root: string, ...args: ReadonlyArray<string>): void {
+  execFileSync('git', args, { cwd: root, stdio: 'pipe' })
+}
+
+function write(root: string, path: string, value: string): void {
+  const target = join(root, path)
+  mkdirSync(dirname(target), { recursive: true })
+  writeFileSync(target, value)
+}

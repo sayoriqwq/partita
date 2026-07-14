@@ -12,10 +12,12 @@
       ]
     }
   },
+  "ignoreBinaries": [
+    "mkfifo"
+  ],
   "ignoreDependencies": [
     "@effect/tsgo",
     "@sayoriqwq/prelude",
-    "@sayoriqwq/prelude-contract",
     "@sayoriqwq/psychogram",
     "turbo"
   ]

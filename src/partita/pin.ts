@@ -1,11 +1,17 @@
 /* eslint-disable ts/no-use-before-define */
+import type { CanonicalTreeArchiveSourceEntry } from '@sayoriqwq/prelude-contract'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import {
+  CANONICAL_TREE_ARCHIVE_FORMAT,
+  encodeCanonicalTreeArchive,
+  isSafeRelativeSymlink,
+  SYMBOLIC_LINK_MODE,
+} from '@sayoriqwq/prelude-contract'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
-import * as Stream from 'effect/Stream'
-import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 import { PartitaError } from './errors.ts'
+import { CommandExecutor } from './process.ts'
 
 type PinOwnershipMode = 'direct'
 
@@ -78,6 +84,24 @@ export interface PinCommandOptions {
   readonly contractPath?: string
   readonly name?: string
   readonly prefix?: string
+}
+
+export interface PinPublicationOptions extends PinCommandOptions {
+  readonly archivePath: string
+  readonly provenancePath: string
+}
+
+interface SourcePinPublication {
+  readonly schemaVersion: 1
+  readonly name: string
+  readonly archive: {
+    readonly format: typeof CANONICAL_TREE_ARCHIVE_FORMAT
+  }
+  readonly provenance: {
+    readonly sourceUrl: string
+    readonly revision: string
+    readonly treeDigest: string
+  }
 }
 
 export interface PinIssue {
@@ -262,6 +286,63 @@ export const verifyPins = Effect.fn('verifyPins')(function* (options: PinCommand
 
   yield* Console.log(`GitHub subtree pin verified: ${report.contractPath}`)
   return report
+})
+
+const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOptions) {
+  const root = resolve(options.root)
+  const report = yield* inspectPins(options)
+  if (!report.ok) {
+    return yield* Effect.fail(new PartitaError([
+      'GitHub subtree pin verification failed:',
+      ...report.issues.map(issue => `- ${formatPinIssue(issue)}`),
+    ].join('\n')))
+  }
+
+  const contract = yield* readGitHubSubtreeContract(root, report.contractPath)
+  const entries = yield* sourcePinArchiveEntries(root, contract)
+  const encoded = yield* Effect.try({
+    try: () => encodeCanonicalTreeArchive(entries),
+    catch: cause => new PartitaError(`Encode Source Pin archive: ${formatUnknown(cause)}`),
+  })
+  const publication: SourcePinPublication = {
+    archive: { format: CANONICAL_TREE_ARCHIVE_FORMAT },
+    name: contract.name,
+    provenance: {
+      revision: contract.github.ref,
+      sourceUrl: contract.github.repository,
+      treeDigest: encoded.treeDigest,
+    },
+    schemaVersion: 1,
+  }
+
+  const archive = yield* parsePublicationOutputPath(root, options.archivePath, 'archive')
+  const provenance = yield* parsePublicationOutputPath(root, options.provenancePath, 'provenance')
+  if (archive.relativePath === provenance.relativePath) {
+    return yield* Effect.fail(new PartitaError('Source Pin archive and provenance paths must be different.'))
+  }
+
+  const fs = yield* FileSystem.FileSystem
+  yield* fs.makeDirectory(dirname(archive.absolutePath), { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Create ${dirname(archive.relativePath)}: ${formatUnknown(cause)}`)),
+  )
+  yield* fs.makeDirectory(dirname(provenance.absolutePath), { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Create ${dirname(provenance.relativePath)}: ${formatUnknown(cause)}`)),
+  )
+  yield* fs.writeFile(archive.absolutePath, encoded.bytes).pipe(
+    Effect.mapError(cause => new PartitaError(`Write ${archive.relativePath}: ${formatUnknown(cause)}`)),
+  )
+  yield* fs.writeFileString(provenance.absolutePath, `${JSON.stringify(publication, null, 2)}\n`).pipe(
+    Effect.mapError(cause => new PartitaError(`Write ${provenance.relativePath}: ${formatUnknown(cause)}`)),
+  )
+
+  return { archivePath: archive.relativePath, bytes: encoded.bytes, publication, provenancePath: provenance.relativePath }
+})
+
+export const printPinPublication = Effect.fn('printPinPublication')(function* (options: PinPublicationOptions) {
+  const result = yield* publishPin(options)
+  yield* Console.log(`Published Source Pin archive: ${result.archivePath}`)
+  yield* Console.log(`Published Source Pin provenance: ${result.provenancePath}`)
+  return result
 })
 
 const readGitHubSubtreeContract = Effect.fn('readGitHubSubtreeContract')(function* (
@@ -626,19 +707,168 @@ function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
 }
 
 const pinPrefixIsGitlink = Effect.fn('pinPrefixIsGitlink')(function* (root: string, prefix: string) {
-  const result = yield* runCommand({
+  const executor = yield* CommandExecutor
+  const result = yield* executor.run({
     args: ['ls-files', '--stage', '--', prefix],
     command: 'git',
     cwd: root,
   })
   if (result.exitCode !== 0) {
-    return false
+    return yield* Effect.fail(new PartitaError(
+      `Inspect git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
+    ))
   }
   return result.output.split(/\0|\r?\n/u).some((line) => {
     const match = line.match(/^160000 [0-9a-f]{40,64} \d\t(.+)$/u)
     return match !== null && normalizeRelativePath(match[1]!) === normalizeRelativePath(prefix)
   })
 })
+
+interface GitIndexEntry {
+  readonly mode: string
+  readonly path: string
+}
+
+const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
+  root: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const prefix = contract.local.prefix
+  const prefixRoot = resolve(root, prefix)
+  const index = yield* sourcePinGitIndex(root, prefix)
+  const opaqueGitlinks = index.filter(entry => entry.mode === '160000').map(entry => entry.path)
+  const trackedEntries = index.filter(entry => entry.mode !== '160000')
+  const trackedPaths = new Set(trackedEntries.map(entry => entry.path))
+  const directoryPaths = new Set<string>()
+  for (const entry of trackedEntries) {
+    const segments = entry.path.split('/')
+    for (let index = 1; index < segments.length; index += 1) {
+      directoryPaths.add(segments.slice(0, index).join('/'))
+    }
+  }
+
+  const fs = yield* FileSystem.FileSystem
+  const workingEntries = yield* fs.readDirectory(prefixRoot, { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Read Source Pin directory ${prefix}: ${formatUnknown(cause)}`)),
+  )
+  for (const rawPath of workingEntries) {
+    const path = normalizeRelativePath(rawPath)
+    if (opaqueGitlinks.some(gitlink => pathIsSameOrInside(path, gitlink))) {
+      continue
+    }
+    if (trackedPaths.has(path)) {
+      continue
+    }
+    const absolutePath = resolve(prefixRoot, path)
+    const stat = yield* fs.stat(absolutePath).pipe(
+      Effect.mapError(cause => new PartitaError(`Stat Source Pin entry ${path}: ${formatUnknown(cause)}`)),
+    )
+    if (stat.type === 'Directory') {
+      if (!directoryPaths.has(path)) {
+        return yield* Effect.fail(new PartitaError(`Untracked Source Pin entry: ${path}`))
+      }
+      continue
+    }
+    return yield* Effect.fail(new PartitaError(`Untracked Source Pin entry: ${path}`))
+  }
+
+  const entries: Array<CanonicalTreeArchiveSourceEntry> = [...directoryPaths]
+    .sort(compareText)
+    .map(path => ({ kind: 'directory' as const, mode: 0o755, path }))
+
+  for (const entry of trackedEntries.sort((left, right) => compareText(left.path, right.path))) {
+    const absolutePath = resolve(prefixRoot, entry.path)
+    if (entry.mode === '120000') {
+      const target = yield* fs.readLink(absolutePath).pipe(
+        Effect.mapError(cause => new PartitaError(`Tracked Source Pin entry is missing or is not a symbolic link: ${entry.path}: ${formatUnknown(cause)}`)),
+      )
+      if (!isSafeRelativeSymlink(entry.path, target)) {
+        return yield* Effect.fail(new PartitaError(`Unsafe Source Pin symbolic link: ${entry.path} -> ${target}`))
+      }
+      entries.push({ kind: 'symbolicLink', mode: SYMBOLIC_LINK_MODE, path: entry.path, target })
+      continue
+    }
+
+    if (!(yield* fileExists(absolutePath))) {
+      return yield* Effect.fail(new PartitaError(`Tracked Source Pin entry is missing: ${entry.path}`))
+    }
+    const stat = yield* fs.stat(absolutePath).pipe(
+      Effect.mapError(cause => new PartitaError(`Stat Source Pin entry ${entry.path}: ${formatUnknown(cause)}`)),
+    )
+
+    if (stat.type !== 'File' || (entry.mode !== '100644' && entry.mode !== '100755')) {
+      return yield* Effect.fail(new PartitaError(`Unsupported Source Pin entry: ${entry.path}`))
+    }
+    const bytes = yield* fs.readFile(absolutePath).pipe(
+      Effect.mapError(cause => new PartitaError(`Read Source Pin file ${entry.path}: ${formatUnknown(cause)}`)),
+    )
+    entries.push({
+      bytes,
+      kind: 'file',
+      mode: entry.mode === '100755' ? 0o755 : 0o644,
+      path: entry.path,
+    })
+  }
+
+  return entries
+})
+
+const sourcePinGitIndex = Effect.fn('sourcePinGitIndex')(function* (root: string, prefix: string) {
+  const executor = yield* CommandExecutor
+  const result = yield* executor.run({
+    args: ['ls-files', '--stage', '--', prefix],
+    command: 'git',
+    cwd: root,
+  })
+  if (result.exitCode !== 0) {
+    return yield* Effect.fail(new PartitaError(
+      `Inspect Git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
+    ))
+  }
+
+  const entries: Array<GitIndexEntry> = []
+  const seen = new Set<string>()
+  for (const line of result.output.split(/\0|\r?\n/u).filter(Boolean)) {
+    const match = /^(\d{6}) [0-9a-f]{40,64} \d\t(.+)$/u.exec(line)
+    if (match === null) {
+      return yield* Effect.fail(new PartitaError(`Cannot decode Source Pin Git index entry: ${line}`))
+    }
+    const mode = match[1]!
+    const indexedPath = normalizeRelativePath(match[2]!)
+    if (!indexedPath.startsWith(`${prefix}/`)) {
+      return yield* Effect.fail(new PartitaError(`Source Pin Git index entry escaped ${prefix}: ${indexedPath}`))
+    }
+    const path = indexedPath.slice(prefix.length + 1)
+    if (!validRelativePath(path) || seen.has(path)) {
+      return yield* Effect.fail(new PartitaError(`Invalid Source Pin Git index path: ${path}`))
+    }
+    if (!['100644', '100755', '120000', '160000'].includes(mode)) {
+      return yield* Effect.fail(new PartitaError(`Unsupported Source Pin Git mode ${mode}: ${path}`))
+    }
+    seen.add(path)
+    entries.push({ mode, path })
+  }
+  if (entries.length === 0) {
+    return yield* Effect.fail(new PartitaError(`Source Pin Git index is empty: ${prefix}`))
+  }
+  return entries
+})
+
+const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(function* (
+  root: string,
+  value: string,
+  label: string,
+) {
+  const relativePath = normalizeRelativePath(value)
+  if (!validRelativePath(relativePath)) {
+    return yield* Effect.fail(new PartitaError(`Source Pin ${label} path must be relative to the repository root: ${value}`))
+  }
+  return { absolutePath: resolve(root, relativePath), relativePath }
+})
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0
+}
 
 const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (
   root: string,
@@ -663,9 +893,9 @@ const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (
     }
     const absolutePath = resolve(root, relativePath)
     const stat = yield* fs.stat(absolutePath).pipe(
-      Effect.catchTag('PlatformError', () => Effect.succeed(undefined)),
+      Effect.mapError(cause => new PartitaError(`Stat ${relativePath}: ${formatUnknown(cause)}`)),
     )
-    if (stat?.type === 'File') {
+    if (stat.type === 'File') {
       files.push(absolutePath)
     }
   }
@@ -762,47 +992,10 @@ function stripJsonComments(text: string): string {
   return output
 }
 
-interface CommandResult {
-  readonly exitCode: number
-  readonly output: string
-}
-
-interface PinGitCommand {
-  readonly command: string
-  readonly args: ReadonlyArray<string>
-  readonly cwd: string
-}
-
-const runCommand = Effect.fn('runPinGitCommand')(function* (command: PinGitCommand) {
-  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-  return yield* Effect.scoped(Effect.gen(function* () {
-    const handle = yield* spawner.spawn(
-      ChildProcess.make(command.command, command.args, {
-        cwd: command.cwd,
-        extendEnv: true,
-      }),
-    ).pipe(
-      Effect.mapError(cause => new PartitaError(`Spawn ${command.command}: ${formatUnknown(cause)}`)),
-    )
-    const output = yield* handle.all.pipe(
-      Stream.decodeText(),
-      Stream.mkString,
-      Effect.mapError(cause => new PartitaError(`Collect ${command.command} output: ${formatUnknown(cause)}`)),
-    )
-    const exitCode = Number(yield* handle.exitCode.pipe(
-      Effect.mapError(cause => new PartitaError(`Wait for ${command.command}: ${formatUnknown(cause)}`)),
-    ))
-    return {
-      exitCode,
-      output,
-    } satisfies CommandResult
-  }))
-})
-
 const fileExists = Effect.fn('fileExists')(function* (path: string) {
   const fs = yield* FileSystem.FileSystem
   return yield* fs.exists(path).pipe(
-    Effect.catchTag('PlatformError', () => Effect.succeed(false)),
+    Effect.mapError(cause => new PartitaError(`Check ${path}: ${formatUnknown(cause)}`)),
   )
 })
 

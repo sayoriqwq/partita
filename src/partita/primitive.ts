@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
 import { PartitaError } from './errors.ts'
 
 export interface PrimitiveReferenceCopySpec {
@@ -36,11 +36,30 @@ export const primitiveReferenceCopySpecs: ReadonlyArray<PrimitiveReferenceCopySp
   },
 ]
 
-export const syncPrimitiveReferences = Effect.fn('syncPrimitiveReferences')(function* (options: SyncPrimitiveReferencesOptions) {
-  return yield* Effect.try({
-    catch: cause => new PartitaError(cause instanceof Error ? cause.message : String(cause)),
-    try: () => syncPrimitiveReferencesSync(resolve(options.root)),
-  })
+export const syncPrimitiveReferences = Effect.fn('syncPrimitiveReferences')(function* (
+  options: SyncPrimitiveReferencesOptions,
+): Effect.fn.Return<PrimitiveReferenceSyncReport, PartitaError, FileSystem.FileSystem> {
+  const fs = yield* FileSystem.FileSystem
+  const root = resolve(options.root)
+  const copied: Array<string> = []
+
+  for (const copy of primitiveReferenceCopySpecs) {
+    const sourcePath = join(root, copy.sourcePath)
+    if (!(yield* mapFileSystemError(fs.exists(sourcePath), `Check ${copy.sourcePath}`))) {
+      return yield* Effect.fail(new PartitaError(`Missing primitive reference source: ${copy.sourcePath}`))
+    }
+
+    const text = yield* mapFileSystemError(fs.readFileString(sourcePath), `Read ${copy.sourcePath}`)
+    const body = primitiveReferenceBody(text)
+    for (const targetPath of copy.targetPaths) {
+      const absoluteTargetPath = join(root, targetPath)
+      yield* mapFileSystemError(fs.makeDirectory(dirname(absoluteTargetPath), { recursive: true }), `Create ${dirname(targetPath)}`)
+      yield* mapFileSystemError(fs.writeFileString(absoluteTargetPath, body), `Write ${targetPath}`)
+      copied.push(targetPath)
+    }
+  }
+
+  return { copied }
 })
 
 export const printPrimitiveReferenceSync = Effect.fn('printPrimitiveReferenceSync')(function* (options: SyncPrimitiveReferencesOptions) {
@@ -65,23 +84,10 @@ export function primitiveReferenceBody(text: string): string {
   return text.slice(end + delimiter.length).replace(/^\n/u, '')
 }
 
-function syncPrimitiveReferencesSync(root: string): PrimitiveReferenceSyncReport {
-  const copied: Array<string> = []
+function mapFileSystemError<A, E, R>(effect: Effect.Effect<A, E, R>, operation: string) {
+  return effect.pipe(Effect.mapError(cause => new PartitaError(`${operation}: ${formatUnknown(cause)}`)))
+}
 
-  for (const copy of primitiveReferenceCopySpecs) {
-    const sourcePath = join(root, copy.sourcePath)
-    if (!existsSync(sourcePath)) {
-      throw new Error(`Missing primitive reference source: ${copy.sourcePath}`)
-    }
-
-    const body = primitiveReferenceBody(readFileSync(sourcePath, 'utf8'))
-    for (const targetPath of copy.targetPaths) {
-      const absoluteTargetPath = join(root, targetPath)
-      mkdirSync(dirname(absoluteTargetPath), { recursive: true })
-      writeFileSync(absoluteTargetPath, body)
-      copied.push(targetPath)
-    }
-  }
-
-  return { copied }
+function formatUnknown(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause)
 }

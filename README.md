@@ -62,6 +62,7 @@ Partita CLI 发布为 `@sayoriqwq/partita`，bin name 是 `partita`。
 ```bash
 npx @sayoriqwq/partita pin status --name effect --prefix repos/effect --contract repos/effect.subtree.json
 npx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
+npx @sayoriqwq/partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive out/effect.pta --provenance out/effect.json
 pnpm dlx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
 ```
 
@@ -111,12 +112,19 @@ partita home apply --write
 
 `partita pin` 只支持 GitHub repository + git subtree pin。
 
+Partita owns generic Source Pin verification and publication. `pin publish`
+verifies the contract and working tree, then uses the Prelude Contract codec to
+write a deterministic canonical archive plus path-independent provenance JSON.
+It does not choose Harness Target locators, routes, anchors, or `referenceOnly`
+delivery policy.
+
 默认 contract path 是 subtree prefix 的 sibling 文件。
 
 例如：
 
 ```bash
 partita pin plan --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect --branch main
+partita pin publish --name effect --prefix repos/effect --archive out/effect.pta --provenance out/effect.json
 ```
 
 默认读取或生成：

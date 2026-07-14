@@ -2,7 +2,7 @@ packages:
   - packages/*
 
 overrides:
-  '@sayoriqwq/prelude-contract': file:vendor/prelude-v1/sayoriqwq-prelude-contract-0.1.0.tgz
+  '@sayoriqwq/prelude-contract': 0.2.0
 
 allowBuilds:
   msgpackr-extract: true
@@ -15,3 +15,4 @@ minimumReleaseAgeExclude:
   - '@turbo/windows-64@2.10.1'
   - '@turbo/windows-arm64@2.10.1'
   - turbo@2.10.1
+  - '@sayoriqwq/prelude-contract@0.2.0'

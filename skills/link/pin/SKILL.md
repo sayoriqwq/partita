@@ -12,9 +12,10 @@ description: "Use when the user explicitly asks to pin a GitHub repository into 
 面对用户要 `pin` repository 时，MUST 先区分两个阶段，并保持一个 Source Pin 真源：
 
 1. **Source Pin**：source-maintaining repo 通过 GitHub `git subtree` 维护 `repos/<name>/`，旁边的 `repos/<name>.subtree.json` 与 materialized prefix 共同构成唯一真源。contract 记录 GitHub repo、branch/ref、subtree split/trailer、anchor、agent route、editor policy、update/verify command、`direct` ownership 和 read-only/import block。
-2. **Target delivery**：owning Harness Artifact 从 Source Pin 派生 source URL 与 immutable revision，验证 prefix，并计算 `sha256` tree digest；Prelude 只离线验证和物化 Artifact 已打包的 Pinned Reference Tree。
+2. **Publication**：Partita 验证 Source Pin 后，使用 Prelude Contract canonical codec 生成确定性 archive、tree digest 与普通 provenance metadata；publication 不含 Harness-specific Target policy。
+3. **Target delivery**：owning Harness Artifact 消费 Partita publication，并附加 Target locator、route、anchor 与 `referenceOnly` 语义；Prelude 只离线验证和物化 Artifact 已打包的 Pinned Reference Tree。
 
-Pinned Reference Tree 是 Harness-owned、reference-only 的 Target 内容，不是第二个 pin。Target evidence 写入 owning Harness 的 feedback surface。Partita 只维护 Source Pin contract 和 hard blocks；MUST NOT 复制 Harness build contract、Prelude Contract 或 domain-specific policy。
+Pinned Reference Tree 是 Harness-owned、reference-only 的 Target 内容，不是第二个 pin。Target evidence 写入 owning Harness 的 feedback surface。Partita 维护 Source Pin contract、hard blocks 与 generic publication，并直接消费 Prelude Contract codec；MUST NOT 复制 archive wire contract、Harness build contract 或 domain-specific policy。
 
 `pin` 不是非 GitHub source、任意 external source 抽象、非 subtree mechanism、临时 clone、一次性 web fetch、`node_modules` 猜测、普通 package version pin，也不是把外部内容复制进当前项目后失去 provenance。
 
@@ -35,7 +36,7 @@ Do not use when:
 Soft:
 
 - SHOULD 先从当前项目的 active instructions 和 ownership 语境判断请求属于 Source Pin 还是 Prelude-managed Target delivery。
-- SHOULD 只在 Source Pin 阶段使用 `partita pin plan`、`partita pin status` 和 `partita pin verify`。
+- SHOULD 只在 Source Pin 阶段使用 `partita pin plan`、`partita pin status`、`partita pin verify` 和 `partita pin publish`。
 - SHOULD 让 target repo 的脚本保持短，只调用 Partita CLI 或 owning domain wrapper。
 - SHOULD 将 domain-specific 语义留给 owning harness；Partita 只表达 GitHub subtree pin 字段和 hard blocks。
 - SHOULD 默认 contract path 为 `repos/<name>.subtree.json`，与 `repos/<name>/` 并列；MAY 只在明确需要时使用 `--contract <path>` 覆盖。
@@ -67,6 +68,9 @@ Hard:
 - When: 需要 materialize、update 或 verify pin。
   Do: MUST 使用 Partita CLI、当前项目已有 wrapper 或 owning harness command；MUST NOT 把大段脚本塞进 target repo。
 
+- When: 需要发布 verified Source Pin。
+  Do: MUST 使用 `partita pin publish` 生成 canonical archive 与 provenance；MUST hard block untracked/missing entries、unsafe links、invalid modes、prefix gitlink 和 Git/filesystem inspection failure；MUST NOT 把 Target locator、route、anchor 或 `referenceOnly` 写入 generic publication。
+
 - When: 当前 repo 是 Prelude-managed Target。
   Do: MUST 在运行 Partita pin command、fetch/update Git 或写入 contract/prefix 之前 hard block；MUST 路由到 owning Harness Artifact build 与 Prelude Pinned Reference Tree convergence，无法使用 owning mechanism 时停止并报告 blocker。
 
@@ -91,14 +95,16 @@ Hard:
 5. 运行 `partita pin plan` 生成只读 `repos/<name>.subtree.json` contract 和 editor settings shape。
 6. 使用 `partita pin status --name <name> --prefix repos/<name>` 检查当前 pinned prefix、anchor、route、subtree split/trailer 和 editor state。
 7. 使用 `partita pin verify --name <name> --prefix repos/<name>` hard block source 缺失、pin prefix 本身为 gitlink/submodule、缺 split/trailer、非 GitHub URL、非 subtree mechanism、错误 import 和缺 anchor/route；prefix 内部 gitlink 只作为 opaque upstream boundary，不 follow。
-8. 若 owning Harness 需要 Target delivery，向其 Artifact build 交付 Source Pin contract/prefix；Target 侧只接受 Prelude 离线 convergence 的 Pinned Reference Tree。
-9. 汇报 changed files、contract path、CLI commands、hard block 覆盖点和验证结果。
+8. 使用 `partita pin publish --archive <path> --provenance <path>` 从 verified Source Pin 生成确定性 canonical archive 与 provenance。
+9. 若 owning Harness 需要 Target delivery，向其 Artifact build 交付 Partita publication；Target 侧只接受 Prelude 离线 convergence 的 Pinned Reference Tree。
+10. 汇报 changed files、contract path、CLI commands、hard block 覆盖点和验证结果。
 
 ## References
 
 - `partita pin plan`
 - `partita pin status`
 - `partita pin verify`
+- `partita pin publish`
 
 ## Validation
 
@@ -117,3 +123,4 @@ Before done:
 - Target Pinned Reference Tree 由 owning Harness Artifact 与 Prelude convergence 投递，保持 Harness-owned、reference-only，evidence 写入 feedback；
 - 应用和测试代码没有从 pinned prefix import；
 - `partita pin status` 或 `partita pin verify` 的结果已报告，或已说明具体 blocker。
+- 若执行 publication，相同 verified input 产生 byte-identical archive 与 provenance，且 publication 未吸收 Harness Target policy。

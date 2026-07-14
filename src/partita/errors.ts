@@ -1,7 +1,10 @@
-export class PartitaError {
+export class PartitaError extends Error {
   readonly _tag = 'PartitaError'
 
-  constructor(readonly message: string) {}
+  constructor(message: string) {
+    super(message)
+    this.name = 'PartitaError'
+  }
 }
 
 export function errorMessage(error: unknown): string {

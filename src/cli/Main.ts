@@ -1,9 +1,11 @@
 import process from 'node:process'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
+import { PartitaError } from '../partita/errors.ts'
 import {
   printChezmoiHomeApply,
   printChezmoiHomeDiff,
@@ -11,10 +13,12 @@ import {
 } from '../partita/home.ts'
 import {
   printPinPlan,
+  printPinPublication,
   printPinStatus,
   verifyPins,
 } from '../partita/pin.ts'
 import { printPrimitiveReferenceSync } from '../partita/primitive.ts'
+import { CommandExecutorLive } from '../partita/process.ts'
 import {
   printSkillRuntimeStatus,
   printSkillRuntimeVerify,
@@ -26,6 +30,10 @@ export interface CliConfig {
   readonly root: string
   readonly version: string
 }
+
+const PartitaLive = CommandExecutorLive.pipe(
+  Layer.provideMerge(NodeServices.layer),
+)
 
 const resolveFromCwd = Effect.fnUntraced(function* (value: string) {
   const path = yield* Path.Path
@@ -197,6 +205,16 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Hard-verify GitHub git-subtree pin contracts'),
   )
 
+  const pinPublish = Command.make('publish', {
+    ...pinReadFlags,
+    archivePath: Flag.string('archive').pipe(Flag.withDescription('Repository-relative canonical archive output path')),
+    provenancePath: Flag.string('provenance').pipe(Flag.withDescription('Repository-relative provenance JSON output path')),
+  }, Effect.fnUntraced(function* (options) {
+    yield* printPinPublication(options)
+  })).pipe(
+    Command.withDescription('Publish a verified Source Pin as a canonical archive and provenance JSON'),
+  )
+
   const pinAdd = Command.make('add', {
     ...pinPlanFlags,
     dryRun: Flag.boolean('dry-run').pipe(
@@ -206,7 +224,7 @@ function makeCli(config: CliConfig) {
     root,
   }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
     if (!dryRun) {
-      return yield* Effect.fail(new Error('partita pin add only supports --dry-run in this implementation'))
+      return yield* Effect.fail(new PartitaError('partita pin add only supports --dry-run in this implementation'))
     }
     yield* printPinPlan(options)
   })).pipe(
@@ -224,7 +242,7 @@ function makeCli(config: CliConfig) {
     root,
   }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
     if (!dryRun) {
-      return yield* Effect.fail(new Error('partita pin update only supports --dry-run in this implementation'))
+      return yield* Effect.fail(new PartitaError('partita pin update only supports --dry-run in this implementation'))
     }
     yield* printPinStatus(options)
   })).pipe(
@@ -233,7 +251,7 @@ function makeCli(config: CliConfig) {
 
   const pin = Command.make('pin').pipe(
     Command.withDescription('Manage GitHub repository pins materialized with git subtree'),
-    Command.withSubcommands([pinPlan, pinStatus, pinVerify, pinAdd, pinUpdate]),
+    Command.withSubcommands([pinPlan, pinStatus, pinVerify, pinPublish, pinAdd, pinUpdate]),
   )
 
   return Command.make('partita').pipe(
@@ -245,6 +263,6 @@ function makeCli(config: CliConfig) {
 export function runCli(config: CliConfig) {
   return makeCli(config).pipe(
     Command.run({ version: config.version }),
-    Effect.provide(NodeServices.layer),
+    Effect.provide(PartitaLive),
   )
 }

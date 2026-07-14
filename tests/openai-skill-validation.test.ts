@@ -2,6 +2,7 @@ import { NodeFileSystem } from '@effect/platform-node'
 import { assert, describe, it } from '@effect/vitest'
 import { FileSystem } from 'effect'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 
 import { validateOpenAiSkillFolder, validateOpenAiSkillText } from '../src/partita/openai-skill-validation.ts'
 
@@ -67,4 +68,27 @@ describe('official skill validation', () => {
 
       assert.isTrue(validReport.ok)
     }).pipe(Effect.provide(NodeFileSystem.layer))))
+
+  it.effect('fails closed when SKILL.md existence cannot be checked', () => {
+    const root = '/tmp/partita-openai-skill-inaccessible'
+    const skillPath = `${root}/SKILL.md`
+    const inaccessibleFileSystem = Layer.effect(
+      FileSystem.FileSystem,
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem
+        return FileSystem.FileSystem.of({
+          ...fs,
+          exists: path => path === skillPath ? fs.stat(`${skillPath}.missing`).pipe(Effect.as(true)) : fs.exists(path),
+        })
+      }),
+    ).pipe(Layer.provide(NodeFileSystem.layer))
+
+    return validateOpenAiSkillFolder(root).pipe(
+      Effect.provide(inaccessibleFileSystem),
+      Effect.match({
+        onFailure: error => assert.include(error.message, `Check ${skillPath}`),
+        onSuccess: () => assert.fail('expected inaccessible SKILL.md to fail closed'),
+      }),
+    )
+  })
 })

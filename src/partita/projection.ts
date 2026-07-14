@@ -1,7 +1,8 @@
-type SkillFamily = 'expression' | 'link' | 'maintenance' | 'orientation' | 'primitive'
+import type { PartitaSkillFamily } from './source-skill-catalog.ts'
+import { partitaSkillFamilies } from './source-skill-catalog.ts'
 
 interface SkillIdentityForm {
-  readonly family: SkillFamily
+  readonly family: PartitaSkillFamily
   readonly slug: string
   readonly title: string
 }
@@ -33,7 +34,7 @@ export interface SkillProjection {
 interface IdentityProjection {
   readonly acceptedMarkers: ReadonlyArray<string>
   readonly displayName: string
-  readonly family: SkillFamily
+  readonly family: PartitaSkillFamily
   readonly handle: string
   readonly marker: string
   readonly slug: string
@@ -60,15 +61,7 @@ export interface OpenAiMetadataProjection {
   }
 }
 
-const familyHandles: Record<SkillFamily, string> = {
-  expression: 'ex',
-  link: 'lk',
-  maintenance: 'mt',
-  orientation: 'og',
-  primitive: 'pm',
-}
-
-const familyMarkers: Record<SkillFamily, string> = {
+const familyMarkers: Record<PartitaSkillFamily, string> = {
   expression: '💬',
   link: '🔗',
   maintenance: '🧹',
@@ -120,7 +113,7 @@ function projectIdentity(identity: SkillIdentityForm): IdentityProjection {
     acceptedMarkers,
     displayName: identity.title,
     family: identity.family,
-    handle: `${familyHandles[identity.family]}:${identity.slug}`,
+    handle: `${partitaSkillFamilies[identity.family]}:${identity.slug}`,
     marker,
     slug: identity.slug,
     sourcePath: `skills/${identity.family}/${identity.slug}/`,

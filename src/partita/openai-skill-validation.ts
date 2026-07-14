@@ -3,6 +3,7 @@ import type { ValidationIssue, ValidationReport } from './validation.ts'
 
 import { join } from 'node:path'
 import { Effect, FileSystem } from 'effect'
+import { PartitaError } from './errors.ts'
 import { issue } from './validation.ts'
 
 export interface OpenAiSkillValidationReport extends ValidationReport {
@@ -28,7 +29,7 @@ interface ParsedFrontmatter {
 
 function pathExists(fs: FileSystem.FileSystem, path: string) {
   return fs.exists(path).pipe(
-    Effect.catchTag('PlatformError', () => Effect.succeed(false)),
+    Effect.mapError(cause => fileSystemError(`Check ${path}`, cause)),
   )
 }
 
@@ -42,8 +43,15 @@ export const validateOpenAiSkillFolder = Effect.fn('validateOpenAiSkillFolder')(
     return report([issue('openai_skill.skill_md_missing', 'SKILL.md not found', skillMdPath)])
   }
 
-  return validateOpenAiSkillText(yield* fs.readFileString(skillMdPath), skillMdPath)
+  const text = yield* fs.readFileString(skillMdPath).pipe(
+    Effect.mapError(cause => fileSystemError(`Read ${skillMdPath}`, cause)),
+  )
+  return validateOpenAiSkillText(text, skillMdPath)
 })
+
+function fileSystemError(operation: string, cause: unknown): PartitaError {
+  return new PartitaError(`${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+}
 
 export function validateOpenAiSkillText(text: string, path = 'SKILL.md'): OpenAiSkillValidationReport {
   const lines = text.split(/\r?\n/u)

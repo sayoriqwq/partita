@@ -1,8 +1,11 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { assert, describe, it } from '@effect/vitest'
+import * as NodeServices from '@effect/platform-node/NodeServices'
+import { assert, layer } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
+import * as Layer from 'effect/Layer'
 import {
   primitiveReferenceCopySpecs,
   syncPrimitiveReferences,
@@ -15,7 +18,7 @@ import {
 
 const marker = '🧭'
 
-describe('Partita verifier', () => {
+layer(NodeServices.layer)('Partita verifier', (it) => {
   it.effect('keeps score explicit invocation only', () => Effect.sync(() => {
     const metadata = readFileSync('skills/primitive/score/agents/openai.yaml', 'utf8')
 
@@ -30,6 +33,78 @@ describe('Partita verifier', () => {
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
     }))
+
+  it.effect('reports filesystem access failures through the typed error channel', () => {
+    const fixture = makeValidSourceFixture()
+    const missingRoot = join(fixture, 'missing')
+    return verifySourceProject({ root: missingRoot }).pipe(
+      Effect.match({
+        onFailure: error => assert.include(error.message, missingRoot),
+        onSuccess: () => assert.fail('expected missing root to fail'),
+      }),
+    )
+  })
+
+  it.effect('fails source and runtime verification when the workspace root is missing', () =>
+    Effect.gen(function* () {
+      const fixture = makeValidSourceFixture()
+      const missingRoot = join(fixture, 'missing')
+      const sourceFailure = yield* Effect.flip(verifyPartitaSourceSkills({ root: missingRoot }))
+      const runtimeFailure = yield* Effect.flip(verifyRuntimeSkills({ root: missingRoot }))
+
+      assert.include(sourceFailure.message, `Stat workspace root ${missingRoot}`)
+      assert.include(runtimeFailure.message, `Stat workspace root ${missingRoot}`)
+    }))
+
+  it.effect('fails source and runtime verification when the workspace root is not a directory', () =>
+    Effect.gen(function* () {
+      const fixture = makeValidSourceFixture()
+      const fileRoot = join(fixture, 'workspace-root-file')
+      writeFileSync(fileRoot, 'not a directory\n')
+      const sourceFailure = yield* Effect.flip(verifyPartitaSourceSkills({ root: fileRoot }))
+      const runtimeFailure = yield* Effect.flip(verifyRuntimeSkills({ root: fileRoot }))
+
+      assert.include(sourceFailure.message, `Workspace root must be a directory: ${fileRoot}`)
+      assert.include(runtimeFailure.message, `Workspace root must be a directory: ${fileRoot}`)
+    }))
+
+  it.effect('keeps zero skills as a valid source state', () =>
+    Effect.gen(function* () {
+      const root = mkdtempSync(join(tmpdir(), 'partita-verifier-zero-skills-'))
+      const report = yield* verifyPartitaSourceSkills({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
+    }))
+
+  it.effect('acquires each source SKILL.md once during source validation', () => {
+    const root = makeValidSourceFixture()
+    const skillPath = join(root, 'skills/demo/SKILL.md')
+    let reads = 0
+    const trackingFileSystem = Layer.effect(
+      FileSystem.FileSystem,
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem
+        return FileSystem.FileSystem.of({
+          ...fs,
+          readFileString: (path, encoding) => {
+            if (path === skillPath) {
+              reads += 1
+            }
+            return fs.readFileString(path, encoding)
+          },
+        })
+      }),
+    ).pipe(Layer.provide(NodeServices.layer))
+
+    return verifyPartitaSourceSkills({ root }).pipe(
+      Effect.provide(trackingFileSystem),
+      Effect.flatMap(report => Effect.sync(() => {
+        assert.isTrue(report.ok)
+        assert.strictEqual(reads, 1)
+      })),
+    )
+  })
 
   it.effect('reports skill contract drift', () =>
     Effect.gen(function* () {

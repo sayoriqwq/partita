@@ -1,16 +1,29 @@
 import type { GitHubSubtreePinContract } from '../src/partita/pin.ts'
-import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
+import * as Layer from 'effect/Layer'
 import {
   buildPinPlan,
   defaultPinContractPath,
   inspectPins,
 } from '../src/partita/pin.ts'
+import { CommandExecutor } from '../src/partita/process.ts'
+
+const gitSuccess = () => Effect.succeed({ exitCode: 0, output: '' })
+
+function pinTestLayer(run: CommandExecutor['Service']['run'] = gitSuccess) {
+  return Layer.merge(
+    NodeServices.layer,
+    Layer.succeed(CommandExecutor, CommandExecutor.of({ run })),
+  )
+}
+
+const PinTestLayer = pinTestLayer()
 
 describe('Partita pins', () => {
   it.effect('plans a GitHub subtree pin with sibling contract path and separate editor settings shapes', () =>
@@ -42,7 +55,7 @@ describe('Partita pins', () => {
       assert.include(plan.editorSettings.zed, '"vtsls"')
       assert.include(plan.editorSettings.zed, '"typescript-language-server"')
       assert.notInclude(plan.editorSettings.zed, '"file_scan_exclusions"')
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
 
   it.effect('normalizes explicit contract paths back to target-root relative paths', () =>
     Effect.gen(function* () {
@@ -61,7 +74,7 @@ describe('Partita pins', () => {
       assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
       assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
       assert.include(plan.contract.commands.verify, '--contract repos/upstream.subtree.json')
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
 
   it.effect('accepts a valid GitHub subtree pin contract from the default path', () =>
     Effect.gen(function* () {
@@ -98,7 +111,7 @@ describe('Partita pins', () => {
       assert.deepStrictEqual(report.issues, [])
       assert.strictEqual(report.contractPath, 'repos/upstream.subtree.json')
       assert.strictEqual(report.entry.name, 'upstream')
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
 
   it.effect('hard-blocks missing pin prefixes', () =>
     Effect.gen(function* () {
@@ -111,7 +124,7 @@ describe('Partita pins', () => {
 
       assert.strictEqual(report.ok, false)
       assert.isTrue(codes.includes('pin.missing'))
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
 
   it.effect('hard-blocks non-direct source ownership', () =>
     Effect.gen(function* () {
@@ -129,7 +142,7 @@ describe('Partita pins', () => {
       assert.isTrue(report.issues.some(issue =>
         issue.code === 'pin.contract_missing'
         && issue.message.includes('pin.ownership.mode')))
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
 
   it.effect('hard-blocks unsafe GitHub subtree pin contracts', () =>
     Effect.gen(function* () {
@@ -165,7 +178,23 @@ describe('Partita pins', () => {
       assert.isTrue(codes.includes('pin.read_only_missing'))
       assert.isTrue(codes.includes('pin.import_blocked'))
       assert.isTrue(codes.includes('pin.editor_vscode_auto_import_missing'))
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(PinTestLayer)))
+
+  it.effect('recognizes a gitlink from deterministic Git index output', () =>
+    Effect.gen(function* () {
+      const root = makeFixture()
+      write(root, 'AGENTS.md', '# Agents\n')
+      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
+      writeContract(root, validContract())
+
+      const report = yield* inspectPins({ name: 'upstream', root })
+
+      assert.isFalse(report.ok)
+      assert.isTrue(report.issues.some(issue => issue.code === 'pin.gitlink'))
+    }).pipe(Effect.provide(pinTestLayer(() => Effect.succeed({
+      exitCode: 0,
+      output: '160000 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6 0\trepos/upstream\n',
+    })))))
 
   it.effect('allows internal upstream gitlinks as opaque reference boundaries', () =>
     Effect.gen(function* () {
@@ -173,37 +202,97 @@ describe('Partita pins', () => {
       write(root, 'AGENTS.md', '# Agents\n')
       write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
       writeContract(root, validContract())
-      addGitlink(root, 'repos/upstream/typescript-go', '52168999f3dcfc9205432d47f6f600051f02f1a2')
 
       const report = yield* inspectPins({ name: 'upstream', root })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
-    }).pipe(Effect.provide(NodeServices.layer)))
+    }).pipe(Effect.provide(pinTestLayer(() => Effect.succeed({
+      exitCode: 0,
+      output: '160000 52168999f3dcfc9205432d47f6f600051f02f1a2 0\trepos/upstream/typescript-go\n',
+    })))))
 
-  it.effect('hard-blocks the pin prefix itself when it is a gitlink', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      writeContract(root, validContract())
-      addGitlink(root, 'repos/upstream', '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6')
+  it.effect('fails closed when Git cannot inspect the index', () => {
+    const root = makeFixture()
+    write(root, 'AGENTS.md', '# Agents\n')
+    write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
+    writeContract(root, validContract())
 
-      const report = yield* inspectPins({ name: 'upstream', root })
+    return inspectPins({ name: 'upstream', root }).pipe(
+      Effect.provide(pinTestLayer(() => Effect.succeed({ exitCode: 128, output: 'fatal: index unavailable' }))),
+      Effect.match({
+        onFailure: error => assert.include(error.message, 'git exited with code 128'),
+        onSuccess: () => assert.fail('expected Git inspection to fail closed'),
+      }),
+    )
+  })
 
-      assert.isFalse(report.ok)
-      assert.isTrue(report.issues.some(issue => issue.code === 'pin.gitlink'))
-    }).pipe(Effect.provide(NodeServices.layer)))
+  it.effect('fails closed when source file stat cannot be completed', () => {
+    const root = makeFixture()
+    const sourcePath = join(root, 'src/app.ts')
+    write(root, 'AGENTS.md', '# Agents\n')
+    write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
+    write(root, 'src/app.ts', 'export const value = 1\n')
+    writeContract(root, validContract())
+
+    return inspectPins({ name: 'upstream', root }).pipe(
+      Effect.provide(Layer.merge(
+        failingStatLayer(sourcePath),
+        Layer.succeed(CommandExecutor, CommandExecutor.of({ run: gitSuccess })),
+      )),
+      Effect.match({
+        onFailure: error => assert.include(error.message, 'Stat src/app.ts'),
+        onSuccess: () => assert.fail('expected source stat to fail closed'),
+      }),
+    )
+  })
+
+  it.effect('fails closed when path existence cannot be checked', () => {
+    const root = makeFixture()
+    const contractPath = join(root, 'repos/upstream.subtree.json')
+    writeContract(root, validContract())
+
+    return inspectPins({ name: 'upstream', root }).pipe(
+      Effect.provide(Layer.merge(
+        failingExistsLayer(contractPath),
+        Layer.succeed(CommandExecutor, CommandExecutor.of({ run: gitSuccess })),
+      )),
+      Effect.match({
+        onFailure: error => assert.include(error.message, `Check ${contractPath}`),
+        onSuccess: () => assert.fail('expected path check to fail closed'),
+      }),
+    )
+  })
 })
 
-function makeFixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'partita-pin-'))
-  execFileSync('git', ['init', '--quiet'], { cwd: root })
-  return root
+function failingStatLayer(target: string) {
+  return Layer.effect(
+    FileSystem.FileSystem,
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem
+      return FileSystem.FileSystem.of({
+        ...fs,
+        stat: path => path === target ? fs.stat(`${target}.missing`) : fs.stat(path),
+      })
+    }),
+  ).pipe(Layer.provide(NodeServices.layer))
 }
 
-function addGitlink(root: string, path: string, revision: string) {
-  execFileSync('git', ['update-index', '--add', '--info-only', '--cacheinfo', `160000,${revision},${path}`], { cwd: root })
+function failingExistsLayer(target: string) {
+  return Layer.effect(
+    FileSystem.FileSystem,
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem
+      return FileSystem.FileSystem.of({
+        ...fs,
+        exists: path => path === target ? fs.stat(`${target}.missing`).pipe(Effect.as(true)) : fs.exists(path),
+      })
+    }),
+  ).pipe(Layer.provide(NodeServices.layer))
+}
+
+function makeFixture(): string {
+  return mkdtempSync(join(tmpdir(), 'partita-pin-'))
 }
 
 function validContract(): GitHubSubtreePinContract {
