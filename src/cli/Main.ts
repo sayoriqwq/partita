@@ -10,6 +10,7 @@ import {
   printChezmoiHomeStatus,
 } from '../partita/home.ts'
 import {
+  printPinApply,
   printPinPlan,
   printPinStatus,
   verifyPins,
@@ -55,32 +56,50 @@ const pinNameFlag = Flag.string('name').pipe(
   Flag.withDefault(''),
 )
 
-function pinPolicyDecisionFlag(name: string, description: string) {
-  return Flag.choice(name, ['enabled', 'recommended', 'disabled'] as const).pipe(
+function pinInclusionDecisionFlag(name: string, description: string) {
+  return Flag.choice(name, ['excluded', 'included'] as const).pipe(
     Flag.withDescription(description),
-    Flag.withDefault('recommended' as const),
+    Flag.withDefault('excluded' as const),
   )
 }
 
-const pinFilesExcludeFlag = Flag.choice('files-exclude', ['enabled', 'disabled'] as const).pipe(
-  Flag.withDescription('Whether editor file trees should hide the pinned prefix'),
-  Flag.withDefault('disabled' as const),
+const pinFilesFlag = Flag.choice('files', ['hidden', 'visible'] as const).pipe(
+  Flag.withDescription('Whether editor file trees hide or show the pinned prefix'),
+  Flag.withDefault('visible' as const),
 )
 
 const pinPlanFlags = {
   agentRoute: Flag.string('agent-route').pipe(Flag.withDescription('Agent route file path'), Flag.withDefault('')),
   anchor: Flag.string('anchor').pipe(Flag.withDescription('Anchor or LLM document path'), Flag.withDefault('')),
-  branch: Flag.string('branch').pipe(Flag.withDescription('Upstream branch'), Flag.withDefault('main')),
+  branch: Flag.string('branch').pipe(Flag.withDescription('GitHub tracking branch'), Flag.withDefault('main')),
   contractPath: pinContractFlag,
-  filesExclude: pinFilesExcludeFlag,
+  files: pinFilesFlag,
   name: pinNameFlag,
+  operation: Flag.choice('operation', ['add', 'update'] as const).pipe(
+    Flag.withDescription('Whether to plan a new Source Pin or update an existing contract'),
+    Flag.withDefault('add' as const),
+  ),
   prefix: Flag.string('prefix').pipe(Flag.withDescription('Local pinned prefix'), Flag.withDefault('')),
-  ref: Flag.string('ref').pipe(Flag.withDescription('Pinned upstream ref or subtree split'), Flag.withDefault('')),
-  repository: Flag.string('repository').pipe(Flag.withDescription('Upstream repository URL'), Flag.withDefault('')),
-  searchExclude: pinPolicyDecisionFlag('search-exclude', 'Whether editor search should exclude the pinned prefix'),
-  updateCommand: Flag.string('update-command').pipe(Flag.withDescription('Source update command'), Flag.withDefault('')),
-  verifyCommand: Flag.string('verify-command').pipe(Flag.withDescription('Source verify command'), Flag.withDefault('')),
-  watcherExclude: pinPolicyDecisionFlag('watcher-exclude', 'Whether editor file watching should exclude the pinned prefix'),
+  repository: Flag.string('repository').pipe(Flag.withDescription('GitHub repository URL'), Flag.withDefault('')),
+  revision: Flag.string('revision').pipe(
+    Flag.withDescription('Optional immutable revision assertion for the resolved tracking branch'),
+    Flag.withDefault(''),
+  ),
+  search: pinInclusionDecisionFlag('search', 'Whether editor search excludes or includes the pinned prefix'),
+  watch: pinInclusionDecisionFlag('watch', 'Whether editor file watching excludes or includes the pinned prefix'),
+}
+
+const pinApplyFlags = {
+  planHash: Flag.string('plan-hash').pipe(
+    Flag.withDescription('Approved SHA-256 hash printed in the Source Pin plan'),
+  ),
+  planPath: Flag.path('plan').pipe(
+    Flag.withDescription('Path to the exact JSON Source Pin plan being approved'),
+    Flag.mapEffect(resolveFromCwd),
+  ),
+  revision: Flag.string('revision').pipe(
+    Flag.withDescription('Approved immutable revision printed in the Source Pin plan'),
+  ),
 }
 
 function makeCli(config: CliConfig) {
@@ -182,7 +201,7 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* (options) {
     yield* printPinPlan(options)
   })).pipe(
-    Command.withDescription('Plan a GitHub git-subtree pin contract without writing files'),
+    Command.withDescription('Resolve a GitHub branch and print a read-only, hashed Source Pin add/update plan'),
   )
 
   const pinStatus = Command.make('status', pinReadFlags, Effect.fnUntraced(function* (options) {
@@ -198,37 +217,21 @@ function makeCli(config: CliConfig) {
   )
 
   const pinAdd = Command.make('add', {
-    ...pinPlanFlags,
-    dryRun: Flag.boolean('dry-run').pipe(
-      Flag.withDescription('Only print the add plan; direct git subtree writes are intentionally not implemented'),
-      Flag.withDefault(true),
-    ),
+    ...pinApplyFlags,
     root,
-  }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
-    if (!dryRun) {
-      return yield* Effect.fail(new Error('partita pin add only supports --dry-run in this implementation'))
-    }
-    yield* printPinPlan(options)
+  }, Effect.fnUntraced(function* (options) {
+    yield* printPinApply({ ...options, operation: 'add' })
   })).pipe(
-    Command.withDescription('Dry-run a GitHub git-subtree pin add plan'),
+    Command.withDescription('Apply an approved immutable Source Pin add plan with git subtree'),
   )
 
   const pinUpdate = Command.make('update', {
-    contractPath: pinContractFlag,
-    dryRun: Flag.boolean('dry-run').pipe(
-      Flag.withDescription('Only print update status; direct git subtree update is intentionally not implemented'),
-      Flag.withDefault(true),
-    ),
-    name: pinNameFlag,
-    prefix: Flag.string('prefix').pipe(Flag.withDescription('Local pinned prefix used to derive the default contract path'), Flag.withDefault('')),
+    ...pinApplyFlags,
     root,
-  }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
-    if (!dryRun) {
-      return yield* Effect.fail(new Error('partita pin update only supports --dry-run in this implementation'))
-    }
-    yield* printPinStatus(options)
+  }, Effect.fnUntraced(function* (options) {
+    yield* printPinApply({ ...options, operation: 'update' })
   })).pipe(
-    Command.withDescription('Dry-run GitHub git-subtree update checks before a domain wrapper mutates the tree'),
+    Command.withDescription('Apply an approved immutable Source Pin update plan with git subtree'),
   )
 
   const pin = Command.make('pin').pipe(
