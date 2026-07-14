@@ -112,11 +112,38 @@ partita home apply --write
 
 `partita pin` 只支持 GitHub repository + git subtree pin。
 
-Partita owns generic Source Pin verification and publication. `pin publish`
-verifies the contract and working tree, then uses the Prelude Contract codec to
-write a deterministic canonical archive plus path-independent provenance JSON.
-It does not choose Harness Target locators, routes, anchors, or `referenceOnly`
-delivery policy.
+Partita is the generic **producer** for Source Pin publications. The [Prelude
+Contract canonical tree archive
+protocol](https://github.com/yume-infra/prelude/blob/main/packages/harness-contract/README.md#canonical-tree-archive-protocol)
+is normative for wire framing, entry meaning, the logical tree digest, decoder
+limits, and compatibility. Partita consumes that codec; it does not define a
+second Partita-private archive format.
+
+`pin publish` has these observable boundaries:
+
+- inputs: the repository root, a GitHub subtree contract, its bounded Source
+  Pin prefix, and separate repository-relative archive/provenance output paths;
+- verification: contract identity, immutable subtree revision, committed Git
+  index and working-tree equality, tracked filesystem kind/mode/bytes, safe
+  relative symbolic links, opaque internal Gitlinks, and output confinement;
+- outputs: one deterministic `prelude-canonical-tree-archive-v1` ordinary file
+  and path-independent provenance JSON containing archive format plus the
+  outer source URL, immutable revision, and complete logical tree digest;
+- failures: contract or revision drift, staged/unstaged/untracked content,
+  missing or unsupported entries, unsafe links, prefix Gitlinks, Git/filesystem
+  inspection errors, invalid or aliased output paths, and Contract encoder or
+  provenance validation failures all stop publication.
+
+The provenance `treeDigest` is the digest recomputed by the Contract encoder
+from the same verified logical entries carried by the archive; it is not a hash
+of the archive container bytes. Repeating publication from identical inputs
+must produce byte-identical archive and provenance files.
+
+Partita does not choose Harness Target locators, routes, anchors, or
+`referenceOnly` delivery policy. [Effect
+Harness](https://github.com/sayoriqwq/effect-harness/blob/main/HARNESS.md) is a
+concrete **composer** of Partita publications; [Prelude](https://github.com/yume-infra/prelude/blob/main/docs/v2-harness-convergence-contract.md#pinned-reference-trees)
+is the **consumer** and Target mutation host.
 
 默认 contract path 是 subtree prefix 的 sibling 文件。
 

@@ -1,7 +1,7 @@
 {
   "name": "@sayoriqwq/partita",
   "type": "module",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
   "repository": {
