@@ -209,6 +209,30 @@ describe('partita pin publish CLI', () => {
     assert.isFalse(existsSync(join(outside, 'escaping-output.json')))
   }))
 
+  it.effect('rejects internal output symlink aliases to the contract and Source Pin prefix', () => Effect.sync(() => {
+    const contractRoot = makeFixture()
+    symlinkSync('.', join(contractRoot, 'out'))
+    const contractAlias = publish(contractRoot, 'contract-alias', {
+      archive: 'out/repos/upstream.subtree.json',
+      provenance: 'publication/contract-alias.json',
+    })
+
+    assert.notEqual(contractAlias.status, 0)
+    assert.include(contractAlias.stderr, 'must not overwrite Source Pin contract')
+    assert.match(readFileSync(join(contractRoot, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion": 1/u)
+
+    const prefixRoot = makeFixture()
+    symlinkSync('repos/upstream', join(prefixRoot, 'out'))
+    const prefixAlias = publish(prefixRoot, 'prefix-alias', {
+      archive: 'out/generated.pta',
+      provenance: 'publication/prefix-alias.json',
+    })
+
+    assert.notEqual(prefixAlias.status, 0)
+    assert.include(prefixAlias.stderr, 'must be outside Source Pin prefix')
+    assert.isFalse(existsSync(join(prefixRoot, 'repos/upstream/generated.pta')))
+  }))
+
   it.effect('rejects an escaping symbolic link', () => Effect.sync(() => {
     const root = makeFixture()
     symlinkSync('../../outside', join(root, 'repos/upstream/escape'))

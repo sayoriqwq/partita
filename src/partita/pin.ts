@@ -357,24 +357,44 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
   }
 
   const fs = yield* FileSystem.FileSystem
-  yield* assertPublicationOutputParentConfined(root, archive.absolutePath)
-  yield* assertPublicationOutputParentConfined(root, provenance.absolutePath)
-  yield* fs.makeDirectory(dirname(archive.absolutePath), { recursive: true }).pipe(
+  const physicalArchive = yield* resolvePublicationOutputPhysicalPath(root, archive)
+  const physicalProvenance = yield* resolvePublicationOutputPhysicalPath(root, provenance)
+  const [physicalContract, physicalPrefix] = yield* Effect.all([
+    fs.realPath(resolve(root, report.contractPath)).pipe(
+      Effect.mapError(cause => new PartitaError(`Resolve Source Pin contract ${report.contractPath}: ${formatUnknown(cause)}`)),
+    ),
+    fs.realPath(resolve(root, contract.local.prefix)).pipe(
+      Effect.mapError(cause => new PartitaError(`Resolve Source Pin prefix ${contract.local.prefix}: ${formatUnknown(cause)}`)),
+    ),
+  ])
+  for (const output of [physicalArchive, physicalProvenance]) {
+    if (output.physicalPath === physicalContract) {
+      return yield* Effect.fail(new PartitaError(
+        `Source Pin publication output must not overwrite Source Pin contract: ${report.contractPath}`,
+      ))
+    }
+    if (physicalPathIsSameOrInside(output.physicalPath, physicalPrefix)) {
+      return yield* Effect.fail(new PartitaError(
+        `Source Pin publication output must be outside Source Pin prefix ${contract.local.prefix}: ${output.relativePath}`,
+      ))
+    }
+  }
+  yield* fs.makeDirectory(dirname(physicalArchive.physicalPath), { recursive: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Create ${dirname(archive.relativePath)}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.makeDirectory(dirname(provenance.absolutePath), { recursive: true }).pipe(
+  yield* fs.makeDirectory(dirname(physicalProvenance.physicalPath), { recursive: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Create ${dirname(provenance.relativePath)}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.remove(archive.absolutePath, { force: true }).pipe(
+  yield* fs.remove(physicalArchive.physicalPath, { force: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Replace ${archive.relativePath}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.remove(provenance.absolutePath, { force: true }).pipe(
+  yield* fs.remove(physicalProvenance.physicalPath, { force: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Replace ${provenance.relativePath}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.writeFile(archive.absolutePath, encoded.bytes).pipe(
+  yield* fs.writeFile(physicalArchive.physicalPath, encoded.bytes).pipe(
     Effect.mapError(cause => new PartitaError(`Write ${archive.relativePath}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.writeFileString(provenance.absolutePath, `${JSON.stringify(publication, null, 2)}\n`).pipe(
+  yield* fs.writeFileString(physicalProvenance.physicalPath, `${JSON.stringify(publication, null, 2)}\n`).pipe(
     Effect.mapError(cause => new PartitaError(`Write ${provenance.relativePath}: ${formatUnknown(cause)}`)),
   )
 
@@ -1050,16 +1070,16 @@ const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(funct
   return { absolutePath: resolve(root, relativePath), relativePath }
 })
 
-const assertPublicationOutputParentConfined = Effect.fn('assertPublicationOutputParentConfined')(function* (
+const resolvePublicationOutputPhysicalPath = Effect.fn('resolvePublicationOutputPhysicalPath')(function* (
   root: string,
-  outputPath: string,
+  output: { readonly absolutePath: string, readonly relativePath: string },
 ) {
   const fs = yield* FileSystem.FileSystem
-  let existingParent = dirname(outputPath)
+  let existingParent = dirname(output.absolutePath)
   while (!(yield* fileExists(existingParent))) {
     const next = dirname(existingParent)
     if (next === existingParent) {
-      return yield* Effect.fail(new PartitaError(`Cannot resolve Source Pin publication output parent: ${outputPath}`))
+      return yield* Effect.fail(new PartitaError(`Cannot resolve Source Pin publication output parent: ${output.relativePath}`))
     }
     existingParent = next
   }
@@ -1073,9 +1093,18 @@ const assertPublicationOutputParentConfined = Effect.fn('assertPublicationOutput
   ])
   const parentFromRoot = relative(realRoot, realParent)
   if (isAbsolute(parentFromRoot) || parentFromRoot === '..' || parentFromRoot.startsWith(`..${sep}`)) {
-    return yield* Effect.fail(new PartitaError(`Source Pin publication output parent escapes the repository: ${outputPath}`))
+    return yield* Effect.fail(new PartitaError(`Source Pin publication output parent escapes the repository: ${output.relativePath}`))
+  }
+  return {
+    ...output,
+    physicalPath: resolve(realParent, relative(existingParent, output.absolutePath)),
   }
 })
+
+function physicalPathIsSameOrInside(path: string, parent: string): boolean {
+  const pathFromParent = relative(parent, path)
+  return pathFromParent === '' || (!isAbsolute(pathFromParent) && pathFromParent !== '..' && !pathFromParent.startsWith(`..${sep}`))
+}
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0
