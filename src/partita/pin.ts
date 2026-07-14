@@ -359,6 +359,11 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
   const fs = yield* FileSystem.FileSystem
   const physicalArchive = yield* resolvePublicationOutputPhysicalPath(root, archive)
   const physicalProvenance = yield* resolvePublicationOutputPhysicalPath(root, provenance)
+  if (physicalArchive.physicalPath === physicalProvenance.physicalPath) {
+    return yield* Effect.fail(new PartitaError(
+      'Source Pin archive and provenance paths must resolve to different files.',
+    ))
+  }
   const [physicalContract, physicalPrefix] = yield* Effect.all([
     fs.realPath(resolve(root, report.contractPath)).pipe(
       Effect.mapError(cause => new PartitaError(`Resolve Source Pin contract ${report.contractPath}: ${formatUnknown(cause)}`)),

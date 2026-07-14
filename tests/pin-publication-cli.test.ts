@@ -231,6 +231,17 @@ describe('partita pin publish CLI', () => {
     assert.notEqual(prefixAlias.status, 0)
     assert.include(prefixAlias.stderr, 'must be outside Source Pin prefix')
     assert.isFalse(existsSync(join(prefixRoot, 'repos/upstream/generated.pta')))
+
+    const sameOutputRoot = makeFixture()
+    symlinkSync('.', join(sameOutputRoot, 'out'))
+    const sameOutputAlias = publish(sameOutputRoot, 'same-output-alias', {
+      archive: 'out/publication.bin',
+      provenance: 'publication.bin',
+    })
+
+    assert.notEqual(sameOutputAlias.status, 0)
+    assert.include(sameOutputAlias.stderr, 'resolve to different files')
+    assert.isFalse(existsSync(join(sameOutputRoot, 'publication.bin')))
   }))
 
   it.effect('rejects an escaping symbolic link', () => Effect.sync(() => {
