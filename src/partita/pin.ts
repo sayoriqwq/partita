@@ -1,15 +1,20 @@
 /* eslint-disable ts/no-use-before-define */
-import type { CanonicalTreeArchiveSourceEntry } from '@sayoriqwq/prelude-contract'
+import type {
+  CanonicalTreeArchiveSourceEntry,
+  PinnedReferenceProvenance,
+} from '@sayoriqwq/prelude-contract'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import {
   CANONICAL_TREE_ARCHIVE_FORMAT,
   encodeCanonicalTreeArchive,
   isSafeRelativeSymlink,
+  PinnedReferenceProvenanceSchema,
   SYMBOLIC_LINK_MODE,
 } from '@sayoriqwq/prelude-contract'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Schema from 'effect/Schema'
 import { PartitaError } from './errors.ts'
 import { CommandExecutor } from './process.ts'
 
@@ -97,11 +102,7 @@ interface SourcePinPublication {
   readonly archive: {
     readonly format: typeof CANONICAL_TREE_ARCHIVE_FORMAT
   }
-  readonly provenance: {
-    readonly sourceUrl: string
-    readonly revision: string
-    readonly treeDigest: string
-  }
+  readonly provenance: PinnedReferenceProvenance
 }
 
 export interface PinIssue {
@@ -318,18 +319,22 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
   const contract = report.contract
   const snapshot = yield* sourcePinArchiveEntries(root, contract)
   yield* assertSourcePinUnmodified(root, contract.local.prefix, snapshot.opaqueGitlinks)
+  yield* assertSourcePinRevisionMatches(root, contract)
   const encoded = yield* Effect.try({
     try: () => encodeCanonicalTreeArchive(snapshot.entries),
     catch: cause => new PartitaError(`Encode Source Pin archive: ${formatUnknown(cause)}`),
   })
+  const validatedProvenance = yield* Schema.decodeUnknownEffect(PinnedReferenceProvenanceSchema)({
+    revision: contract.github.ref,
+    sourceUrl: contract.github.repository,
+    treeDigest: encoded.treeDigest,
+  }).pipe(
+    Effect.mapError(cause => new PartitaError(`Validate Source Pin provenance: ${formatUnknown(cause)}`)),
+  )
   const publication: SourcePinPublication = {
     archive: { format: CANONICAL_TREE_ARCHIVE_FORMAT },
     name: contract.name,
-    provenance: {
-      revision: contract.github.ref,
-      sourceUrl: contract.github.repository,
-      treeDigest: encoded.treeDigest,
-    },
+    provenance: validatedProvenance,
     schemaVersion: 1,
   }
 
@@ -339,6 +344,11 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
     if (pathIsSameOrInside(output.relativePath, contract.local.prefix)) {
       return yield* Effect.fail(new PartitaError(
         `Source Pin publication output must be outside Source Pin prefix ${contract.local.prefix}: ${output.relativePath}`,
+      ))
+    }
+    if (output.relativePath === report.contractPath) {
+      return yield* Effect.fail(new PartitaError(
+        `Source Pin publication output must not overwrite Source Pin contract: ${report.contractPath}`,
       ))
     }
   }
@@ -425,6 +435,14 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
     ...checkGitSubtreeOnly(contract),
     ...checkContractPathOutsidePrefix(contractPath, contract),
   ]
+  if (contract.github.ref !== contract.subtree.split
+    || contract.subtree.trailer !== `git-subtree-split: ${contract.github.ref}`) {
+    issues.push(issue(
+      'pin.revision_mismatch',
+      'Source Pin github.ref, subtree.split, and subtree.trailer must identify the same revision',
+      contract.local.prefix,
+    ))
+  }
   const prefix = contract.local.prefix
   const prefixPath = resolve(root, prefix)
 
@@ -493,6 +511,12 @@ const checkPublicationSourceContract = Effect.fn('checkPublicationSourceContract
   }
   if (!contract.boundaries.readOnly) {
     issues.push(issue('pin.read_only_missing', 'GitHub subtree pin must be marked read-only', prefix))
+  }
+  if (!contract.boundaries.importBlock) {
+    issues.push(issue('pin.import_block_missing', 'GitHub subtree pin must enable import blocking', prefix))
+  }
+  else if (!isMissingValue(prefix)) {
+    issues.push(...(yield* checkForbiddenImports(root, contract)))
   }
   return issues
 })
@@ -964,6 +988,54 @@ const assertSourcePinUnmodified = Effect.fn('assertSourcePinUnmodified')(functio
       return yield* Effect.fail(new PartitaError(`${check.message}: ${prefix}`))
     }
   }
+})
+
+const assertSourcePinRevisionMatches = Effect.fn('assertSourcePinRevisionMatches')(function* (
+  root: string,
+  contract: GitHubSubtreePinContract,
+) {
+  const executor = yield* CommandExecutor
+  const history = yield* executor.run({
+    args: [
+      'log',
+      '--format=%H',
+      '--fixed-strings',
+      `--grep=${contract.subtree.trailer}`,
+      '--',
+      contract.local.prefix,
+    ],
+    command: 'git',
+    cwd: root,
+  })
+  if (history.exitCode !== 0) {
+    return yield* Effect.fail(new PartitaError(
+      `Inspect Source Pin revision history: git exited with code ${history.exitCode}: ${history.output.trim()}`,
+    ))
+  }
+  const currentTree = yield* readGitObjectId(executor, root, `HEAD:${contract.local.prefix}`)
+  for (const commit of history.output.split(/\r?\n/u).filter(Boolean)) {
+    const pinnedTree = yield* readGitObjectId(executor, root, `${commit}:${contract.local.prefix}`)
+    if (pinnedTree === currentTree) {
+      return
+    }
+  }
+  return yield* Effect.fail(new PartitaError(
+    `Source Pin tree does not match declared subtree revision ${contract.github.ref}: ${contract.local.prefix}`,
+  ))
+})
+
+const readGitObjectId = Effect.fn('readGitObjectId')(function* (
+  executor: CommandExecutor['Service'],
+  root: string,
+  revisionPath: string,
+) {
+  const result = yield* executor.run({ args: ['rev-parse', revisionPath], command: 'git', cwd: root })
+  if (result.exitCode !== 0) {
+    return yield* Effect.fail(new PartitaError(
+      `Resolve Git object ${revisionPath}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
+    ))
+  }
+  return result.output.trim()
 })
 
 const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(function* (

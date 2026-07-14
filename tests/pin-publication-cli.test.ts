@@ -90,6 +90,19 @@ describe('partita pin publish CLI', () => {
     assertOutputsAbsent(root, 'modified')
   }))
 
+  it.effect('rejects committed Source Pin content that no longer matches the declared subtree revision', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream/README.md', 'committed local drift\n')
+    git(root, 'add', 'repos/upstream/README.md')
+    git(root, 'commit', '--quiet', '-m', 'drift after pinned subtree')
+
+    const result = publish(root, 'committed-drift')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'does not match declared subtree revision')
+    assertOutputsAbsent(root, 'committed-drift')
+  }))
+
   it.effect('rejects a Source Pin prefix materialized as a Gitlink', () => Effect.sync(() => {
     const root = makeFixture()
     git(root, 'rm', '-r', '--cached', 'repos/upstream')
@@ -143,6 +156,44 @@ describe('partita pin publish CLI', () => {
     assert.include(result.stderr, 'must be outside Source Pin prefix repos/upstream')
     assert.isFalse(existsSync(join(root, archive)))
     assert.isFalse(existsSync(join(root, provenance)))
+  }))
+
+  it.effect('rejects publication output that would overwrite the Source Pin contract', () => Effect.sync(() => {
+    const root = makeFixture()
+
+    const result = publish(root, 'contract-output', {
+      archive: 'repos/upstream.subtree.json',
+      provenance: 'out/contract-output.json',
+    })
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'must not overwrite Source Pin contract')
+    assert.match(readFileSync(join(root, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion": 1/u)
+  }))
+
+  it.effect('requires the Source Pin import block before publication', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({
+      ...contract(),
+      boundaries: { importBlock: false, readOnly: true },
+    }, null, 2)}\n`)
+
+    const result = publish(root, 'missing-import-block')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'pin.import_block_missing')
+    assertOutputsAbsent(root, 'missing-import-block')
+  }))
+
+  it.effect('rejects application imports from the Source Pin before publication', () => Effect.sync(() => {
+    const root = makeFixture()
+    write(root, 'src/app.ts', 'import "../repos/upstream/README.md"\n')
+
+    const result = publish(root, 'blocked-import')
+
+    assert.notEqual(result.status, 0)
+    assert.include(result.stderr, 'pin.import_blocked')
+    assertOutputsAbsent(root, 'blocked-import')
   }))
 
   it.effect('rejects publication through an output parent symlink that escapes the repository', () => Effect.sync(() => {
@@ -231,7 +282,7 @@ function makeFixture(options: { readonly initializeGit?: boolean } = {}): string
     git(root, 'config', 'user.email', 'partita@example.invalid')
     git(root, 'config', 'user.name', 'Partita Test')
     git(root, 'add', '.')
-    git(root, 'commit', '--quiet', '-m', 'fixture')
+    git(root, 'commit', '--quiet', '-m', `fixture\n\ngit-subtree-split: ${'a'.repeat(40)}`)
   }
   return root
 }
