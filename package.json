@@ -1,7 +1,7 @@
 {
   "name": "@sayoriqwq/partita",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
   "packageManager": "pnpm@11.7.0",
