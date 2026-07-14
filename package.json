@@ -4,6 +4,10 @@
   "version": "0.2.0",
   "description": "CLI-backed Codex skill harness for user-defined workflow skills.",
   "author": "sayori",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sayoriqwq/partita"
+  },
   "packageManager": "pnpm@11.7.0",
   "license": "MIT",
   "publishConfig": {
