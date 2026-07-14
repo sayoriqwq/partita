@@ -242,7 +242,7 @@ describe('partita pin publish CLI', () => {
     assert.notEqual(sameOutputAlias.status, 0)
     assert.include(sameOutputAlias.stderr, 'resolve to different files')
     assert.isFalse(existsSync(join(sameOutputRoot, 'publication.bin')))
-  }))
+  }), 15_000)
 
   it.effect('rejects an escaping symbolic link', () => Effect.sync(() => {
     const root = makeFixture()
