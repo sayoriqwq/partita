@@ -1026,8 +1026,6 @@ const assertSourcePinRevisionMatches = Effect.fn('assertSourcePinRevisionMatches
       '--format=%H',
       '--fixed-strings',
       `--grep=${contract.subtree.trailer}`,
-      '--',
-      contract.local.prefix,
     ],
     command: 'git',
     cwd: root,
@@ -1039,7 +1037,7 @@ const assertSourcePinRevisionMatches = Effect.fn('assertSourcePinRevisionMatches
   }
   const currentTree = yield* readGitObjectId(executor, root, `HEAD:${contract.local.prefix}`)
   for (const commit of history.output.split(/\r?\n/u).filter(Boolean)) {
-    const pinnedTree = yield* readGitObjectId(executor, root, `${commit}:${contract.local.prefix}`)
+    const pinnedTree = yield* readGitObjectId(executor, root, `${commit}^{tree}`)
     if (pinnedTree === currentTree) {
       return
     }

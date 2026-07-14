@@ -316,8 +316,33 @@ function makeFixture(options: { readonly initializeGit?: boolean } = {}): string
     git(root, 'init', '--quiet')
     git(root, 'config', 'user.email', 'partita@example.invalid')
     git(root, 'config', 'user.name', 'Partita Test')
-    git(root, 'add', '.')
-    git(root, 'commit', '--quiet', '-m', `fixture\n\ngit-subtree-split: ${'a'.repeat(40)}`)
+    git(root, 'add', 'AGENTS.md', 'repos/upstream.subtree.json')
+    git(root, 'commit', '--quiet', '-m', 'fixture base')
+    const base = gitOutput(root, 'rev-parse', 'HEAD')
+    git(root, 'add', 'repos/upstream')
+    const materializationTree = gitOutput(root, 'write-tree')
+    const prefixTree = gitOutput(root, 'rev-parse', `${materializationTree}:repos/upstream`)
+    const squash = gitOutput(
+      root,
+      'commit-tree',
+      prefixTree,
+      '-p',
+      base,
+      '-m',
+      `Squashed 'repos/upstream/' changes\n\ngit-subtree-dir: repos/upstream\ngit-subtree-split: ${'a'.repeat(40)}`,
+    )
+    const materialization = gitOutput(
+      root,
+      'commit-tree',
+      materializationTree,
+      '-p',
+      base,
+      '-p',
+      squash,
+      '-m',
+      'materialize subtree',
+    )
+    git(root, 'reset', '--quiet', '--hard', materialization)
   }
   return root
 }
@@ -365,6 +390,10 @@ function assertOutputsAbsent(root: string, outputName: string): void {
 
 function git(root: string, ...args: ReadonlyArray<string>): void {
   execFileSync('git', args, { cwd: root, stdio: 'pipe' })
+}
+
+function gitOutput(root: string, ...args: ReadonlyArray<string>): string {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim()
 }
 
 function write(root: string, path: string, value: string): void {
