@@ -25,6 +25,10 @@ __pycache__/
 node_modules/
 npm-debug.log*
 
+# Prelude reference trees preserve archive modes that Git cannot round-trip.
+# They are deterministic materializations of the pinned Artifact archives.
+/.prelude/*/repos/
+
 # IDE
 .idea/
 .vscode/
