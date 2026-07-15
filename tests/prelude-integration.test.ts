@@ -29,7 +29,7 @@ describe('prelude V2 Harness convergence', () => {
     const plan = Schema.decodeUnknownSync(PlanDocument)(result.stdout)
     expect(plan.schemaVersion).toBe(2)
     expect(plan.blocked).toBe(false)
-    expect(plan.converged).toBe(true)
+    expect(plan.converged, result.stdout).toBe(true)
     expect(plan.integrations.map(integration => integration.integrationId)).toEqual(['effect'])
 
     const outputs = (integrationId: string) => plan.outputs
