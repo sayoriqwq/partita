@@ -1,11 +1,9 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, layer } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
 import * as Layer from 'effect/Layer'
+import * as Schema from 'effect/Schema'
 import {
   primitiveReferenceCopySpecs,
   syncPrimitiveReferences,
@@ -15,6 +13,10 @@ import {
   verifyRuntimeSkills,
   verifySourceProject,
 } from '../src/partita/verifier.ts'
+
+const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { tmpdir } = process.getBuiltinModule('node:os')
+const { dirname, join } = process.getBuiltinModule('node:path')
 
 const marker = '🧭'
 
@@ -77,33 +79,33 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.deepStrictEqual(report.issues, [])
     }))
 
-  it.effect('acquires each source SKILL.md once during source validation', () => {
-    const root = makeValidSourceFixture()
-    const skillPath = join(root, 'skills/demo/SKILL.md')
-    let reads = 0
-    const trackingFileSystem = Layer.effect(
-      FileSystem.FileSystem,
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem
-        return FileSystem.FileSystem.of({
-          ...fs,
-          readFileString: (path, encoding) => {
-            if (path === skillPath) {
-              reads += 1
-            }
-            return fs.readFileString(path, encoding)
-          },
-        })
-      }),
-    ).pipe(Layer.provide(NodeServices.layer))
+  const trackedRoot = makeValidSourceFixture()
+  const trackedSkillPath = join(trackedRoot, 'skills/demo/SKILL.md')
+  let reads = 0
+  const trackingFileSystem = Layer.effect(
+    FileSystem.FileSystem,
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem
+      return FileSystem.FileSystem.of({
+        ...fs,
+        readFileString: (path, encoding) => {
+          if (path === trackedSkillPath) {
+            reads += 1
+          }
+          return fs.readFileString(path, encoding)
+        },
+      })
+    }),
+  )
 
-    return verifyPartitaSourceSkills({ root }).pipe(
-      Effect.provide(trackingFileSystem),
-      Effect.flatMap(report => Effect.sync(() => {
+  it.layer(trackingFileSystem)((it) => {
+    it.effect('acquires each source SKILL.md once during source validation', () =>
+      Effect.gen(function* () {
+        reads = 0
+        const report = yield* verifyPartitaSourceSkills({ root: trackedRoot })
         assert.isTrue(report.ok)
         assert.strictEqual(reads, 1)
-      })),
-    )
+      }))
   })
 
   it.effect('reports skill contract drift', () =>
@@ -440,14 +442,14 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(codes.includes('surface.removed_exists'))
     }))
 
-  it.effect('does not interpret Psychogram wikilinks while rejecting the removed wiki package', () =>
+  it.effect('does not interpret external managed-doc wikilinks while rejecting the removed wiki package', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'psychogram/managed/harness/lead.md', 'Use [[prelude|Prelude]].\n')
+      write(root, 'external/managed/docs/lead.md', 'Use [[prelude|Prelude]].\n')
 
-      const psychogramReport = yield* verifySourceProject({ root })
-      assert.isTrue(psychogramReport.ok)
-      assert.deepStrictEqual(psychogramReport.issues, [])
+      const externalDocsReport = yield* verifySourceProject({ root })
+      assert.isTrue(externalDocsReport.ok)
+      assert.deepStrictEqual(externalDocsReport.issues, [])
 
       write(root, 'packages/wiki/index.md', '# Removed wiki package\n')
       const removedSurfaceReport = yield* verifySourceProject({ root })
@@ -456,10 +458,21 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(removedSurfaceReport.issues.some(issue => issue.path === 'packages/wiki'))
     }))
 
+  it.effect('treats Prelude pinned reference trees as read-only diagnostics outside project verification', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, '.prelude/effect/repos/upstream/README.md', '[missing](./not-materialized.md)\n')
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
+    }))
+
   it.effect('keeps runtime, source, and project verification as separate layers', () =>
     Effect.gen(function* () {
       const root = mkdtempSync(join(tmpdir(), 'partita-verifier-levels-'))
-      write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
+      write(root, 'package.json', encodeJson({ version: '0.1.0' }))
       write(root, 'skills/demo/SKILL.md', [
         '---',
         'name: demo',
@@ -488,7 +501,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
 
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))
-  write(root, 'package.json', JSON.stringify({ version: '0.1.0' }))
+  write(root, 'package.json', encodeJson({ version: '0.1.0' }))
 
   write(root, 'skills/demo/SKILL.md', validSkill())
   write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata())
@@ -598,4 +611,8 @@ function write(root: string, path: string, contents: string) {
   const absolutePath = join(root, path)
   mkdirSync(dirname(absolutePath), { recursive: true })
   writeFileSync(absolutePath, contents)
+}
+
+function encodeJson(value: unknown): string {
+  return Schema.encodeSync(Schema.UnknownFromJsonString)(value)
 }

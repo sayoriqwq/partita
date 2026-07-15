@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "integrations": [
+    {
+      "id": "effect",
+      "module": "@sayoriqwq/effect-harness/prelude",
+      "packageRoots": ["."]
+    }
+  ]
+}

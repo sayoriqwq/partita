@@ -1,9 +1,8 @@
 # Prelude convergence in Partita
 
-This wiki records how Partita uses Prelude to review a composed, target-owned
-transition before any managed output is applied.
+This target-owned note records the former composed Prelude integration.
 
-The root package graph selects Prelude, Effect Harness, and Psychogram
-Artifacts. `prelude.config.jsonc` declares the two Integrations at the Partita
-package root. Effect guidance belongs to its managed documentation; this wiki
-remains target-owned and captures Partita-specific operating context.
+Partita now selects only the Effect Harness through `.prelude/config.jsonc`.
+Psychogram is not a package or Prelude Integration dependency while its upstream
+architecture is being rebuilt. This note remains ordinary target-owned content;
+Prelude does not plan, materialize, or verify it.

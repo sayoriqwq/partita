@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.effect.json",
   "include": [
     "bin",
     "src",
@@ -24,16 +25,6 @@
       "node"
     ],
     "allowImportingTsExtensions": true,
-    "exactOptionalPropertyTypes": true,
-    "plugins": [
-      {
-        "name": "@effect/language-service",
-        "diagnostics": true,
-        "includeSuggestionsInTsc": true,
-        "ignoreEffectSuggestionsInTscExitCode": false,
-        "ignoreEffectWarningsInTscExitCode": false,
-        "ignoreEffectErrorsInTscExitCode": false
-      }
-    ]
+    "exactOptionalPropertyTypes": true
   }
 }

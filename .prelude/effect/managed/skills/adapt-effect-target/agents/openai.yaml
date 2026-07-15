@@ -1,0 +1,4 @@
+interface:
+  display_name: Adapt Effect Target
+  short_description: Authorize and verify Target-owned Effect adaptation
+  default_prompt: 'Use $adapt-effect-target to propose, authorize, apply, and verify this repository''s Effect toolchain adaptation.'

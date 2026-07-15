@@ -31,7 +31,7 @@ export interface CliConfig {
   readonly version: string
 }
 
-const PartitaLive = CommandExecutorLive.pipe(
+export const PartitaLive = CommandExecutorLive.pipe(
   Layer.provideMerge(NodeServices.layer),
 )
 
@@ -224,7 +224,7 @@ function makeCli(config: CliConfig) {
     root,
   }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
     if (!dryRun) {
-      return yield* Effect.fail(new PartitaError('partita pin add only supports --dry-run in this implementation'))
+      return yield* new PartitaError('partita pin add only supports --dry-run in this implementation')
     }
     yield* printPinPlan(options)
   })).pipe(
@@ -242,7 +242,7 @@ function makeCli(config: CliConfig) {
     root,
   }, Effect.fnUntraced(function* ({ dryRun, ...options }) {
     if (!dryRun) {
-      return yield* Effect.fail(new PartitaError('partita pin update only supports --dry-run in this implementation'))
+      return yield* new PartitaError('partita pin update only supports --dry-run in this implementation')
     }
     yield* printPinStatus(options)
   })).pipe(
@@ -263,6 +263,5 @@ function makeCli(config: CliConfig) {
 export function runCli(config: CliConfig) {
   return makeCli(config).pipe(
     Command.run({ version: config.version }),
-    Effect.provide(PartitaLive),
   )
 }

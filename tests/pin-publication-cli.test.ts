@@ -1,5 +1,9 @@
-import { execFileSync, spawnSync } from 'node:child_process'
-import {
+import { assert, describe, it } from '@effect/vitest'
+import * as Effect from 'effect/Effect'
+import * as Schema from 'effect/Schema'
+
+const { execFileSync, spawnSync } = process.getBuiltinModule('node:child_process')
+const {
   chmodSync,
   existsSync,
   mkdirSync,
@@ -7,12 +11,10 @@ import {
   readFileSync,
   symlinkSync,
   writeFileSync,
-} from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { assert, describe, it } from '@effect/vitest'
-import * as Effect from 'effect/Effect'
+} = process.getBuiltinModule('node:fs')
+const { tmpdir } = process.getBuiltinModule('node:os')
+const { dirname, join, resolve } = process.getBuiltinModule('node:path')
+const { fileURLToPath } = process.getBuiltinModule('node:url')
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const cliEntrypoint = join(repositoryRoot, 'bin/partita.ts')
@@ -33,7 +35,7 @@ describe('partita pin publish CLI', () => {
       readFileSync(join(root, 'out/first.json'), 'utf8'),
       readFileSync(join(root, 'out/second.json'), 'utf8'),
     )
-    assert.deepEqual(JSON.parse(readFileSync(join(root, 'out/first.json'), 'utf8')), {
+    assert.deepEqual(decodeJson(readFileSync(join(root, 'out/first.json'), 'utf8')), {
       archive: {
         format: 'prelude-canonical-tree-archive-v1',
       },
@@ -117,7 +119,7 @@ describe('partita pin publish CLI', () => {
 
   it.effect('rejects an unsupported Source Pin contract schema version', () => Effect.sync(() => {
     const root = makeFixture()
-    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({ ...contract(), schemaVersion: 2 }, null, 2)}\n`)
+    write(root, 'repos/upstream.subtree.json', `${encodeJson({ ...contract(), schemaVersion: 2 })}\n`)
 
     const result = publish(root, 'schema-version')
 
@@ -128,7 +130,7 @@ describe('partita pin publish CLI', () => {
 
   it.effect('publishes independently of Harness delivery routes, anchors, and editor policy', () => Effect.sync(() => {
     const root = makeFixture()
-    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({
+    write(root, 'repos/upstream.subtree.json', `${encodeJson({
       ...contract(),
       agent: { route: 'delivery/missing-route.md' },
       anchor: { llmDocument: 'delivery/missing-anchor.md' },
@@ -138,7 +140,7 @@ describe('partita pin publish CLI', () => {
         searchExclude: 'disabled',
         watcherExclude: 'disabled',
       },
-    }, null, 2)}\n`)
+    })}\n`)
 
     const result = publish(root, 'policy-independent')
 
@@ -168,15 +170,15 @@ describe('partita pin publish CLI', () => {
 
     assert.notEqual(result.status, 0)
     assert.include(result.stderr, 'must not overwrite Source Pin contract')
-    assert.match(readFileSync(join(root, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion": 1/u)
+    assert.match(readFileSync(join(root, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*1/u)
   }))
 
   it.effect('requires the Source Pin import block before publication', () => Effect.sync(() => {
     const root = makeFixture()
-    write(root, 'repos/upstream.subtree.json', `${JSON.stringify({
+    write(root, 'repos/upstream.subtree.json', `${encodeJson({
       ...contract(),
       boundaries: { importBlock: false, readOnly: true },
-    }, null, 2)}\n`)
+    })}\n`)
 
     const result = publish(root, 'missing-import-block')
 
@@ -219,7 +221,7 @@ describe('partita pin publish CLI', () => {
 
     assert.notEqual(contractAlias.status, 0)
     assert.include(contractAlias.stderr, 'must not overwrite Source Pin contract')
-    assert.match(readFileSync(join(contractRoot, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion": 1/u)
+    assert.match(readFileSync(join(contractRoot, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*1/u)
 
     const prefixRoot = makeFixture()
     symlinkSync('repos/upstream', join(prefixRoot, 'out'))
@@ -311,7 +313,7 @@ function makeFixture(options: { readonly initializeGit?: boolean } = {}): string
   write(root, 'repos/upstream/README.md', 'hello\n')
   write(root, 'repos/upstream/bin/run.sh', '#!/bin/sh\necho hello\n')
   chmodSync(join(root, 'repos/upstream/bin/run.sh'), 0o755)
-  write(root, 'repos/upstream.subtree.json', `${JSON.stringify(contract(), null, 2)}\n`)
+  write(root, 'repos/upstream.subtree.json', `${encodeJson(contract())}\n`)
   if (options.initializeGit !== false) {
     git(root, 'init', '--quiet')
     git(root, 'config', 'user.email', 'partita@example.invalid')
@@ -400,4 +402,12 @@ function write(root: string, path: string, value: string): void {
   const target = join(root, path)
   mkdirSync(dirname(target), { recursive: true })
   writeFileSync(target, value)
+}
+
+function decodeJson(value: string): unknown {
+  return Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(value)
+}
+
+function encodeJson(value: unknown): string {
+  return Schema.encodeSync(Schema.UnknownFromJsonString)(value)
 }

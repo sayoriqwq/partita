@@ -1,8 +1,7 @@
 import type { SkillMetadata } from './model.ts'
 import type { ValidationIssue, ValidationReport } from './validation.ts'
 
-import { join } from 'node:path'
-import { Effect, FileSystem } from 'effect'
+import { Effect, FileSystem, Path } from 'effect'
 import { PartitaError } from './errors.ts'
 import { issue } from './validation.ts'
 
@@ -36,7 +35,8 @@ function pathExists(fs: FileSystem.FileSystem, path: string) {
 export const validateOpenAiSkillFolder = Effect.fn('validateOpenAiSkillFolder')(function* (
   skillPath: string,
 ) {
-  const skillMdPath = join(skillPath, 'SKILL.md')
+  const path = yield* Path.Path
+  const skillMdPath = path.join(skillPath, 'SKILL.md')
   const fs = yield* FileSystem.FileSystem
   const exists = yield* pathExists(fs, skillMdPath)
   if (!exists) {
@@ -105,7 +105,7 @@ function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): Pars
   let currentKey: string | undefined
 
   for (const rawLine of lines) {
-    if (!rawLine.trim()) {
+    if (rawLine.trim() === '') {
       continue
     }
 
@@ -125,7 +125,7 @@ function parseFrontmatterLines(lines: ReadonlyArray<string>, path: string): Pars
 
     const key = rawLine.slice(0, separator).trim()
     currentKey = key
-    if (!key) {
+    if (key === '') {
       issues.push(issue('openai_skill.invalid_frontmatter', `Invalid YAML in frontmatter: ${JSON.stringify(rawLine)}`, path))
       continue
     }
@@ -157,7 +157,7 @@ function checkName(
   }
 
   const name = value.value.trim()
-  if (!name) {
+  if (name === '') {
     return name
   }
   if (!skillNamePattern.test(name)) {
@@ -202,7 +202,7 @@ function checkDescription(
   }
 
   const description = value.value.trim()
-  if (!description) {
+  if (description === '') {
     return description
   }
   if (description.includes('<') || description.includes('>')) {
@@ -220,7 +220,7 @@ function checkDescription(
 
 function parseScalar(raw: string): ScalarValue {
   const value = raw.trim()
-  if (!value) {
+  if (value === '') {
     return { kind: 'non_string', typeName: 'dict' }
   }
 

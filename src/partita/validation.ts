@@ -17,5 +17,5 @@ export function reportFromIssues(issues: ReadonlyArray<ValidationIssue>): Valida
 }
 
 export function issue(code: string, message: string, path?: string): ValidationIssue {
-  return path ? { code, message, path } : { code, message }
+  return path !== undefined && path !== '' ? { code, message, path } : { code, message }
 }

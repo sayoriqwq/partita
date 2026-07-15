@@ -1,7 +1,7 @@
 /* eslint-disable ts/no-use-before-define */
-import { join, relative, sep } from 'node:path'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Path from 'effect/Path'
 import { PartitaError } from './errors.ts'
 
 export const partitaSkillFamilies = {
@@ -43,15 +43,16 @@ export function isPartitaSkillFamily(value: string): value is PartitaSkillFamily
 
 export const loadPartitaSourceSkillCatalog = Effect.fn('loadPartitaSourceSkillCatalog')(function* (
   root: string,
-): Effect.fn.Return<PartitaSourceSkillCatalog, PartitaError, FileSystem.FileSystem> {
+): Effect.fn.Return<PartitaSourceSkillCatalog, PartitaError, FileSystem.FileSystem | Path.Path> {
   const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
   const rootStat = yield* fs.stat(root).pipe(
     Effect.mapError(cause => fileSystemError(`Stat workspace root ${root}`, cause)),
   )
   if (rootStat.type !== 'Directory') {
-    return yield* Effect.fail(new PartitaError(`Workspace root must be a directory: ${root}`))
+    return yield* new PartitaError(`Workspace root must be a directory: ${root}`)
   }
-  const skillsRoot = join(root, 'skills')
+  const skillsRoot = path.join(root, 'skills')
   if (!(yield* pathExists(fs, skillsRoot))) {
     return { root, skills: [], skillsRootEntries: [] }
   }
@@ -64,11 +65,11 @@ export const loadPartitaSourceSkillCatalog = Effect.fn('loadPartitaSourceSkillCa
       continue
     }
 
-    const rootEntryPath = join(skillsRoot, rootEntry.name)
+    const rootEntryPath = path.join(skillsRoot, rootEntry.name)
     const rootEntryChildren = yield* directoryEntries(fs, rootEntryPath)
     skillsRootEntries.push({ ...rootEntry, entries: rootEntryChildren })
     if (rootEntryChildren.some(entry => entry.name === 'SKILL.md')) {
-      skills.push(yield* acquireSkill(fs, root, undefined, rootEntry.name, rootEntryPath, rootEntryChildren))
+      skills.push(yield* acquireSkill(fs, path, root, undefined, rootEntry.name, rootEntryPath, rootEntryChildren))
       continue
     }
     if (!isPartitaSkillFamily(rootEntry.name)) {
@@ -79,13 +80,14 @@ export const loadPartitaSourceSkillCatalog = Effect.fn('loadPartitaSourceSkillCa
       if (skillEntry.type !== 'Directory') {
         continue
       }
-      const skillDirectoryPath = join(rootEntryPath, skillEntry.name)
+      const skillDirectoryPath = path.join(rootEntryPath, skillEntry.name)
       const skillDirectoryEntries = yield* directoryEntries(fs, skillDirectoryPath)
       if (!skillDirectoryEntries.some(entry => entry.name === 'SKILL.md')) {
         continue
       }
       skills.push(yield* acquireSkill(
         fs,
+        path,
         root,
         rootEntry.name,
         skillEntry.name,
@@ -104,19 +106,20 @@ export const loadPartitaSourceSkillCatalog = Effect.fn('loadPartitaSourceSkillCa
 
 const acquireSkill = Effect.fn('acquirePartitaSourceSkill')(function* (
   fs: FileSystem.FileSystem,
+  pathService: Path.Path,
   root: string,
   family: PartitaSkillFamily | undefined,
   name: string,
   directoryPath: string,
   entries: ReadonlyArray<PartitaSourceDirectoryEntry>,
 ) {
-  const path = join(directoryPath, 'SKILL.md')
+  const path = pathService.join(directoryPath, 'SKILL.md')
   const directoryEntriesWithShape: Array<PartitaSourceDirectoryEntry> = []
   for (const entry of entries) {
     if (entry.type === 'Directory' && (entry.name === 'agents' || entry.name === 'references')) {
       directoryEntriesWithShape.push({
         ...entry,
-        entries: yield* directoryEntries(fs, join(directoryPath, entry.name)),
+        entries: yield* directoryEntries(fs, pathService.join(directoryPath, entry.name)),
       })
       continue
     }
@@ -130,7 +133,7 @@ const acquireSkill = Effect.fn('acquirePartitaSourceSkill')(function* (
     handle: family === undefined ? name : `${partitaSkillFamilies[family]}:${name}`,
     name,
     path,
-    relativePath: relativePathFrom(root, path),
+    relativePath: relativePathFrom(pathService, root, path),
     text: yield* fs.readFileString(path).pipe(
       Effect.mapError(cause => fileSystemError(`Read ${path}`, cause)),
     ),
@@ -139,14 +142,15 @@ const acquireSkill = Effect.fn('acquirePartitaSourceSkill')(function* (
 
 const directoryEntries = Effect.fn('partitaSourceSkillDirectoryEntries')(function* (
   fs: FileSystem.FileSystem,
-  path: string,
+  directoryPath: string,
 ) {
-  const names = yield* fs.readDirectory(path).pipe(
-    Effect.mapError(cause => fileSystemError(`Read directory ${path}`, cause)),
+  const path = yield* Path.Path
+  const names = yield* fs.readDirectory(directoryPath).pipe(
+    Effect.mapError(cause => fileSystemError(`Read directory ${directoryPath}`, cause)),
   )
   const entries: Array<PartitaSourceDirectoryEntry> = []
   for (const name of [...names].sort()) {
-    const entryPath = join(path, name)
+    const entryPath = path.join(directoryPath, name)
     const stat = yield* fs.stat(entryPath).pipe(
       Effect.mapError(cause => fileSystemError(`Stat ${entryPath}`, cause)),
     )
@@ -164,7 +168,6 @@ function fileSystemError(operation: string, cause: unknown): PartitaError {
   return new PartitaError(`${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
 }
 
-function relativePathFrom(root: string, path: string): string {
-  const value = relative(root, path)
-  return value.split(sep).join('/')
+function relativePathFrom(pathService: Path.Path, root: string, path: string): string {
+  return pathService.relative(root, path).split(pathService.sep).join('/')
 }

@@ -22,13 +22,13 @@ export class PartitaCommandError extends Schema.TaggedErrorClass<PartitaCommandE
 
 export class CommandExecutor extends Context.Service<CommandExecutor, {
   readonly run: (command: PartitaCommand) => Effect.Effect<PartitaCommandResult, PartitaCommandError>
-}>()('partita/CommandExecutor') {}
+}>()('@sayoriqwq/partita/partita/process/CommandExecutor') {}
 
 function formatUnknown(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause)
 }
 
-const commandError = (message: string): PartitaCommandError => new PartitaCommandError({ message })
+const commandError = (message: string): PartitaCommandError => PartitaCommandError.make({ message })
 
 export const CommandExecutorLive = Layer.effect(
   CommandExecutor,

@@ -3,7 +3,6 @@ import type {
   CanonicalTreeArchiveSourceEntry,
   PinnedReferenceProvenance,
 } from '@sayoriqwq/prelude-contract'
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import {
   CANONICAL_TREE_ARCHIVE_FORMAT,
   encodeCanonicalTreeArchive,
@@ -14,7 +13,10 @@ import {
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Path from 'effect/Path'
 import * as Schema from 'effect/Schema'
+import * as SchemaGetter from 'effect/SchemaGetter'
+import * as SchemaTransformation from 'effect/SchemaTransformation'
 import { PartitaError } from './errors.ts'
 import { CommandExecutor } from './process.ts'
 
@@ -167,6 +169,18 @@ const sideEffectImportPattern = /^\s*import\s*['"]([^'"]+)['"]/gmu
 const dynamicImportPattern = /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/gu
 const requirePattern = /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/gu
 
+const PrettyJsonString = Schema.String.pipe(
+  Schema.decodeTo(
+    Schema.Unknown,
+    new SchemaTransformation.Transformation(
+      SchemaGetter.parseJson({}),
+      SchemaGetter.stringifyJson({ space: 2 }),
+    ),
+  ),
+)
+
+const encodePrettyJson = Schema.encodeSync(PrettyJsonString)
+
 export function defaultPinContractPath(options: {
   readonly name?: string
   readonly prefix?: string
@@ -177,10 +191,11 @@ export function defaultPinContractPath(options: {
 }
 
 export const buildPinPlan = Effect.fn('buildPinPlan')(function* (options: PinPlanOptions) {
-  const root = resolve(options.root)
+  const path = yield* Path.Path
+  const root = path.resolve(options.root)
   const name = nonEmpty(options.name) ?? 'pin'
   const prefix = normalizeRelativePath(nonEmpty(options.prefix) ?? `repos/${name}`)
-  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath({ name, prefix }))
+  const contractPath = pinContractPathFromOption(path, root, options.contractPath, defaultPinContractPath({ name, prefix }))
   const agentRoute = normalizeRelativePath(nonEmpty(options.agentRoute) ?? (yield* defaultAgentRoute(root)))
   const split = nonEmpty(options.ref) ?? '<TODO:github-ref-or-subtree-split>'
   const contract: GitHubSubtreePinContract = {
@@ -226,14 +241,15 @@ export const buildPinPlan = Effect.fn('buildPinPlan')(function* (options: PinPla
 
   return {
     contract,
-    contractJson: `${JSON.stringify(contract, null, 2)}\n`,
+    contractJson: `${encodePrettyJson(contract)}\n`,
     contractPath,
     editorSettings: renderEditorSettings(contract),
   } satisfies PinPlan
 })
 
 export const inspectPins = Effect.fn('inspectPins')(function* (options: PinCommandOptions) {
-  const root = resolve(options.root)
+  const path = yield* Path.Path
+  const root = path.resolve(options.root)
   const defaultPathOptions: { name?: string, prefix?: string } = {}
   const name = nonEmpty(options.name)
   const prefix = nonEmpty(options.prefix)
@@ -243,13 +259,14 @@ export const inspectPins = Effect.fn('inspectPins')(function* (options: PinComma
   if (prefix !== undefined) {
     defaultPathOptions.prefix = prefix
   }
-  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath(defaultPathOptions))
+  const contractPath = pinContractPathFromOption(path, root, options.contractPath, defaultPinContractPath(defaultPathOptions))
   const contract = yield* readGitHubSubtreeContract(root, contractPath)
   return yield* buildPinReport(root, contractPath, contract)
 })
 
 const inspectPublicationSource = Effect.fn('inspectPublicationSource')(function* (options: PinCommandOptions) {
-  const root = resolve(options.root)
+  const path = yield* Path.Path
+  const root = path.resolve(options.root)
   const defaultPathOptions: { name?: string, prefix?: string } = {}
   const name = nonEmpty(options.name)
   const prefix = nonEmpty(options.prefix)
@@ -259,7 +276,7 @@ const inspectPublicationSource = Effect.fn('inspectPublicationSource')(function*
   if (prefix !== undefined) {
     defaultPathOptions.prefix = prefix
   }
-  const contractPath = pinContractPathFromOption(root, options.contractPath, defaultPinContractPath(defaultPathOptions))
+  const contractPath = pinContractPathFromOption(path, root, options.contractPath, defaultPinContractPath(defaultPathOptions))
   const contract = yield* readGitHubSubtreeContract(root, contractPath)
   const issues = yield* checkPublicationSourceContract(root, contractPath, contract)
   return { contract, contractPath, issues, ok: issues.length === 0 }
@@ -299,7 +316,7 @@ export const verifyPins = Effect.fn('verifyPins')(function* (options: PinCommand
     for (const issue of report.issues) {
       yield* Console.error(`- ${formatPinIssue(issue)}`)
     }
-    return yield* Effect.fail(new PartitaError('GitHub subtree pin verification failed.'))
+    return yield* new PartitaError('GitHub subtree pin verification failed.')
   }
 
   yield* Console.log(`GitHub subtree pin verified: ${report.contractPath}`)
@@ -307,13 +324,14 @@ export const verifyPins = Effect.fn('verifyPins')(function* (options: PinCommand
 })
 
 const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOptions) {
-  const root = resolve(options.root)
+  const path = yield* Path.Path
+  const root = path.resolve(options.root)
   const report = yield* inspectPublicationSource(options)
   if (!report.ok) {
-    return yield* Effect.fail(new PartitaError([
+    return yield* new PartitaError([
       'GitHub subtree pin verification failed:',
       ...report.issues.map(issue => `- ${formatPinIssue(issue)}`),
-    ].join('\n')))
+    ].join('\n'))
   }
 
   const contract = report.contract
@@ -342,53 +360,53 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
   const provenance = yield* parsePublicationOutputPath(root, options.provenancePath, 'provenance')
   for (const output of [archive, provenance]) {
     if (pathIsSameOrInside(output.relativePath, contract.local.prefix)) {
-      return yield* Effect.fail(new PartitaError(
+      return yield* new PartitaError(
         `Source Pin publication output must be outside Source Pin prefix ${contract.local.prefix}: ${output.relativePath}`,
-      ))
+      )
     }
     if (output.relativePath === report.contractPath) {
-      return yield* Effect.fail(new PartitaError(
+      return yield* new PartitaError(
         `Source Pin publication output must not overwrite Source Pin contract: ${report.contractPath}`,
-      ))
+      )
     }
   }
   if (archive.relativePath === provenance.relativePath) {
-    return yield* Effect.fail(new PartitaError('Source Pin archive and provenance paths must be different.'))
+    return yield* new PartitaError('Source Pin archive and provenance paths must be different.')
   }
 
   const fs = yield* FileSystem.FileSystem
   const physicalArchive = yield* resolvePublicationOutputPhysicalPath(root, archive)
   const physicalProvenance = yield* resolvePublicationOutputPhysicalPath(root, provenance)
   if (physicalArchive.physicalPath === physicalProvenance.physicalPath) {
-    return yield* Effect.fail(new PartitaError(
+    return yield* new PartitaError(
       'Source Pin archive and provenance paths must resolve to different files.',
-    ))
+    )
   }
   const [physicalContract, physicalPrefix] = yield* Effect.all([
-    fs.realPath(resolve(root, report.contractPath)).pipe(
+    fs.realPath(path.resolve(root, report.contractPath)).pipe(
       Effect.mapError(cause => new PartitaError(`Resolve Source Pin contract ${report.contractPath}: ${formatUnknown(cause)}`)),
     ),
-    fs.realPath(resolve(root, contract.local.prefix)).pipe(
+    fs.realPath(path.resolve(root, contract.local.prefix)).pipe(
       Effect.mapError(cause => new PartitaError(`Resolve Source Pin prefix ${contract.local.prefix}: ${formatUnknown(cause)}`)),
     ),
   ])
   for (const output of [physicalArchive, physicalProvenance]) {
     if (output.physicalPath === physicalContract) {
-      return yield* Effect.fail(new PartitaError(
+      return yield* new PartitaError(
         `Source Pin publication output must not overwrite Source Pin contract: ${report.contractPath}`,
-      ))
+      )
     }
-    if (physicalPathIsSameOrInside(output.physicalPath, physicalPrefix)) {
-      return yield* Effect.fail(new PartitaError(
+    if (physicalPathIsSameOrInside(path, output.physicalPath, physicalPrefix)) {
+      return yield* new PartitaError(
         `Source Pin publication output must be outside Source Pin prefix ${contract.local.prefix}: ${output.relativePath}`,
-      ))
+      )
     }
   }
-  yield* fs.makeDirectory(dirname(physicalArchive.physicalPath), { recursive: true }).pipe(
-    Effect.mapError(cause => new PartitaError(`Create ${dirname(archive.relativePath)}: ${formatUnknown(cause)}`)),
+  yield* fs.makeDirectory(path.dirname(physicalArchive.physicalPath), { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Create ${path.dirname(archive.relativePath)}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.makeDirectory(dirname(physicalProvenance.physicalPath), { recursive: true }).pipe(
-    Effect.mapError(cause => new PartitaError(`Create ${dirname(provenance.relativePath)}: ${formatUnknown(cause)}`)),
+  yield* fs.makeDirectory(path.dirname(physicalProvenance.physicalPath), { recursive: true }).pipe(
+    Effect.mapError(cause => new PartitaError(`Create ${path.dirname(provenance.relativePath)}: ${formatUnknown(cause)}`)),
   )
   yield* fs.remove(physicalArchive.physicalPath, { force: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Replace ${archive.relativePath}: ${formatUnknown(cause)}`)),
@@ -399,7 +417,7 @@ const publishPin = Effect.fn('publishPin')(function* (options: PinPublicationOpt
   yield* fs.writeFile(physicalArchive.physicalPath, encoded.bytes).pipe(
     Effect.mapError(cause => new PartitaError(`Write ${archive.relativePath}: ${formatUnknown(cause)}`)),
   )
-  yield* fs.writeFileString(physicalProvenance.physicalPath, `${JSON.stringify(publication, null, 2)}\n`).pipe(
+  yield* fs.writeFileString(physicalProvenance.physicalPath, `${encodePrettyJson(publication)}\n`).pipe(
     Effect.mapError(cause => new PartitaError(`Write ${provenance.relativePath}: ${formatUnknown(cause)}`)),
   )
 
@@ -418,11 +436,12 @@ const readGitHubSubtreeContract = Effect.fn('readGitHubSubtreeContract')(functio
   contractPath: string,
 ) {
   const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
   const relativePath = normalizeRelativePath(contractPath)
-  const absolutePath = resolve(root, relativePath)
+  const absolutePath = path.resolve(root, relativePath)
   const exists = yield* fileExists(absolutePath)
   if (!exists) {
-    return yield* Effect.fail(new PartitaError(`GitHub subtree pin contract missing: ${relativePath}`))
+    return yield* new PartitaError(`GitHub subtree pin contract missing: ${relativePath}`)
   }
   const text = yield* fs.readFileString(absolutePath).pipe(
     Effect.mapError(cause => new PartitaError(`Read ${relativePath}: ${formatUnknown(cause)}`)),
@@ -450,12 +469,13 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
   contractPath: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const path = yield* Path.Path
   const issues: Array<PinIssue> = [
     ...(contract.schemaVersion === 1
       ? []
       : [issue('pin.schema_version_invalid', `unsupported Source Pin contract schema version: ${contract.schemaVersion}`)]),
     ...checkRequiredContractFields(contract),
-    ...checkRelativeContractPaths(contract),
+    ...checkRelativeContractPaths(path, contract),
     ...checkGitHubOnly(contract),
     ...checkGitSubtreeOnly(contract),
     ...checkContractPathOutsidePrefix(contractPath, contract),
@@ -469,7 +489,7 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
     ))
   }
   const prefix = contract.local.prefix
-  const prefixPath = resolve(root, prefix)
+  const prefixPath = path.resolve(root, prefix)
 
   if (!isMissingValue(prefix) && !(yield* fileExists(prefixPath))) {
     issues.push(issue('pin.missing', `pin prefix is missing: ${prefix}`, prefix))
@@ -477,7 +497,7 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
   if (!isMissingValue(prefix) && (yield* pinPrefixIsGitlink(root, prefix))) {
     issues.push(issue('pin.gitlink', `pin prefix must be a git subtree checkout, not a submodule or gitlink: ${prefix}`, prefix))
   }
-  if (!isMissingValue(prefix) && (yield* fileExists(join(prefixPath, '.git')))) {
+  if (!isMissingValue(prefix) && (yield* fileExists(path.join(prefixPath, '.git')))) {
     issues.push(issue('pin.gitlink', `pin prefix contains nested git metadata: ${prefix}/.git`, `${prefix}/.git`))
   }
 
@@ -485,10 +505,10 @@ const checkGitHubSubtreeContract = Effect.fn('checkGitHubSubtreeContract')(funct
     issues.push(issue('pin.pin_missing', 'missing GitHub ref or git-subtree split/trailer', prefix))
   }
 
-  if (!isMissingValue(contract.anchor.llmDocument) && !(yield* fileExists(resolve(root, contract.anchor.llmDocument)))) {
+  if (!isMissingValue(contract.anchor.llmDocument) && !(yield* fileExists(path.resolve(root, contract.anchor.llmDocument)))) {
     issues.push(issue('pin.anchor_missing', `anchor LLM document is missing: ${contract.anchor.llmDocument}`, contract.anchor.llmDocument))
   }
-  if (!isMissingValue(contract.agent.route) && !(yield* fileExists(resolve(root, contract.agent.route)))) {
+  if (!isMissingValue(contract.agent.route) && !(yield* fileExists(path.resolve(root, contract.agent.route)))) {
     issues.push(issue('pin.agent_route_missing', `agent route is missing: ${contract.agent.route}`, contract.agent.route))
   }
 
@@ -511,12 +531,13 @@ const checkPublicationSourceContract = Effect.fn('checkPublicationSourceContract
   contractPath: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const path = yield* Path.Path
   const issues: Array<PinIssue> = [
     ...(contract.schemaVersion === 1
       ? []
       : [issue('pin.schema_version_invalid', `unsupported Source Pin contract schema version: ${contract.schemaVersion}`)]),
     ...checkRequiredPublicationFields(contract),
-    ...(validRelativePath(contract.local.prefix)
+    ...(validRelativePath(path, contract.local.prefix)
       ? []
       : [issue('pin.path_invalid', `pin.local.prefix must be a relative path inside the source repo: ${contract.local.prefix}`, contract.local.prefix)]),
     ...checkGitHubOnly(contract),
@@ -524,14 +545,14 @@ const checkPublicationSourceContract = Effect.fn('checkPublicationSourceContract
     ...checkContractPathOutsidePrefix(contractPath, contract),
   ]
   const prefix = contract.local.prefix
-  const prefixPath = resolve(root, prefix)
+  const prefixPath = path.resolve(root, prefix)
   if (!isMissingValue(prefix) && !(yield* fileExists(prefixPath))) {
     issues.push(issue('pin.missing', `pin prefix is missing: ${prefix}`, prefix))
   }
   if (!isMissingValue(prefix) && (yield* pinPrefixIsGitlink(root, prefix))) {
     issues.push(issue('pin.gitlink', `pin prefix must be a git subtree checkout, not a submodule or gitlink: ${prefix}`, prefix))
   }
-  if (!isMissingValue(prefix) && (yield* fileExists(join(prefixPath, '.git')))) {
+  if (!isMissingValue(prefix) && (yield* fileExists(path.join(prefixPath, '.git')))) {
     issues.push(issue('pin.gitlink', `pin prefix contains nested git metadata: ${prefix}/.git`, `${prefix}/.git`))
   }
   if (!contract.boundaries.readOnly) {
@@ -592,7 +613,7 @@ function normalizeGitHubSubtreeContract(raw: unknown): GitHubSubtreePinContract 
     mechanism: stringAt(value.mechanism) === 'git-subtree' ? 'git-subtree' : '',
     subtree: {
       split,
-      trailer: stringAt(subtree.trailer) ?? stringAt(legacyPin.trailer) ?? stringAt(value.trailer) ?? (split ? `git-subtree-split: ${split}` : ''),
+      trailer: stringAt(subtree.trailer) ?? stringAt(legacyPin.trailer) ?? stringAt(value.trailer) ?? (split.length > 0 ? `git-subtree-split: ${split}` : ''),
     },
     anchor: {
       llmDocument: normalizeRelativePath(stringAt(anchor.llmDocument) ?? stringAt(value.llmDocument) ?? ''),
@@ -645,14 +666,14 @@ function checkRequiredContractFields(contract: GitHubSubtreePinContract): Readon
     .map(([field]) => issue('pin.contract_missing', `missing GitHub subtree pin contract field: ${field}`))
 }
 
-function checkRelativeContractPaths(contract: GitHubSubtreePinContract): ReadonlyArray<PinIssue> {
+function checkRelativeContractPaths(path: Path.Path, contract: GitHubSubtreePinContract): ReadonlyArray<PinIssue> {
   const paths = [
     ['pin.local.prefix', contract.local.prefix],
     ['pin.anchor.llmDocument', contract.anchor.llmDocument],
     ['pin.agent.route', contract.agent.route],
   ] as const
   return paths.flatMap(([field, value]) => {
-    if (isMissingValue(value) || validRelativePath(value)) {
+    if (isMissingValue(value) || validRelativePath(path, value)) {
       return []
     }
     return [issue('pin.path_invalid', `${field} must be a relative path inside the target repo: ${value}`, value)]
@@ -684,16 +705,17 @@ const checkForbiddenImports = Effect.fn('checkForbiddenImports')(function* (
   root: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const path = yield* Path.Path
   const files = yield* collectSourceCodeFiles(root, [contract.local.prefix])
   const issues: Array<PinIssue> = []
   const fs = yield* FileSystem.FileSystem
   for (const file of files) {
     const text = yield* fs.readFileString(file).pipe(
-      Effect.mapError(cause => new PartitaError(`Read ${relativePathFrom(root, file)}: ${formatUnknown(cause)}`)),
+      Effect.mapError(cause => new PartitaError(`Read ${relativePathFrom(path, root, file)}: ${formatUnknown(cause)}`)),
     )
     for (const specifier of importedSpecifiers(text)) {
-      if (specifierTargetsPrefix(root, file, specifier, contract.local.prefix)) {
-        const relativeFile = relativePathFrom(root, file)
+      if (specifierTargetsPrefix(path, root, file, specifier, contract.local.prefix)) {
+        const relativeFile = relativePathFrom(path, root, file)
         issues.push(issue(
           'pin.import_blocked',
           `application/test code must not import from GitHub subtree prefix ${contract.local.prefix}: ${specifier}`,
@@ -709,12 +731,13 @@ const checkEditorPolicy = Effect.fn('checkEditorPolicy')(function* (
   root: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const path = yield* Path.Path
   const issues: Array<PinIssue> = []
   if (contract.editorPolicy.autoImportExclude !== 'block') {
     issues.push(issue('pin.editor_auto_import_missing', 'editor policy must block auto-import from the GitHub subtree prefix'))
   }
 
-  const vscodeSettings = join(root, '.vscode', 'settings.json')
+  const vscodeSettings = path.join(root, '.vscode', 'settings.json')
   if (yield* fileExists(vscodeSettings)) {
     const value = yield* parseSettingsFile(vscodeSettings, '.vscode/settings.json')
     if (!vscodeAutoImportExcluded(value, contract.local.prefix)) {
@@ -722,7 +745,7 @@ const checkEditorPolicy = Effect.fn('checkEditorPolicy')(function* (
     }
   }
 
-  const zedSettings = join(root, '.zed', 'settings.json')
+  const zedSettings = path.join(root, '.zed', 'settings.json')
   if (yield* fileExists(zedSettings)) {
     const value = yield* parseSettingsFile(zedSettings, '.zed/settings.json')
     if (!zedAutoImportExcluded(value, contract.local.prefix)) {
@@ -738,17 +761,18 @@ const pinStatus = Effect.fn('pinStatus')(function* (
   contractPath: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const path = yield* Path.Path
   return {
-    anchorExists: !isMissingValue(contract.anchor.llmDocument) && (yield* fileExists(resolve(root, contract.anchor.llmDocument))),
+    anchorExists: !isMissingValue(contract.anchor.llmDocument) && (yield* fileExists(path.resolve(root, contract.anchor.llmDocument))),
     contractPath,
     mechanism: contract.mechanism,
     name: contract.name,
     ownershipMode: contract.ownership.mode,
     prefix: contract.local.prefix,
     repository: contract.github.repository,
-    routeExists: !isMissingValue(contract.agent.route) && (yield* fileExists(resolve(root, contract.agent.route))),
-    prefixExists: !isMissingValue(contract.local.prefix) && (yield* fileExists(resolve(root, contract.local.prefix))),
-    subtreeSplit: contract.subtree.split || contract.github.ref || contract.subtree.trailer,
+    routeExists: !isMissingValue(contract.agent.route) && (yield* fileExists(path.resolve(root, contract.agent.route))),
+    prefixExists: !isMissingValue(contract.local.prefix) && (yield* fileExists(path.resolve(root, contract.local.prefix))),
+    subtreeSplit: nonEmpty(contract.subtree.split) ?? nonEmpty(contract.github.ref) ?? contract.subtree.trailer,
   } satisfies PinStatus
 })
 
@@ -768,7 +792,9 @@ function formatPinStatus(entry: PinStatus): string {
 }
 
 function formatPinIssue(issue: PinIssue): string {
-  return issue.path ? `${issue.path}: ${issue.code}: ${issue.message}` : `${issue.code}: ${issue.message}`
+  return issue.path !== undefined
+    ? `${issue.path}: ${issue.code}: ${issue.message}`
+    : `${issue.code}: ${issue.message}`
 }
 
 function renderEditorSettings(contract: GitHubSubtreePinContract): PinPlan['editorSettings'] {
@@ -817,8 +843,8 @@ function renderEditorSettings(contract: GitHubSubtreePinContract): PinPlan['edit
   }
 
   return {
-    vscode: `${JSON.stringify(vscode, null, 2)}\n`,
-    zed: `${JSON.stringify(zed, null, 2)}\n`,
+    vscode: `${encodePrettyJson(vscode)}\n`,
+    zed: `${encodePrettyJson(zed)}\n`,
   }
 }
 
@@ -835,11 +861,15 @@ function zedAutoImportExcluded(settings: JsonRecord, prefix: string): boolean {
   const typescriptLanguageServer = recordAt(lsp['typescript-language-server'])
   const initializationOptions = recordAt(typescriptLanguageServer.initialization_options)
   const tlsPreferences = recordAt(initializationOptions.preferences)
+  const tsgo = recordAt(lsp.tsgo)
+  const tsgoInitializationOptions = recordAt(tsgo.initialization_options)
+  const tsgoPreferences = recordAt(tsgoInitializationOptions.preferences)
 
   const vtslsConfigured = stringArrayCoversPrefix(tsPreferences.autoImportFileExcludePatterns, prefix)
     && stringArrayCoversPrefix(jsPreferences.autoImportFileExcludePatterns, prefix)
   const tlsConfigured = stringArrayCoversPrefix(tlsPreferences.autoImportFileExcludePatterns, prefix)
-  return vtslsConfigured || tlsConfigured
+  const tsgoConfigured = stringArrayCoversPrefix(tsgoPreferences.autoImportFileExcludePatterns, prefix)
+  return vtslsConfigured || tlsConfigured || tsgoConfigured
 }
 
 const pinPrefixIsGitlink = Effect.fn('pinPrefixIsGitlink')(function* (root: string, prefix: string) {
@@ -859,8 +889,9 @@ const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
   root: string,
   contract: GitHubSubtreePinContract,
 ) {
+  const pathService = yield* Path.Path
   const prefix = contract.local.prefix
-  const prefixRoot = resolve(root, prefix)
+  const prefixRoot = pathService.resolve(root, prefix)
   const index = yield* sourcePinGitIndex(root, prefix)
   const opaqueGitlinks = index.filter(entry => entry.mode === '160000').map(entry => entry.path)
   const trackedEntries = index.filter(entry => entry.mode !== '160000')
@@ -885,17 +916,17 @@ const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
     if (trackedPaths.has(path)) {
       continue
     }
-    const absolutePath = resolve(prefixRoot, path)
+    const absolutePath = pathService.resolve(prefixRoot, path)
     const stat = yield* fs.stat(absolutePath).pipe(
       Effect.mapError(cause => new PartitaError(`Stat Source Pin entry ${path}: ${formatUnknown(cause)}`)),
     )
     if (stat.type === 'Directory') {
       if (!directoryPaths.has(path)) {
-        return yield* Effect.fail(new PartitaError(`Untracked Source Pin entry: ${path}`))
+        return yield* new PartitaError(`Untracked Source Pin entry: ${path}`)
       }
       continue
     }
-    return yield* Effect.fail(new PartitaError(`Untracked Source Pin entry: ${path}`))
+    return yield* new PartitaError(`Untracked Source Pin entry: ${path}`)
   }
 
   const entries: Array<CanonicalTreeArchiveSourceEntry> = [...directoryPaths]
@@ -903,27 +934,27 @@ const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
     .map(path => ({ kind: 'directory' as const, mode: 0o755, path }))
 
   for (const entry of trackedEntries.sort((left, right) => compareText(left.path, right.path))) {
-    const absolutePath = resolve(prefixRoot, entry.path)
+    const absolutePath = pathService.resolve(prefixRoot, entry.path)
     if (entry.mode === '120000') {
       const target = yield* fs.readLink(absolutePath).pipe(
         Effect.mapError(cause => new PartitaError(`Tracked Source Pin entry is missing or is not a symbolic link: ${entry.path}: ${formatUnknown(cause)}`)),
       )
       if (!isSafeRelativeSymlink(entry.path, target)) {
-        return yield* Effect.fail(new PartitaError(`Unsafe Source Pin symbolic link: ${entry.path} -> ${target}`))
+        return yield* new PartitaError(`Unsafe Source Pin symbolic link: ${entry.path} -> ${target}`)
       }
       entries.push({ kind: 'symbolicLink', mode: SYMBOLIC_LINK_MODE, path: entry.path, target })
       continue
     }
 
     if (!(yield* fileExists(absolutePath))) {
-      return yield* Effect.fail(new PartitaError(`Tracked Source Pin entry is missing: ${entry.path}`))
+      return yield* new PartitaError(`Tracked Source Pin entry is missing: ${entry.path}`)
     }
     const stat = yield* fs.stat(absolutePath).pipe(
       Effect.mapError(cause => new PartitaError(`Stat Source Pin entry ${entry.path}: ${formatUnknown(cause)}`)),
     )
 
     if (stat.type !== 'File' || (entry.mode !== '100644' && entry.mode !== '100755')) {
-      return yield* Effect.fail(new PartitaError(`Unsupported Source Pin entry: ${entry.path}`))
+      return yield* new PartitaError(`Unsupported Source Pin entry: ${entry.path}`)
     }
     const bytes = yield* fs.readFile(absolutePath).pipe(
       Effect.mapError(cause => new PartitaError(`Read Source Pin file ${entry.path}: ${formatUnknown(cause)}`)),
@@ -940,6 +971,7 @@ const sourcePinArchiveEntries = Effect.fn('sourcePinArchiveEntries')(function* (
 })
 
 const sourcePinGitIndex = Effect.fn('sourcePinGitIndex')(function* (root: string, prefix: string) {
+  const pathService = yield* Path.Path
   const output = yield* inspectSourcePinGitIndex(root, prefix)
 
   const entries: Array<GitIndexEntry> = []
@@ -947,25 +979,25 @@ const sourcePinGitIndex = Effect.fn('sourcePinGitIndex')(function* (root: string
   for (const line of output.split(/\0|\r?\n/u).filter(Boolean)) {
     const match = /^(\d{6}) [0-9a-f]{40,64} \d\t(.+)$/u.exec(line)
     if (match === null) {
-      return yield* Effect.fail(new PartitaError(`Cannot decode Source Pin Git index entry: ${line}`))
+      return yield* new PartitaError(`Cannot decode Source Pin Git index entry: ${line}`)
     }
     const mode = match[1]!
     const indexedPath = normalizeRelativePath(match[2]!)
     if (!indexedPath.startsWith(`${prefix}/`)) {
-      return yield* Effect.fail(new PartitaError(`Source Pin Git index entry escaped ${prefix}: ${indexedPath}`))
+      return yield* new PartitaError(`Source Pin Git index entry escaped ${prefix}: ${indexedPath}`)
     }
     const path = indexedPath.slice(prefix.length + 1)
-    if (!validRelativePath(path) || seen.has(path)) {
-      return yield* Effect.fail(new PartitaError(`Invalid Source Pin Git index path: ${path}`))
+    if (!validRelativePath(pathService, path) || seen.has(path)) {
+      return yield* new PartitaError(`Invalid Source Pin Git index path: ${path}`)
     }
     if (!['100644', '100755', '120000', '160000'].includes(mode)) {
-      return yield* Effect.fail(new PartitaError(`Unsupported Source Pin Git mode ${mode}: ${path}`))
+      return yield* new PartitaError(`Unsupported Source Pin Git mode ${mode}: ${path}`)
     }
     seen.add(path)
     entries.push({ mode, path })
   }
   if (entries.length === 0) {
-    return yield* Effect.fail(new PartitaError(`Source Pin Git index is empty: ${prefix}`))
+    return yield* new PartitaError(`Source Pin Git index is empty: ${prefix}`)
   }
   return entries
 })
@@ -978,9 +1010,9 @@ const inspectSourcePinGitIndex = Effect.fn('inspectSourcePinGitIndex')(function*
     cwd: root,
   })
   if (result.exitCode !== 0) {
-    return yield* Effect.fail(new PartitaError(
+    return yield* new PartitaError(
       `Inspect git index for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
-    ))
+    )
   }
   return result.output
 })
@@ -997,9 +1029,9 @@ const assertSourcePinUnmodified = Effect.fn('assertSourcePinUnmodified')(functio
   ] as const) {
     const result = yield* executor.run({ args: check.args, command: 'git', cwd: root })
     if (result.exitCode !== 0) {
-      return yield* Effect.fail(new PartitaError(
+      return yield* new PartitaError(
         `Inspect Git state for ${prefix}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
-      ))
+      )
     }
     const changedPaths = result.output.split(/\r?\n/u).filter(Boolean).filter((path) => {
       const normalizedPath = normalizeRelativePath(path)
@@ -1010,7 +1042,7 @@ const assertSourcePinUnmodified = Effect.fn('assertSourcePinUnmodified')(functio
       return !opaqueGitlinks.some(gitlink => pathIsSameOrInside(sourcePath, gitlink))
     })
     if (changedPaths.length > 0) {
-      return yield* Effect.fail(new PartitaError(`${check.message}: ${prefix}`))
+      return yield* new PartitaError(`${check.message}: ${prefix}`)
     }
   }
 })
@@ -1031,9 +1063,9 @@ const assertSourcePinRevisionMatches = Effect.fn('assertSourcePinRevisionMatches
     cwd: root,
   })
   if (history.exitCode !== 0) {
-    return yield* Effect.fail(new PartitaError(
+    return yield* new PartitaError(
       `Inspect Source Pin revision history: git exited with code ${history.exitCode}: ${history.output.trim()}`,
-    ))
+    )
   }
   const currentTree = yield* readGitObjectId(executor, root, `HEAD:${contract.local.prefix}`)
   for (const commit of history.output.split(/\r?\n/u).filter(Boolean)) {
@@ -1042,9 +1074,9 @@ const assertSourcePinRevisionMatches = Effect.fn('assertSourcePinRevisionMatches
       return
     }
   }
-  return yield* Effect.fail(new PartitaError(
+  return yield* new PartitaError(
     `Source Pin tree does not match declared subtree revision ${contract.github.ref}: ${contract.local.prefix}`,
-  ))
+  )
 })
 
 const readGitObjectId = Effect.fn('readGitObjectId')(function* (
@@ -1054,9 +1086,9 @@ const readGitObjectId = Effect.fn('readGitObjectId')(function* (
 ) {
   const result = yield* executor.run({ args: ['rev-parse', revisionPath], command: 'git', cwd: root })
   if (result.exitCode !== 0) {
-    return yield* Effect.fail(new PartitaError(
+    return yield* new PartitaError(
       `Resolve Git object ${revisionPath}: git exited with code ${result.exitCode}: ${result.output.trim()}`,
-    ))
+    )
   }
   return result.output.trim()
 })
@@ -1066,11 +1098,12 @@ const parsePublicationOutputPath = Effect.fn('parsePublicationOutputPath')(funct
   value: string,
   label: string,
 ) {
+  const path = yield* Path.Path
   const relativePath = normalizeRelativePath(value)
-  if (!validRelativePath(relativePath)) {
-    return yield* Effect.fail(new PartitaError(`Source Pin ${label} path must be relative to the repository root: ${value}`))
+  if (!validRelativePath(path, relativePath)) {
+    return yield* new PartitaError(`Source Pin ${label} path must be relative to the repository root: ${value}`)
   }
-  return { absolutePath: resolve(root, relativePath), relativePath }
+  return { absolutePath: path.resolve(root, relativePath), relativePath }
 })
 
 const resolvePublicationOutputPhysicalPath = Effect.fn('resolvePublicationOutputPhysicalPath')(function* (
@@ -1078,11 +1111,12 @@ const resolvePublicationOutputPhysicalPath = Effect.fn('resolvePublicationOutput
   output: { readonly absolutePath: string, readonly relativePath: string },
 ) {
   const fs = yield* FileSystem.FileSystem
-  let existingParent = dirname(output.absolutePath)
+  const path = yield* Path.Path
+  let existingParent = path.dirname(output.absolutePath)
   while (!(yield* fileExists(existingParent))) {
-    const next = dirname(existingParent)
+    const next = path.dirname(existingParent)
     if (next === existingParent) {
-      return yield* Effect.fail(new PartitaError(`Cannot resolve Source Pin publication output parent: ${output.relativePath}`))
+      return yield* new PartitaError(`Cannot resolve Source Pin publication output parent: ${output.relativePath}`)
     }
     existingParent = next
   }
@@ -1094,19 +1128,20 @@ const resolvePublicationOutputPhysicalPath = Effect.fn('resolvePublicationOutput
       Effect.mapError(cause => new PartitaError(`Resolve output parent ${existingParent}: ${formatUnknown(cause)}`)),
     ),
   ])
-  const parentFromRoot = relative(realRoot, realParent)
-  if (isAbsolute(parentFromRoot) || parentFromRoot === '..' || parentFromRoot.startsWith(`..${sep}`)) {
-    return yield* Effect.fail(new PartitaError(`Source Pin publication output parent escapes the repository: ${output.relativePath}`))
+  const parentFromRoot = path.relative(realRoot, realParent)
+  if (path.isAbsolute(parentFromRoot) || parentFromRoot === '..' || parentFromRoot.startsWith(`..${path.sep}`)) {
+    return yield* new PartitaError(`Source Pin publication output parent escapes the repository: ${output.relativePath}`)
   }
   return {
     ...output,
-    physicalPath: resolve(realParent, relative(existingParent, output.absolutePath)),
+    physicalPath: path.resolve(realParent, path.relative(existingParent, output.absolutePath)),
   }
 })
 
-function physicalPathIsSameOrInside(path: string, parent: string): boolean {
-  const pathFromParent = relative(parent, path)
-  return pathFromParent === '' || (!isAbsolute(pathFromParent) && pathFromParent !== '..' && !pathFromParent.startsWith(`..${sep}`))
+function physicalPathIsSameOrInside(pathService: Path.Path, path: string, parent: string): boolean {
+  const pathFromParent = pathService.relative(parent, path)
+  return pathFromParent === ''
+    || (!pathService.isAbsolute(pathFromParent) && pathFromParent !== '..' && !pathFromParent.startsWith(`..${pathService.sep}`))
 }
 
 function compareText(left: string, right: string): number {
@@ -1118,6 +1153,7 @@ const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (
   sourcePrefixes: ReadonlyArray<string>,
 ) {
   const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
   const entries = yield* fs.readDirectory(root, { recursive: true }).pipe(
     Effect.mapError(cause => new PartitaError(`Read directory ${root}: ${formatUnknown(cause)}`)),
   )
@@ -1134,7 +1170,7 @@ const collectSourceCodeFiles = Effect.fn('collectSourceCodeFiles')(function* (
     if (!sourceCodeExtensions.has(extensionOf(relativePath))) {
       continue
     }
-    const absolutePath = resolve(root, relativePath)
+    const absolutePath = path.resolve(root, relativePath)
     const stat = yield* fs.stat(absolutePath).pipe(
       Effect.mapError(cause => new PartitaError(`Stat ${relativePath}: ${formatUnknown(cause)}`)),
     )
@@ -1158,22 +1194,21 @@ function importedSpecifiers(text: string): ReadonlyArray<string> {
   return specifiers
 }
 
-function specifierTargetsPrefix(root: string, importer: string, specifier: string, prefix: string): boolean {
+function specifierTargetsPrefix(path: Path.Path, root: string, importer: string, specifier: string, prefix: string): boolean {
   if (specifier === prefix || specifier.startsWith(`${prefix}/`)) {
     return true
   }
   if (!specifier.startsWith('.')) {
     return false
   }
-  const resolved = resolve(dirname(importer), specifier)
-  return pathIsSameOrInside(relativePathFrom(root, resolved), prefix)
+  const resolved = path.resolve(path.dirname(importer), specifier)
+  return pathIsSameOrInside(relativePathFrom(path, root, resolved), prefix)
 }
 
 const parseJson = Effect.fn('parseJson')(function* (text: string, path: string) {
-  return yield* Effect.try({
-    try: () => JSON.parse(text) as unknown,
-    catch: cause => new PartitaError(`Invalid JSON in ${path}: ${formatUnknown(cause)}`),
-  })
+  return yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(text).pipe(
+    Effect.mapError(cause => new PartitaError(`Invalid JSON in ${path}: ${formatUnknown(cause)}`)),
+  )
 })
 
 const parseSettingsFile = Effect.fn('parseSettingsFile')(function* (path: string, relativePath: string) {
@@ -1183,7 +1218,7 @@ const parseSettingsFile = Effect.fn('parseSettingsFile')(function* (path: string
   )
   const parsed = yield* parseJson(stripJsonComments(text), relativePath)
   if (!isRecord(parsed)) {
-    return yield* Effect.fail(new PartitaError(`${relativePath} must contain a JSON object`))
+    return yield* new PartitaError(`${relativePath} must contain a JSON object`)
   }
   return parsed
 })
@@ -1243,7 +1278,8 @@ const fileExists = Effect.fn('fileExists')(function* (path: string) {
 })
 
 const defaultAgentRoute = Effect.fn('defaultAgentRoute')(function* (root: string) {
-  return (yield* fileExists(join(root, 'AGENTS.md'))) ? 'AGENTS.md' : '<TODO:agent-route>'
+  const path = yield* Path.Path
+  return (yield* fileExists(path.join(root, 'AGENTS.md'))) ? 'AGENTS.md' : '<TODO:agent-route>'
 })
 
 function githubRepositoryUrl(value: string): boolean {
@@ -1253,7 +1289,8 @@ function githubRepositoryUrl(value: string): boolean {
 
 function siblingSubtreeContractPath(prefix: string, name: string): string {
   const normalizedPrefix = normalizeRelativePath(prefix)
-  const parent = dirname(normalizedPrefix).replaceAll('\\', '/')
+  const lastSeparator = normalizedPrefix.lastIndexOf('/')
+  const parent = lastSeparator === -1 ? '' : normalizedPrefix.slice(0, lastSeparator)
   const basename = lastPathSegment(normalizedPrefix) ?? name
   if (parent === '.' || parent.length === 0) {
     return `${basename}.subtree.json`
@@ -1261,9 +1298,9 @@ function siblingSubtreeContractPath(prefix: string, name: string): string {
   return `${parent}/${basename}.subtree.json`
 }
 
-function pinContractPathFromOption(root: string, value: string | undefined, fallback: string): string {
+function pinContractPathFromOption(path: Path.Path, root: string, value: string | undefined, fallback: string): string {
   const rawPath = nonEmpty(value) ?? fallback
-  const relativePath = isAbsolute(rawPath) ? relativePathFrom(root, rawPath) : rawPath
+  const relativePath = path.isAbsolute(rawPath) ? relativePathFrom(path, root, rawPath) : rawPath
   return normalizeRelativePath(relativePath)
 }
 
@@ -1280,8 +1317,8 @@ function normalizeRelativePath(value: string): string {
   return value.replaceAll('\\', '/').replace(/^\.\/+/u, '').replace(/\/+$/u, '')
 }
 
-function validRelativePath(value: string): boolean {
-  if (isAbsolute(value)) {
+function validRelativePath(path: Path.Path, value: string): boolean {
+  if (path.isAbsolute(value)) {
     return false
   }
   const segments = normalizeRelativePath(value).split('/')
@@ -1294,9 +1331,8 @@ function pathIsSameOrInside(path: string, parent: string): boolean {
   return normalizedPath === normalizedParent || normalizedPath.startsWith(`${normalizedParent}/`)
 }
 
-function relativePathFrom(root: string, path: string): string {
-  const value = relative(root, path)
-  return value.split(sep).join('/')
+function relativePathFrom(pathService: Path.Path, root: string, path: string): string {
+  return pathService.relative(root, path).split(pathService.sep).join('/')
 }
 
 function extensionOf(path: string): string {

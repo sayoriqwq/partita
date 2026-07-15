@@ -1,9 +1,8 @@
 /* eslint-disable ts/no-use-before-define */
 import type { PartitaError } from './errors.ts'
 import type { PartitaCommand, PartitaCommandError } from './process.ts'
-import * as path from 'node:path'
 import process from 'node:process'
-import { Effect, Schema } from 'effect'
+import { Effect, Path, Schema } from 'effect'
 import * as Console from 'effect/Console'
 import * as FileSystem from 'effect/FileSystem'
 import { CommandExecutor } from './process.ts'
@@ -51,12 +50,13 @@ function formatUnknown(cause: unknown): string {
   return String(cause)
 }
 
-const skillRuntimeError = (message: string): PartitaSkillRuntimeError => new PartitaSkillRuntimeError({ message })
+const skillRuntimeError = (message: string): PartitaSkillRuntimeError => PartitaSkillRuntimeError.make({ message })
 
 export const syncSkillRuntime = Effect.fn('syncSkillRuntime')(
   function* (
     options: SkillRuntimeOptions = {},
-  ): Effect.fn.Return<SkillRuntimeSyncResult, PartitaCommandError | PartitaSkillRuntimeError, CommandExecutor> {
+  ): Effect.fn.Return<SkillRuntimeSyncResult, PartitaCommandError | PartitaSkillRuntimeError, CommandExecutor | Path.Path> {
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const executor = yield* CommandExecutor
     const addCommand: SkillRuntimeCommand = {
@@ -83,7 +83,8 @@ export const listSkillRuntime = Effect.fn('listSkillRuntime')(
   ): Effect.fn.Return<{
     readonly commands: ReadonlyArray<SkillRuntimeCommand>
     readonly entries: ReadonlyArray<SkillRuntimeEntry>
-  }, PartitaCommandError | PartitaSkillRuntimeError, CommandExecutor> {
+  }, PartitaCommandError | PartitaSkillRuntimeError, CommandExecutor | Path.Path> {
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const executor = yield* CommandExecutor
     const listCommand: SkillRuntimeCommand = {
@@ -110,8 +111,9 @@ const inspectSkillRuntime = Effect.fn('inspectSkillRuntime')(
   ): Effect.fn.Return<
     SkillRuntimeStatus,
     PartitaCommandError | PartitaError | PartitaSkillRuntimeError,
-    CommandExecutor | FileSystem.FileSystem
+    CommandExecutor | FileSystem.FileSystem | Path.Path
   > {
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const sourceSkills = (yield* loadPartitaSourceSkillCatalog(root)).skills
     const runtime = yield* listSkillRuntime({ root })
@@ -213,10 +215,9 @@ const parseSkillRuntimeEntries = Effect.fn('parseSkillRuntimeEntries')(function*
 })
 
 const parseJson = Effect.fn('parseSkillRuntimeJson')((output: string) =>
-  Effect.try({
-    try: () => JSON.parse(output) as unknown,
-    catch: cause => skillRuntimeError(`npx skills list returned invalid JSON: ${formatUnknown(cause)}`),
-  }))
+  Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(output).pipe(
+    Effect.mapError(cause => skillRuntimeError(`npx skills list returned invalid JSON: ${formatUnknown(cause)}`)),
+  ))
 
 const parseSkillRuntimeEntry = Effect.fn('parseSkillRuntimeEntry')(function* (entry: unknown, index: number) {
   if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
@@ -227,13 +228,13 @@ const parseSkillRuntimeEntry = Effect.fn('parseSkillRuntimeEntry')(function* (en
   const entryPath = record.path
   const scope = record.scope
   const agents = record.agents
-  if (typeof name !== 'string' || !name.trim()) {
+  if (typeof name !== 'string' || name.trim() === '') {
     return yield* skillRuntimeError(`npx skills list entry ${index} is missing name`)
   }
-  if (typeof entryPath !== 'string' || !entryPath.trim()) {
+  if (typeof entryPath !== 'string' || entryPath.trim() === '') {
     return yield* skillRuntimeError(`npx skills list entry ${index} is missing path`)
   }
-  if (typeof scope !== 'string' || !scope.trim()) {
+  if (typeof scope !== 'string' || scope.trim() === '') {
     return yield* skillRuntimeError(`npx skills list entry ${index} is missing scope`)
   }
   if (!Array.isArray(agents) || agents.some(agent => typeof agent !== 'string')) {
@@ -254,6 +255,7 @@ const compareSkillDirectories = Effect.fn('compareSkillDirectories')(function* (
   skillName: string,
 ) {
   const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
   const issues: Array<SkillRuntimeIssue> = []
   if (!(yield* pathExists(fs, runtimeDir))) {
     return [{
@@ -312,7 +314,8 @@ const visitFiles = Effect.fn('visitFiles')(function* (
   root: string,
   current: string,
   files: Array<string>,
-): Effect.fn.Return<void, PartitaSkillRuntimeError> {
+): Effect.fn.Return<void, PartitaSkillRuntimeError, Path.Path> {
+  const path = yield* Path.Path
   for (const entry of yield* readDirectory(fs, current)) {
     const fullPath = path.join(current, entry)
     const stats = yield* fs.stat(fullPath).pipe(Effect.mapError(cause => fileSystemError(`stat ${fullPath}`, cause)))
@@ -327,7 +330,9 @@ const visitFiles = Effect.fn('visitFiles')(function* (
 })
 
 function formatRuntimeIssue(issue: SkillRuntimeIssue): string {
-  return issue.path ? `${issue.code}: ${issue.message} (${issue.path})` : `${issue.code}: ${issue.message}`
+  return issue.path !== undefined && issue.path !== ''
+    ? `${issue.code}: ${issue.message} (${issue.path})`
+    : `${issue.code}: ${issue.message}`
 }
 
 function fileSystemError(operation: string, cause: unknown): PartitaSkillRuntimeError {

@@ -1,10 +1,10 @@
 /* eslint-disable ts/no-use-before-define */
 import type { ValidationIssue } from './validation.ts'
 
-import { dirname, join, relative, resolve, sep } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Path from 'effect/Path'
 import { PartitaError } from './errors.ts'
 import {
   checkOpenAiRuntimeSkillFiles,
@@ -27,17 +27,20 @@ const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
 
 export const verifyRuntimeSkills = Effect.fn('verifyRuntimeSkills')(function* (options: VerifyProjectOptions) {
-  const result = yield* checkOpenAiRuntimeSkillFiles(resolve(options.root))
+  const path = yield* Path.Path
+  const result = yield* checkOpenAiRuntimeSkillFiles(path.resolve(options.root))
   return reportFromIssues(result.issues)
 })
 
 export const verifyPartitaSourceSkills = Effect.fn('verifyPartitaSourceSkills')(function* (options: VerifyProjectOptions) {
-  const result = yield* checkPartitaSourceSkillFiles(resolve(options.root))
+  const path = yield* Path.Path
+  const result = yield* checkPartitaSourceSkillFiles(path.resolve(options.root))
   return reportFromIssues(result.issues)
 })
 
 export const verifySourceProject = Effect.fn('verifySourceProject')(function* (options: VerifyProjectOptions) {
-  return yield* buildSourceReport(resolve(options.root), options.level ?? 'project')
+  const path = yield* Path.Path
+  return yield* buildSourceReport(path.resolve(options.root), options.level ?? 'project')
 })
 
 export const verifyProject = Effect.fn('verifyProject')(function* (options: VerifyProjectOptions) {
@@ -48,14 +51,14 @@ export const verifyProject = Effect.fn('verifyProject')(function* (options: Veri
     for (const issue of report.issues) {
       yield* Console.error(`- ${formatIssue(issue)}`)
     }
-    return yield* Effect.fail(new PartitaError(`Partita ${level} verification failed.`))
+    return yield* new PartitaError(`Partita ${level} verification failed.`)
   }
 
   yield* Console.log(`Partita ${level} verified: ${options.root}`)
 })
 
 function formatIssue(issue: ValidationIssue): string {
-  return issue.path ? `${issue.path}: ${issue.message}` : issue.message
+  return issue.path !== undefined && issue.path !== '' ? `${issue.path}: ${issue.message}` : issue.message
 }
 
 const buildSourceReport = Effect.fn('buildSourceReport')(function* (root: string, level: VerifyLevel) {
@@ -81,9 +84,10 @@ const buildSourceReport = Effect.fn('buildSourceReport')(function* (root: string
 })
 
 const checkMarkdownLinks = Effect.fn('checkMarkdownLinks')(function* (fs: FileSystem.FileSystem, root: string) {
+  const pathService = yield* Path.Path
   const issues: Array<ValidationIssue> = []
   for (const path of yield* markdownFiles(fs, root)) {
-    const relativePath = relativePathFrom(root, path)
+    const relativePath = relativePathFrom(pathService, root, path)
     const text = yield* readText(fs, path)
     for (const match of text.matchAll(linkPattern)) {
       const target = match[1]
@@ -96,10 +100,10 @@ const checkMarkdownLinks = Effect.fn('checkMarkdownLinks')(function* (fs: FileSy
 
       const hashIndex = target.indexOf('#')
       const clean = (hashIndex === -1 ? target : target.slice(0, hashIndex)).trim()
-      if (!clean) {
+      if (clean === '') {
         continue
       }
-      if (!(yield* pathExists(fs, join(dirname(path), clean)))) {
+      if (!(yield* pathExists(fs, pathService.join(pathService.dirname(path), clean)))) {
         issues.push(issue('markdown.broken_link', `broken markdown link: ${target}`, relativePath))
       }
     }
@@ -108,6 +112,7 @@ const checkMarkdownLinks = Effect.fn('checkMarkdownLinks')(function* (fs: FileSy
 })
 
 const checkRemovedSurfaces = Effect.fn('checkRemovedSurfaces')(function* (fs: FileSystem.FileSystem, root: string) {
+  const pathService = yield* Path.Path
   const removed = [
     ['VERSION', 'deprecated VERSION file must not exist'],
     ['AGENTS.profile.md', 'removed profile file must not exist'],
@@ -146,7 +151,7 @@ const checkRemovedSurfaces = Effect.fn('checkRemovedSurfaces')(function* (fs: Fi
 
   const issues: Array<ValidationIssue> = []
   for (const [path, message] of removed) {
-    if (yield* pathExists(fs, join(root, path))) {
+    if (yield* pathExists(fs, pathService.join(root, path))) {
       issues.push(issue('surface.removed_exists', message, path))
     }
   }
@@ -157,11 +162,12 @@ const checkPrimitiveReferenceCopies = Effect.fn('checkPrimitiveReferenceCopies')
   fs: FileSystem.FileSystem,
   root: string,
 ) {
+  const path = yield* Path.Path
   const issues: Array<ValidationIssue> = []
 
   for (const copy of primitiveReferenceCopySpecs) {
-    const sourcePath = join(root, copy.sourcePath)
-    const targets = copy.targetPaths.map(targetPath => join(root, targetPath))
+    const sourcePath = path.join(root, copy.sourcePath)
+    const targets = copy.targetPaths.map(targetPath => path.join(root, targetPath))
     const sourceExists = yield* pathExists(fs, sourcePath)
     const targetExists: Array<boolean> = []
     for (const targetPath of targets) {
@@ -178,8 +184,8 @@ const checkPrimitiveReferenceCopies = Effect.fn('checkPrimitiveReferenceCopies')
 
     const sourceText = primitiveReferenceBody(yield* readText(fs, sourcePath))
     for (const [index, referencePath] of targets.entries()) {
-      const relativeReferencePath = relativePathFrom(root, referencePath)
-      if (!targetExists[index]) {
+      const relativeReferencePath = relativePathFrom(path, root, referencePath)
+      if (targetExists[index] !== true) {
         issues.push(issue(
           'primitive_reference.missing_target',
           `missing skill-local copy for ${copy.sourcePath}`,
@@ -201,7 +207,8 @@ const checkPrimitiveReferenceCopies = Effect.fn('checkPrimitiveReferenceCopies')
 })
 
 const checkNoRootSkill = Effect.fn('checkNoRootSkill')(function* (fs: FileSystem.FileSystem, root: string) {
-  return (yield* pathExists(fs, join(root, 'SKILL.md')))
+  const path = yield* Path.Path
+  return (yield* pathExists(fs, path.join(root, 'SKILL.md')))
     ? [issue('root_skill.forbidden', 'source root SKILL.md is not allowed', 'SKILL.md')]
     : []
 })
@@ -216,8 +223,9 @@ const walk = Effect.fn('walkMarkdownFiles')(function* (
   fs: FileSystem.FileSystem,
   path: string,
   files: Array<string>,
-): Effect.fn.Return<void, PartitaError> {
-  if (shouldSkipPath(path)) {
+): Effect.fn.Return<void, PartitaError, Path.Path> {
+  const pathService = yield* Path.Path
+  if (shouldSkipPath(pathService, path)) {
     return
   }
 
@@ -225,7 +233,7 @@ const walk = Effect.fn('walkMarkdownFiles')(function* (
   if (stat.type === 'Directory') {
     const entries = yield* fs.readDirectory(path).pipe(Effect.mapError(cause => fileSystemError(`Read directory ${path}`, cause)))
     for (const entry of entries) {
-      yield* walk(fs, join(path, entry), files)
+      yield* walk(fs, pathService.join(path, entry), files)
     }
     return
   }
@@ -235,8 +243,14 @@ const walk = Effect.fn('walkMarkdownFiles')(function* (
   }
 })
 
-function shouldSkipPath(path: string): boolean {
-  return path.split(sep).some(part => part === '.git' || part === 'assets' || part === 'node_modules')
+function shouldSkipPath(pathService: Path.Path, path: string): boolean {
+  const parts = path.split(pathService.sep)
+  if (parts.some(part => part === '.git' || part === 'assets' || part === 'node_modules')) {
+    return true
+  }
+
+  const preludeIndex = parts.lastIndexOf('.prelude')
+  return preludeIndex !== -1 && parts[preludeIndex + 2] === 'repos'
 }
 
 function isExternalLink(target: string): boolean {
@@ -253,7 +267,7 @@ function fileSystemError(operation: string, cause: unknown): PartitaError {
   return new PartitaError(`${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
 }
 
-function relativePathFrom(root: string, path: string): string {
-  const relativePath = relative(root, path)
-  return relativePath === '' ? '.' : relativePath.split(sep).join('/')
+function relativePathFrom(pathService: Path.Path, root: string, path: string): string {
+  const relativePath = pathService.relative(root, path)
+  return relativePath === '' ? '.' : relativePath.split(pathService.sep).join('/')
 }

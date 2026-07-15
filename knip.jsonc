@@ -12,13 +12,10 @@
       ]
     }
   },
-  "ignoreBinaries": [
-    "mkfifo"
-  ],
   "ignoreDependencies": [
+    "@effect/language-service",
     "@effect/tsgo",
     "@sayoriqwq/prelude",
-    "@sayoriqwq/psychogram",
     "turbo"
   ]
 }

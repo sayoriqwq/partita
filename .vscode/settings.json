@@ -1,8 +1,13 @@
 {
   "typescript.preferences.autoImportFileExcludePatterns": [
-    "repos/**"
+    "repos/**",
+    ".prelude/**/repos/**"
   ],
   "javascript.preferences.autoImportFileExcludePatterns": [
-    "repos/**"
-  ]
+    "repos/**",
+    ".prelude/**/repos/**"
+  ],
+  "typescript.native-preview.tsdk": "node_modules/@typescript/native",
+  "typescript.experimental.useTsgo": true,
+  "js/ts.experimental.useTsgo": true
 }

@@ -1,10 +1,8 @@
 import type { SkillRuntimeCommand } from '../src/partita/skill.ts'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, describe, it } from '@effect/vitest'
 import { Effect, Layer } from 'effect'
+import * as Schema from 'effect/Schema'
 import { CommandExecutor } from '../src/partita/process.ts'
 import {
   listSkillRuntime,
@@ -12,106 +10,103 @@ import {
   syncSkillRuntime,
 } from '../src/partita/skill.ts'
 
+const { mkdirSync, mkdtempSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { tmpdir } = process.getBuiltinModule('node:os')
+const { dirname, join } = process.getBuiltinModule('node:path')
+
 function commandExecutorLayer(run: CommandExecutor['Service']['run']) {
-  return Layer.succeed(CommandExecutor, CommandExecutor.of({ run }))
+  return Layer.merge(
+    NodeServices.layer,
+    Layer.succeed(CommandExecutor, CommandExecutor.of({ run })),
+  )
 }
 
 describe('Partita skill runtime', () => {
-  it.effect('runs the npx skills add command', () =>
+  const syncCalls: Array<SkillRuntimeCommand> = []
+  it.layer(commandExecutorLayer((command: SkillRuntimeCommand) => {
+    syncCalls.push(command)
+    return Effect.succeed({ exitCode: 0, output: '' })
+  }))(it => it.effect('runs the npx skills add command', () =>
     Effect.gen(function* () {
-      const calls: Array<SkillRuntimeCommand> = []
+      syncCalls.length = 0
       const root = '/tmp/partita-test-root'
-      const result = yield* syncSkillRuntime({ root }).pipe(
-        Effect.provide(commandExecutorLayer((command: SkillRuntimeCommand) => {
-          calls.push(command)
-          return Effect.succeed({
-            exitCode: 0,
-            output: '',
-          })
-        })),
-      )
+      const result = yield* syncSkillRuntime({ root })
 
       assert.strictEqual(result.syncExitCode, 0)
-      assert.deepStrictEqual(calls, [
+      assert.deepStrictEqual(syncCalls, [
         {
           command: 'npx',
           args: ['skills', 'add', './skills', '-a', 'codex', '-g', '--skill', '*', '-y', '--full-depth'],
           cwd: root,
         },
       ])
-    }))
+    })))
 
-  it.effect('runs the npx skills list command for Codex runtime status', () =>
+  const listCalls: Array<SkillRuntimeCommand> = []
+  it.layer(commandExecutorLayer((command: SkillRuntimeCommand) => {
+    listCalls.push(command)
+    return Effect.succeed({
+      exitCode: 0,
+      output: encodeJson([{
+        agents: ['Codex'],
+        name: 'demo',
+        path: '/Users/sayori/.agents/skills/demo',
+        scope: 'global',
+      }]),
+    })
+  }))(it => it.effect('runs the npx skills list command for Codex runtime status', () =>
     Effect.gen(function* () {
-      const calls: Array<SkillRuntimeCommand> = []
+      listCalls.length = 0
       const root = '/tmp/partita-test-root'
-      const result = yield* listSkillRuntime({ root }).pipe(
-        Effect.provide(commandExecutorLayer((command: SkillRuntimeCommand) => {
-          calls.push(command)
-          return Effect.succeed({
-            exitCode: 0,
-            output: JSON.stringify([
-              {
-                agents: ['Codex'],
-                name: 'demo',
-                path: '/Users/sayori/.agents/skills/demo',
-                scope: 'global',
-              },
-            ]),
-          })
-        })),
-      )
+      const result = yield* listSkillRuntime({ root })
 
       assert.deepStrictEqual(result.entries.map(entry => entry.name), ['demo'])
-      assert.deepStrictEqual(calls, [
+      assert.deepStrictEqual(listCalls, [
         {
           command: 'npx',
           args: ['skills', 'list', '-g', '-a', 'codex', '--json'],
           cwd: root,
         },
       ])
-    }))
+    })))
 
-  it.effect('reports malformed skills list JSON as a typed failure', () =>
-    listSkillRuntime({ root: '/tmp/partita-test-root' }).pipe(
-      Effect.provide(commandExecutorLayer(() => Effect.succeed({ exitCode: 0, output: '{' }))),
-      Effect.match({
-        onFailure: error => assert.include(error.message, 'invalid JSON'),
-        onSuccess: () => assert.fail('expected malformed JSON to fail'),
-      }),
-    ))
+  it.layer(commandExecutorLayer(() => Effect.succeed({ exitCode: 0, output: '{' })))(it =>
+    it.effect('reports malformed skills list JSON as a typed failure', () =>
+      listSkillRuntime({ root: '/tmp/partita-test-root' }).pipe(
+        Effect.match({
+          onFailure: error => assert.include(error.message, 'invalid JSON'),
+          onSuccess: () => assert.fail('expected malformed JSON to fail'),
+        }),
+      )))
 
-  it.effect('uses catalog family discovery for runtime comparison', () => {
-    const root = mkdtempSync(join(tmpdir(), 'partita-skill-runtime-catalog-'))
-    const skillDirectory = join(root, 'skills/expression/density')
-    write(root, 'skills/expression/density/SKILL.md', [
-      '---',
-      'name: density',
-      'description: "Use when density comparison is needed. Not for unrelated work."',
-      '---',
-      '',
-      '# Density',
-    ].join('\n'))
-    const runtimeLayer = Layer.merge(
-      NodeServices.layer,
-      commandExecutorLayer(() => Effect.succeed({
-        exitCode: 0,
-        output: JSON.stringify([{
-          agents: ['Codex'],
-          name: 'density',
-          path: skillDirectory,
-          scope: 'global',
-        }]),
-      })),
-    )
+  const catalogRoot = mkdtempSync(join(tmpdir(), 'partita-skill-runtime-catalog-'))
+  const skillDirectory = join(catalogRoot, 'skills/expression/density')
+  write(catalogRoot, 'skills/expression/density/SKILL.md', [
+    '---',
+    'name: density',
+    'description: "Use when density comparison is needed. Not for unrelated work."',
+    '---',
+    '',
+    '# Density',
+  ].join('\n'))
+  const runtimeLayer = commandExecutorLayer(() => Effect.succeed({
+    exitCode: 0,
+    output: encodeJson([{
+      agents: ['Codex'],
+      name: 'density',
+      path: skillDirectory,
+      scope: 'global',
+    }]),
+  }))
 
-    return printSkillRuntimeStatus({ root }).pipe(
-      Effect.provide(runtimeLayer),
-      Effect.flatMap(status => Effect.sync(() => {
-        assert.deepStrictEqual(status.expectedSkills, ['density'])
-        assert.deepStrictEqual(status.issues, [])
-      })),
-    )
+  it.layer(runtimeLayer)((it) => {
+    it.effect('uses catalog family discovery for runtime comparison', () =>
+      printSkillRuntimeStatus({ root: catalogRoot }).pipe(
+        Effect.flatMap(status => Effect.sync(() => {
+          assert.deepStrictEqual(status.expectedSkills, ['density'])
+          assert.deepStrictEqual(status.issues, [])
+        })),
+      ))
   })
 })
 
@@ -119,4 +114,8 @@ function write(root: string, path: string, contents: string) {
   const absolutePath = join(root, path)
   mkdirSync(dirname(absolutePath), { recursive: true })
   writeFileSync(absolutePath, contents)
+}
+
+function encodeJson(value: unknown): string {
+  return Schema.encodeSync(Schema.UnknownFromJsonString)(value)
 }

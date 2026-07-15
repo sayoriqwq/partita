@@ -1,9 +1,12 @@
-export class PartitaError extends Error {
+import * as Data from 'effect/Data'
+
+export class PartitaError extends Data.Error<{
+  readonly message: string
+}> {
   readonly _tag = 'PartitaError'
 
   constructor(message: string) {
-    super(message)
-    this.name = 'PartitaError'
+    super({ message })
   }
 }
 

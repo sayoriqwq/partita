@@ -1,10 +1,26 @@
 {
+  "languages": {
+    "JavaScript": {
+      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+    },
+    "TypeScript": {
+      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+    },
+    "TSX": {
+      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+    }
+  },
   "lsp": {
-    "typescript-language-server": {
+    "tsgo": {
+      "binary": {
+        "path": "node_modules/@typescript/native/bin/tsc",
+        "arguments": ["--lsp", "--stdio"]
+      },
       "initialization_options": {
         "preferences": {
           "autoImportFileExcludePatterns": [
-            "repos/**"
+            "repos/**",
+            ".prelude/**/repos/**"
           ]
         }
       }

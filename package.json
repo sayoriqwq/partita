@@ -22,28 +22,27 @@
     "README.md"
   ],
   "dependencies": {
-    "@effect/platform-node": "4.0.0-beta.92",
-    "@sayoriqwq/prelude-contract": "0.2.0",
-    "effect": "4.0.0-beta.92"
+    "@effect/platform-node": "4.0.0-beta.97",
+    "@sayoriqwq/prelude-contract": "0.2.2",
+    "effect": "4.0.0-beta.97"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
-    "@effect/language-service": "0.86.2",
-    "@effect/tsgo": "0.15.0",
-    "@effect/vitest": "4.0.0-beta.92",
-    "@sayoriqwq/effect-harness": "file:vendor/prelude-v1/sayoriqwq-effect-harness-0.1.1.tgz",
-    "@sayoriqwq/prelude": "file:vendor/prelude-v1/sayoriqwq-prelude-0.2.3.tgz",
-    "@sayoriqwq/psychogram": "file:vendor/prelude-v1/sayoriqwq-psychogram-0.1.0.tgz",
+    "@effect/tsgo": "0.19.0",
+    "@effect/vitest": "4.0.0-beta.97",
+    "@sayoriqwq/effect-harness": "0.3.0",
+    "@sayoriqwq/prelude": "0.4.0",
     "@types/node": "^25.6.0",
-    "@typescript/native-preview": "7.0.0-dev.20260630.1",
+    "@typescript/native": "npm:typescript@7.0.2",
     "eslint": "^10.3.0",
     "knip": "^6.12.0",
     "turbo": "^2.10.1",
-    "typescript": "^6.0.3",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "^4.1.8"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && chmod +x dist/bin/partita.js",
+    "build": "rm -rf dist && tsc6 --project tsconfig.build.json && chmod +x dist/bin/partita.js",
+    "effect:verify": "node tooling/verify-effect-toolchain.mjs",
     "home:diff": "pnpm build && node dist/bin/partita.js home diff",
     "home:status": "pnpm build && node dist/bin/partita.js home status",
     "primitive-sync": "pnpm build && node dist/bin/partita.js primitive sync",
@@ -55,9 +54,10 @@
     "lint": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint eslint.config.mjs \"bin/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"packages/*/src/**/*.ts\" --fix --no-error-on-unmatched-pattern",
     "prepack": "pnpm build",
+    "prepare": "node activate-effect-tsgo.mjs",
     "test": "vitest run",
-    "typecheck": "tsgo --noEmit",
-    "verify": "pnpm build && node dist/bin/partita.js verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
+    "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit --project tsconfig.json",
+    "verify": "pnpm build && node dist/bin/partita.js verify && pnpm effect:verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
     "verify-runtime": "pnpm build && node dist/bin/partita.js verify --level runtime",
     "verify-source": "pnpm build && node dist/bin/partita.js verify --level source"
   }

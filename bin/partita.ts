@@ -1,46 +1,61 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 import * as NodeRuntime from '@effect/platform-node/NodeRuntime'
+import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
+import * as FileSystem from 'effect/FileSystem'
+import * as Layer from 'effect/Layer'
+import * as Path from 'effect/Path'
+import * as Schema from 'effect/Schema'
 import * as CliError from 'effect/unstable/cli/CliError'
-import { runCli } from '../src/cli/Main.ts'
+import { PartitaLive, runCli } from '../src/cli/Main.ts'
 import { errorMessage } from '../src/partita/errors.ts'
 
-const packageRoot = resolvePackageRoot(fileURLToPath(import.meta.url))
-const version = readPackageVersion(join(packageRoot, 'package.json'))
-
-runCli({ root: process.cwd(), version }).pipe(
+const program = Effect.gen(function* () {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const entrypoint = yield* path.fromFileUrl(new URL(import.meta.url))
+  const packageRoot = resolvePackageRoot(path, entrypoint)
+  const version = yield* readPackageVersion(fs, path.join(packageRoot, 'package.json'))
+  yield* runCli({ root: process.cwd(), version })
+}).pipe(
   Effect.catch((error: unknown) =>
-    Effect.sync(() => {
-      if (CliError.isCliError(error)) {
-        process.exitCode = 1
-        return
-      }
-      console.error(errorMessage(error))
-      process.exitCode = 1
-    }),
+    CliError.isCliError(error)
+      ? Effect.sync(() => {
+          process.exitCode = 1
+        })
+      : Effect.andThen(Console.error(errorMessage(error)), Effect.sync(() => {
+          process.exitCode = 1
+        })),
   ),
-  NodeRuntime.runMain,
 )
 
-function resolvePackageRoot(entrypoint: string): string {
-  const candidate = dirname(dirname(entrypoint))
+Effect.scoped(Effect.gen(function* () {
+  const context = yield* Layer.build(PartitaLive)
+  yield* Effect.provide(program, context)
+})).pipe(NodeRuntime.runMain)
+
+function resolvePackageRoot(path: Path.Path, entrypoint: string): string {
+  const candidate = path.dirname(path.dirname(entrypoint))
   if (candidate.endsWith('/dist')) {
-    return dirname(candidate)
+    return path.dirname(candidate)
   }
   return candidate
 }
 
-function readPackageVersion(packageJsonPath: string): string {
-  try {
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-    return typeof packageJson.version === 'string' ? packageJson.version : '0.0.0'
-  }
-  catch {
+function readPackageVersion(
+  fs: FileSystem.FileSystem,
+  packageJsonPath: string,
+) {
+  return Effect.gen(function* () {
+    const text = yield* fs.readFileString(packageJsonPath)
+    const packageJson = yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(text)
+    if (typeof packageJson === 'object' && packageJson !== null && 'version' in packageJson) {
+      return typeof packageJson.version === 'string' ? packageJson.version : '0.0.0'
+    }
     return '0.0.0'
-  }
+  }).pipe(
+    Effect.orElseSucceed(() => '0.0.0'),
+  )
 }

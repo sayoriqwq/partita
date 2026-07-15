@@ -1,8 +1,8 @@
 import type { PartitaCommand } from './process.ts'
-import * as path from 'node:path'
 import process from 'node:process'
 import { Effect, Schema } from 'effect'
 import * as Console from 'effect/Console'
+import * as Path from 'effect/Path'
 import { CommandExecutor } from './process.ts'
 
 export type HomeCommand = PartitaCommand
@@ -19,10 +19,11 @@ export class PartitaHomeError extends Schema.TaggedErrorClass<PartitaHomeError>(
   message: Schema.String,
 }) {}
 
-const homeError = (message: string): PartitaHomeError => new PartitaHomeError({ message })
+const homeError = (message: string): PartitaHomeError => PartitaHomeError.make({ message })
 
 export const checkChezmoiHomeStatus = Effect.fn('checkChezmoiHomeStatus')(
   function* (options: ChezmoiHomeOptions = {}) {
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const executor = yield* CommandExecutor
     const statusCommand: HomeCommand = {
@@ -50,6 +51,7 @@ export const applyChezmoiHome = Effect.fn('applyChezmoiHome')(
       return yield* homeError('partita home apply requires --write; use partita home diff for a non-mutating check')
     }
 
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const executor = yield* CommandExecutor
     const applyCommand: HomeCommand = {
@@ -73,6 +75,7 @@ export const applyChezmoiHome = Effect.fn('applyChezmoiHome')(
 
 export const diffChezmoiHome = Effect.fn('diffChezmoiHome')(
   function* (options: ChezmoiHomeOptions = {}) {
+    const path = yield* Path.Path
     const root = path.resolve(options.root ?? process.cwd())
     const executor = yield* CommandExecutor
     const diffCommand: HomeCommand = {

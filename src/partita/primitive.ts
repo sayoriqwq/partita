@@ -1,7 +1,7 @@
-import { dirname, join, resolve } from 'node:path'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Path from 'effect/Path'
 import { PartitaError } from './errors.ts'
 
 export interface PrimitiveReferenceCopySpec {
@@ -38,22 +38,26 @@ export const primitiveReferenceCopySpecs: ReadonlyArray<PrimitiveReferenceCopySp
 
 export const syncPrimitiveReferences = Effect.fn('syncPrimitiveReferences')(function* (
   options: SyncPrimitiveReferencesOptions,
-): Effect.fn.Return<PrimitiveReferenceSyncReport, PartitaError, FileSystem.FileSystem> {
+): Effect.fn.Return<PrimitiveReferenceSyncReport, PartitaError, FileSystem.FileSystem | Path.Path> {
   const fs = yield* FileSystem.FileSystem
-  const root = resolve(options.root)
+  const path = yield* Path.Path
+  const root = path.resolve(options.root)
   const copied: Array<string> = []
 
   for (const copy of primitiveReferenceCopySpecs) {
-    const sourcePath = join(root, copy.sourcePath)
+    const sourcePath = path.join(root, copy.sourcePath)
     if (!(yield* mapFileSystemError(fs.exists(sourcePath), `Check ${copy.sourcePath}`))) {
-      return yield* Effect.fail(new PartitaError(`Missing primitive reference source: ${copy.sourcePath}`))
+      return yield* new PartitaError(`Missing primitive reference source: ${copy.sourcePath}`)
     }
 
     const text = yield* mapFileSystemError(fs.readFileString(sourcePath), `Read ${copy.sourcePath}`)
     const body = primitiveReferenceBody(text)
     for (const targetPath of copy.targetPaths) {
-      const absoluteTargetPath = join(root, targetPath)
-      yield* mapFileSystemError(fs.makeDirectory(dirname(absoluteTargetPath), { recursive: true }), `Create ${dirname(targetPath)}`)
+      const absoluteTargetPath = path.join(root, targetPath)
+      yield* mapFileSystemError(
+        fs.makeDirectory(path.dirname(absoluteTargetPath), { recursive: true }),
+        `Create ${path.dirname(targetPath)}`,
+      )
       yield* mapFileSystemError(fs.writeFileString(absoluteTargetPath, body), `Write ${targetPath}`)
       copied.push(targetPath)
     }

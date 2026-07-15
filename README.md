@@ -143,7 +143,9 @@ Partita does not choose Harness Target locators, routes, anchors, or
 `referenceOnly` delivery policy. [Effect
 Harness](https://github.com/sayoriqwq/effect-harness/blob/main/HARNESS.md) is a
 concrete **composer** of Partita publications; [Prelude](https://github.com/yume-infra/prelude/blob/main/docs/v2-harness-convergence-contract.md#pinned-reference-trees)
-is the **consumer** and Target mutation host.
+is the **consumer** and only materialization host for active Harness-owned
+Outputs. Explicitly authorized Harness-delivered skills adapt Target-owned
+surfaces after those stable Outputs are delivered.
 
 默认 contract path 是 subtree prefix 的 sibling 文件。
 

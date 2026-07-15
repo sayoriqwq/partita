@@ -12,9 +12,9 @@ import type {
 } from './source-skill-catalog.ts'
 import type { ValidationIssue } from './validation.ts'
 
-import { dirname, join, relative, sep } from 'node:path'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
+import * as Path from 'effect/Path'
 import { PartitaError } from './errors.ts'
 import { validateOpenAiSkillText } from './openai-skill-validation.ts'
 import {
@@ -67,9 +67,10 @@ type ExpectedOpenAiInterfaceProjection = OpenAiMetadataProjection['interface']
 
 export const checkOpenAiRuntimeSkillFiles = Effect.fn('checkOpenAiRuntimeSkillFiles')(function* (
   root: string,
-): Effect.fn.Return<SkillFileValidationResult, PartitaError, FileSystem.FileSystem> {
+): Effect.fn.Return<SkillFileValidationResult, PartitaError, FileSystem.FileSystem | Path.Path> {
+  const path = yield* Path.Path
   const catalog = yield* loadPartitaSourceSkillCatalog(root)
-  return checkOpenAiRuntimeSkillCatalog(catalog).result
+  return checkOpenAiRuntimeSkillCatalog(path, catalog).result
 })
 
 interface RuntimeSkillValidation {
@@ -80,7 +81,7 @@ interface RuntimeSkillValidation {
   }>
 }
 
-function checkOpenAiRuntimeSkillCatalog(catalog: PartitaSourceSkillCatalog): RuntimeSkillValidation {
+function checkOpenAiRuntimeSkillCatalog(path: Path.Path, catalog: PartitaSourceSkillCatalog): RuntimeSkillValidation {
   const descriptions: Record<string, string> = {}
   const issues: Array<ValidationIssue> = []
   const skills: Array<RuntimeSkillValidation['skills'][number]> = []
@@ -90,9 +91,9 @@ function checkOpenAiRuntimeSkillCatalog(catalog: PartitaSourceSkillCatalog): Run
     skills.push({ skill, validation })
     issues.push(...validation.issues)
 
-    issues.push(...checkRuntimeSkillDirectoryShape(catalog.root, skill))
+    issues.push(...checkRuntimeSkillDirectoryShape(path, catalog.root, skill))
 
-    if (!validation.fields) {
+    if (validation.fields === undefined) {
       continue
     }
 
@@ -108,17 +109,18 @@ function checkOpenAiRuntimeSkillCatalog(catalog: PartitaSourceSkillCatalog): Run
 
 export const checkPartitaSourceSkillFiles = Effect.fn('checkPartitaSourceSkillFiles')(function* (
   root: string,
-): Effect.fn.Return<SkillFileValidationResult, PartitaError, FileSystem.FileSystem> {
+): Effect.fn.Return<SkillFileValidationResult, PartitaError, FileSystem.FileSystem | Path.Path> {
   const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
   const catalog = yield* loadPartitaSourceSkillCatalog(root)
-  const runtime = checkOpenAiRuntimeSkillCatalog(catalog)
+  const runtime = checkOpenAiRuntimeSkillCatalog(path, catalog)
   const issues: Array<ValidationIssue> = [
     ...runtime.result.issues,
-    ...checkSkillsRootShape(catalog),
+    ...checkSkillsRootShape(path, catalog),
   ]
 
   for (const { skill, validation } of runtime.skills) {
-    if (!validation.fields) {
+    if (validation.fields === undefined) {
       continue
     }
 
@@ -132,7 +134,7 @@ export const checkPartitaSourceSkillFiles = Effect.fn('checkPartitaSourceSkillFi
 
     issues.push(...checkPartitaSkillBodyShape(skill.text, skill.relativePath))
     issues.push(...projection.issues)
-    issues.push(...(yield* checkOpenAiMetadata(fs, root, validation.fields.name, skill.path, title, projection.openAiInterface)))
+    issues.push(...(yield* checkOpenAiMetadata(fs, path, root, validation.fields.name, skill.path, title, projection.openAiInterface)))
   }
 
   return {
@@ -210,7 +212,7 @@ interface ParsedPatternSelector {
 
 function parsePatternSelector(text: string, relativePath: string): ParsedPatternSelector {
   const pattern = sectionBetween(text, '## Pattern', '## Boundary')
-  if (!pattern) {
+  if (pattern === '') {
     return { issues: [], selector: undefined }
   }
 
@@ -330,28 +332,28 @@ function checkPartitaSkillBodyShape(text: string, relativePath: string): Readonl
   }
 
   const pattern = sectionBetween(text, '## Pattern', '## Boundary')
-  if (pattern && (!pattern.includes('Use when:') || !pattern.includes('Do not use when:'))) {
+  if (pattern !== '' && (!pattern.includes('Use when:') || !pattern.includes('Do not use when:'))) {
     issues.push(issue('partita_skill.pattern_shape', 'Pattern must include Use when: and Do not use when:', relativePath))
   }
 
   const boundary = sectionBetween(text, '## Boundary', '## Effects')
-  if (boundary && !boundary.includes('Soft:')) {
+  if (boundary !== '' && !boundary.includes('Soft:')) {
     issues.push(issue('partita_skill.boundary_missing_soft', 'Boundary must include Soft:', relativePath))
   }
   const hardIndex = boundary.indexOf('Hard:')
-  if (hardIndex !== -1 && !boundary.slice(hardIndex + 'Hard:'.length).trim()) {
+  if (hardIndex !== -1 && boundary.slice(hardIndex + 'Hard:'.length).trim() === '') {
     issues.push(issue('partita_skill.boundary_empty_hard', 'Boundary Hard: must not be empty when present', relativePath))
   }
 
   const effects = sectionBetween(text, '## Effects', '## Workflow')
   for (const effect of ['Conversation', 'Filesystem', 'External'] as const) {
-    if (effects && !effects.includes(`- ${effect}:`)) {
+    if (effects !== '' && !effects.includes(`- ${effect}:`)) {
       issues.push(issue('partita_skill.effects_missing_surface', `Effects must include ${effect}`, relativePath))
     }
   }
 
   const validation = sectionBetween(text, '## Validation', '')
-  if (validation && !validation.includes('Before done:')) {
+  if (validation !== '' && !validation.includes('Before done:')) {
     issues.push(issue('partita_skill.validation_shape', 'Validation must include Before done:', relativePath))
   }
 
@@ -360,14 +362,15 @@ function checkPartitaSkillBodyShape(text: string, relativePath: string): Readonl
 
 const checkOpenAiMetadata = Effect.fn('checkOpenAiMetadata')(function* (
   fs: FileSystem.FileSystem,
+  path: Path.Path,
   root: string,
   skillName: string,
   skillPath: string,
   expectedDisplayName: string | undefined,
   expectedInterface: ExpectedOpenAiInterfaceProjection | undefined,
 ) {
-  const metadataPath = join(dirname(skillPath), 'agents', 'openai.yaml')
-  const relativeMetadataPath = relativePathFrom(root, metadataPath)
+  const metadataPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml')
+  const relativeMetadataPath = relativePathFrom(path, root, metadataPath)
   const exists = yield* pathExists(fs, metadataPath)
   const issues: Array<ValidationIssue> = []
   if (!exists) {
@@ -469,7 +472,7 @@ function parseOpenAiMetadata(
   let currentSection: string | undefined
 
   for (const [index, rawLine] of text.split(/\r?\n/u).entries()) {
-    if (!rawLine.trim() || rawLine.trimStart().startsWith('#')) {
+    if (rawLine.trim() === '' || rawLine.trimStart().startsWith('#')) {
       continue
     }
 
@@ -488,7 +491,7 @@ function parseOpenAiMetadata(
 
     if (indent === 0) {
       currentSection = key
-      if (rawValue.trim()) {
+      if (rawValue.trim() !== '') {
         topLevelScalars[key] = rawValue.trim()
         if (key === 'interface' || key === 'policy') {
           issues.push(issue('openai_metadata.invalid_section', `${key} must be a YAML mapping block`, path))
@@ -551,7 +554,7 @@ function parseYamlScalar(
   issues: Array<ValidationIssue>,
 ): string | undefined {
   const value = rawValue.trim()
-  if (!value) {
+  if (value === '') {
     issues.push(issue('openai_metadata.empty_value', `empty YAML scalar on line ${line}`, path))
     return undefined
   }
@@ -621,7 +624,7 @@ function parseQuotedString(value: string): { readonly ok: true, readonly value: 
   return { ok: true, value: result }
 }
 
-function checkSkillsRootShape(catalog: PartitaSourceSkillCatalog): ReadonlyArray<ValidationIssue> {
+function checkSkillsRootShape(path: Path.Path, catalog: PartitaSourceSkillCatalog): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   for (const entry of catalog.skillsRootEntries) {
     if (entry.type !== 'Directory') {
@@ -636,20 +639,21 @@ function checkSkillsRootShape(catalog: PartitaSourceSkillCatalog): ReadonlyArray
     issues.push(issue(
       'skills_root.unsupported_directory',
       'skills directories must be direct skills or supported namespaces',
-      relativePathFrom(catalog.root, join(catalog.root, 'skills', entry.name)),
+      relativePathFrom(path, catalog.root, path.join(catalog.root, 'skills', entry.name)),
     ))
   }
   return issues
 }
 
 function checkRuntimeSkillDirectoryShape(
+  path: Path.Path,
   root: string,
   skill: PartitaSourceSkill,
 ): ReadonlyArray<ValidationIssue> {
   const issues: Array<ValidationIssue> = []
   for (const entry of skill.directoryEntries) {
-    const entryPath = join(skill.directoryPath, entry.name)
-    const relativeEntryPath = relativePathFrom(root, entryPath)
+    const entryPath = path.join(skill.directoryPath, entry.name)
+    const relativeEntryPath = relativePathFrom(path, root, entryPath)
     switch (entry.name) {
       case 'SKILL.md':
         if (entry.type !== 'File') {
@@ -657,16 +661,16 @@ function checkRuntimeSkillDirectoryShape(
         }
         break
       case 'agents':
-        issues.push(...checkAgentsDirectory(root, entryPath, entry))
+        issues.push(...checkAgentsDirectory(path, root, entryPath, entry))
         break
       case 'assets':
-        issues.push(...checkBundledResourceDirectory(root, entryPath, entry.type === 'Directory', 'assets'))
+        issues.push(...checkBundledResourceDirectory(path, root, entryPath, entry.type === 'Directory', 'assets'))
         break
       case 'references':
-        issues.push(...checkReferencesDirectory(root, entryPath, entry))
+        issues.push(...checkReferencesDirectory(path, root, entryPath, entry))
         break
       case 'scripts':
-        issues.push(...checkBundledResourceDirectory(root, entryPath, entry.type === 'Directory', 'scripts'))
+        issues.push(...checkBundledResourceDirectory(path, root, entryPath, entry.type === 'Directory', 'scripts'))
         break
       default:
         issues.push(issue('openai_skill_shape.unsupported_entry', 'skill directories may only contain SKILL.md, agents/, scripts/, references/, and assets/', relativeEntryPath))
@@ -676,17 +680,18 @@ function checkRuntimeSkillDirectoryShape(
 }
 
 function checkAgentsDirectory(
+  pathService: Path.Path,
   root: string,
   path: string,
   directory: PartitaSourceDirectoryEntry,
 ): ReadonlyArray<ValidationIssue> {
   if (directory.type !== 'Directory') {
-    return [issue('openai_skill_shape.invalid_agents_dir', 'agents must be a directory', relativePathFrom(root, path))]
+    return [issue('openai_skill_shape.invalid_agents_dir', 'agents must be a directory', relativePathFrom(pathService, root, path))]
   }
 
   return (directory.entries ?? []).flatMap((entry) => {
-    const entryPath = join(path, entry.name)
-    const relativeEntryPath = relativePathFrom(root, entryPath)
+    const entryPath = pathService.join(path, entry.name)
+    const relativeEntryPath = relativePathFrom(pathService, root, entryPath)
     if (entry.type !== 'File') {
       return [issue('openai_skill_shape.unsupported_agent_entry', 'agents must contain one-level config files', relativeEntryPath)]
     }
@@ -695,6 +700,7 @@ function checkAgentsDirectory(
 }
 
 function checkBundledResourceDirectory(
+  pathService: Path.Path,
   root: string,
   path: string,
   isDirectory: boolean,
@@ -702,21 +708,22 @@ function checkBundledResourceDirectory(
 ): ReadonlyArray<ValidationIssue> {
   return isDirectory
     ? []
-    : [issue(`openai_skill_shape.invalid_${name}_dir`, `${name} must be a directory`, relativePathFrom(root, path))]
+    : [issue(`openai_skill_shape.invalid_${name}_dir`, `${name} must be a directory`, relativePathFrom(pathService, root, path))]
 }
 
 function checkReferencesDirectory(
+  pathService: Path.Path,
   root: string,
   path: string,
   directory: PartitaSourceDirectoryEntry,
 ): ReadonlyArray<ValidationIssue> {
   if (directory.type !== 'Directory') {
-    return [issue('openai_skill_shape.invalid_references_dir', 'references must be a directory', relativePathFrom(root, path))]
+    return [issue('openai_skill_shape.invalid_references_dir', 'references must be a directory', relativePathFrom(pathService, root, path))]
   }
 
   return (directory.entries ?? []).flatMap((entry) => {
-    const entryPath = join(path, entry.name)
-    const relativeEntryPath = relativePathFrom(root, entryPath)
+    const entryPath = pathService.join(path, entry.name)
+    const relativeEntryPath = relativePathFrom(pathService, root, entryPath)
     if (entry.type !== 'File') {
       return [issue('openai_skill_shape.unsupported_reference', 'references must be one-level files', relativeEntryPath)]
     }
@@ -753,7 +760,7 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
-function relativePathFrom(root: string, path: string): string {
-  const relativePath = relative(root, path)
-  return relativePath === '' ? '.' : relativePath.split(sep).join('/')
+function relativePathFrom(pathService: Path.Path, root: string, path: string): string {
+  const relativePath = pathService.relative(root, path)
+  return relativePath === '' ? '.' : relativePath.split(pathService.sep).join('/')
 }
