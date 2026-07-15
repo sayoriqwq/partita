@@ -57,7 +57,9 @@
     "prepare": "node activate-effect-tsgo.mjs",
     "test": "vitest run",
     "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit --project tsconfig.json",
-    "verify": "pnpm build && node dist/bin/partita.js verify && pnpm effect:verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip",
+    "verify": "node tooling/verification-gates.mjs aggregate",
+    "verify:integration": "node tooling/verification-gates.mjs integration",
+    "verify:code": "node tooling/verification-gates.mjs code",
     "verify-runtime": "pnpm build && node dist/bin/partita.js verify --level runtime",
     "verify-source": "pnpm build && node dist/bin/partita.js verify --level source"
   }

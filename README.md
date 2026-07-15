@@ -168,6 +168,16 @@ Pinned upstream 内部的 gitlinks 是 opaque reference boundaries。`partita pi
 
 ## Verification
 
+`pnpm verify` 是 Target-owned 根聚合校验：它先运行 Integration gate（权威接口为
+`prelude check`），再运行 code gate，并在第一层失败时仍继续运行第二层。两层结果
+分别报告；任一层失败都会返回非零。验证不会自动 apply、安装、修复或 materialize。
+
+需要只检查源代码时可直接运行 `pnpm verify:code`；需要只检查 Prelude Integration
+收敛时可直接运行 `pnpm verify:integration`。code gate 保留 Partita 原有的 build、
+project verifier、Effect toolchain、typecheck、test、lint 和 knip 覆盖。
+
+`node tooling/verify-fresh-checkout-fixture.mjs` 会在完整 copied checkout 中运行三条真实 gate；仅该临时 fixture 使用有界的 30s Vitest test timeout，以覆盖冷依赖启动成本。
+
 `partita verify` 默认运行完整 project 层。
 
 需要只看某一层时：
