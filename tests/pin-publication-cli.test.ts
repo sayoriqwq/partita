@@ -119,12 +119,12 @@ describe('partita pin publish CLI', () => {
 
   it.effect('rejects an unsupported Source Pin contract schema version', () => Effect.sync(() => {
     const root = makeFixture()
-    write(root, 'repos/upstream.subtree.json', `${encodeJson({ ...contract(), schemaVersion: 2 })}\n`)
+    write(root, 'repos/upstream.subtree.json', `${encodeJson({ ...contract(), schemaVersion: 1 })}\n`)
 
     const result = publish(root, 'schema-version')
 
     assert.notEqual(result.status, 0)
-    assert.include(result.stderr, 'unsupported Source Pin contract schema version: 2')
+    assert.include(result.stderr, 'must use Source Pin contract schemaVersion 2')
     assertOutputsAbsent(root, 'schema-version')
   }))
 
@@ -132,13 +132,16 @@ describe('partita pin publish CLI', () => {
     const root = makeFixture()
     write(root, 'repos/upstream.subtree.json', `${encodeJson({
       ...contract(),
-      agent: { route: 'delivery/missing-route.md' },
-      anchor: { llmDocument: 'delivery/missing-anchor.md' },
-      editorPolicy: {
-        autoImportExclude: '',
-        filesExclude: 'disabled',
-        searchExclude: 'disabled',
-        watcherExclude: 'disabled',
+      agent: {
+        ...contract().agent,
+        anchor: 'delivery/missing-anchor.md',
+        route: 'delivery/missing-route.md',
+      },
+      workspace: {
+        autoImport: '',
+        files: 'visible',
+        search: 'included',
+        watch: 'included',
       },
     })}\n`)
 
@@ -170,14 +173,14 @@ describe('partita pin publish CLI', () => {
 
     assert.notEqual(result.status, 0)
     assert.include(result.stderr, 'must not overwrite Source Pin contract')
-    assert.match(readFileSync(join(root, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*1/u)
+    assert.match(readFileSync(join(root, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*2/u)
   }))
 
   it.effect('requires the Source Pin import block before publication', () => Effect.sync(() => {
     const root = makeFixture()
     write(root, 'repos/upstream.subtree.json', `${encodeJson({
       ...contract(),
-      boundaries: { importBlock: false, readOnly: true },
+      agent: { ...contract().agent, importBlock: false },
     })}\n`)
 
     const result = publish(root, 'missing-import-block')
@@ -221,7 +224,7 @@ describe('partita pin publish CLI', () => {
 
     assert.notEqual(contractAlias.status, 0)
     assert.include(contractAlias.stderr, 'must not overwrite Source Pin contract')
-    assert.match(readFileSync(join(contractRoot, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*1/u)
+    assert.match(readFileSync(join(contractRoot, 'repos/upstream.subtree.json'), 'utf8'), /"schemaVersion":\s*2/u)
 
     const prefixRoot = makeFixture()
     symlinkSync('repos/upstream', join(prefixRoot, 'out'))
@@ -352,30 +355,32 @@ function makeFixture(options: { readonly initializeGit?: boolean } = {}): string
 function contract() {
   const revision = 'a'.repeat(40)
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'upstream',
-    github: {
+    source: {
       repository: 'https://github.com/example/upstream',
-      branch: 'main',
-      ref: revision,
+      revision,
+      trackingBranch: 'main',
     },
-    local: { prefix: 'repos/upstream' },
-    mechanism: 'git-subtree',
-    subtree: { split: revision, trailer: `git-subtree-split: ${revision}` },
-    anchor: { llmDocument: 'repos/upstream/LLMS.md' },
-    commands: {
-      update: 'partita pin update --name upstream --dry-run',
-      verify: 'partita pin verify --name upstream',
-    },
-    agent: { route: 'AGENTS.md' },
-    editorPolicy: {
-      autoImportExclude: 'block',
-      watcherExclude: 'recommended',
-      searchExclude: 'recommended',
-      filesExclude: 'disabled',
+    materialization: {
+      mechanism: 'git-subtree',
+      prefix: 'repos/upstream',
+      split: revision,
+      trailer: `git-subtree-split: ${revision}`,
     },
     ownership: { mode: 'direct' },
-    boundaries: { importBlock: true, readOnly: true },
+    agent: {
+      anchor: 'repos/upstream/LLMS.md',
+      importBlock: true,
+      readOnly: true,
+      route: 'AGENTS.md',
+    },
+    workspace: {
+      autoImport: 'excluded',
+      files: 'visible',
+      search: 'excluded',
+      watch: 'excluded',
+    },
   }
 }
 

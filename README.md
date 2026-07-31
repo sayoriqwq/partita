@@ -57,22 +57,22 @@ pnpm home:diff
 
 Partita CLI 发布为 `@sayoriqwq/partita`，bin name 是 `partita`。
 
-下游仓库不应该依赖本机 sibling repo 路径；GitHub subtree pin 应通过 package-level CLI 调用：
+Source Pin owner 不应依赖本机 sibling repo 路径；GitHub subtree lifecycle 通过 package-level CLI 调用：
 
 ```bash
+npx @sayoriqwq/partita pin plan --operation add --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect.git --branch main > /tmp/effect.pin-plan.json
+npx @sayoriqwq/partita pin add --plan /tmp/effect.pin-plan.json --plan-hash <planHash> --revision <desiredRevision>
+npx @sayoriqwq/partita pin plan --operation update --contract repos/effect.subtree.json > /tmp/effect.pin-plan.json
+npx @sayoriqwq/partita pin update --plan /tmp/effect.pin-plan.json --plan-hash <planHash> --revision <desiredRevision>
 npx @sayoriqwq/partita pin status --name effect --prefix repos/effect --contract repos/effect.subtree.json
 npx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
 npx @sayoriqwq/partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive out/effect.pta --provenance out/effect.json
 pnpm dlx @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
 ```
 
-`pin plan` 用于生成 GitHub git-subtree pin contract 和 editor settings shape：
+`pin plan` 只读地解析 tracking branch，输出 immutable revision、current→desired、预期 contract/editor bytes、Git operation 和 SHA-256 `planHash`。Approved apply 校验 exact plan hash/revision、local baseline、clean worktree 和 tracking branch 未移动，然后执行真实 `git subtree add/pull`。
 
-```bash
-npx @sayoriqwq/partita pin plan --name effect --prefix repos/effect --contract repos/effect.subtree.json --repository https://github.com/Effect-TS/effect --branch main --ref <commit-or-split>
-```
-
-默认 contract path 是 `repos/<name>.subtree.json`，和 `repos/<name>/` 并列。
+默认 contract path 是 `repos/<name>.subtree.json`，与 `repos/<name>/` 并列。
 
 ## Loop
 
@@ -110,7 +110,11 @@ partita home apply --write
 
 ## Pins
 
-`partita pin` 只支持 GitHub repository + git subtree pin。
+`partita pin` 是 GitHub Source Pin lifecycle owner：plan、approved add/update、status、verify、publish 与 schemaVersion 2 contract。
+
+Contract 使用 sibling path，记录 GitHub repository、tracking branch、resolved immutable revision、git-subtree split/trailer、direct ownership、agent anchor/route/read-only/import block 和显式 workspace decisions；CLI operation 不以自由文本写入 contract。
+
+Apply 不伪装成跨 Git/filesystem transaction：subtree commit 先发生，contract/editor bytes 后写。若 delivery 失败，repository state 保持可观察；fresh plan 会在已 materialize approved revision 时生成 `git.action=none` recovery plan。
 
 Partita is the generic **producer** for Source Pin publications. The [Prelude
 Contract canonical tree archive
@@ -147,13 +151,14 @@ is the **consumer** and only materialization host for active Harness-owned
 Outputs. Explicitly authorized Harness-delivered skills adapt Target-owned
 surfaces after those stable Outputs are delivered.
 
-默认 contract path 是 subtree prefix 的 sibling 文件。
-
 例如：
 
 ```bash
-partita pin plan --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect --branch main
-partita pin publish --name effect --prefix repos/effect --archive out/effect.pta --provenance out/effect.json
+partita pin plan --operation add --name effect --prefix repos/effect --repository https://github.com/Effect-TS/effect.git --branch main > /tmp/effect.pin-plan.json
+partita pin add --plan /tmp/effect.pin-plan.json --plan-hash <planHash> --revision <desiredRevision>
+partita pin status --contract repos/effect.subtree.json
+partita pin verify --contract repos/effect.subtree.json
+partita pin publish --contract repos/effect.subtree.json --archive out/effect.pta --provenance out/effect.json
 ```
 
 默认读取或生成：

@@ -1,130 +1,260 @@
-import type { GitHubSubtreePinContract } from '../src/partita/pin.ts'
+import type { GitHubSubtreePinContract, PinPlan } from '../src/partita/pin.ts'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, layer } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import * as FileSystem from 'effect/FileSystem'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 import {
+  applyPinPlan,
   buildPinPlan,
   defaultPinContractPath,
   inspectPins,
 } from '../src/partita/pin.ts'
-import { CommandExecutor } from '../src/partita/process.ts'
+import { CommandExecutorLive } from '../src/partita/process.ts'
 
-const { mkdirSync, mkdtempSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { execFileSync } = process.getBuiltinModule('node:child_process')
+const { mkdirSync, mkdtempSync, readFileSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
-const gitSuccess = () => Effect.succeed({ exitCode: 0, output: '' })
+const GitHubRepository = 'https://github.com/example/upstream.git'
+const PinTestTimeout = 20_000
+const PinTestLayer = CommandExecutorLive.pipe(
+  Layer.provideMerge(NodeServices.layer),
+)
 
-function pinTestLayer(run: CommandExecutor['Service']['run'] = gitSuccess) {
-  return Layer.merge(
-    NodeServices.layer,
-    Layer.succeed(CommandExecutor, CommandExecutor.of({ run })),
-  )
-}
-
-const PinTestLayer = pinTestLayer()
-
-layer(PinTestLayer)('Partita pins', (it) => {
-  it.effect('plans a GitHub subtree pin with sibling contract path and separate editor settings shapes', () =>
+layer(PinTestLayer)('Partita Source Pins', (it) => {
+  it.effect('plans and applies a real git-subtree add from an immutable branch resolution', () =>
     Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
 
-      const plan = yield* buildPinPlan({
-        name: 'upstream',
-        ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-        repository: 'https://github.com/example/upstream.git',
-        root,
-      })
-
+      assert.strictEqual(plan.planVersion, 1)
+      assert.strictEqual(plan.operation, 'add')
+      assert.strictEqual(plan.currentRevision, null)
+      assert.strictEqual(plan.desiredRevision, fixture.revision)
+      assert.match(plan.planHash, /^[0-9a-f]{64}$/u)
       assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
-      assert.strictEqual(defaultPinContractPath({ name: 'upstream', prefix: 'repos/upstream' }), 'repos/upstream.subtree.json')
-      assert.strictEqual(plan.contract.github.repository, 'https://github.com/example/upstream.git')
-      assert.strictEqual(plan.contract.local.prefix, 'repos/upstream')
-      assert.strictEqual(plan.contract.mechanism, 'git-subtree')
-      assert.strictEqual(plan.contract.ownership.mode, 'direct')
-      assert.strictEqual(plan.contract.anchor.llmDocument, 'repos/upstream/LLMS.md')
-      assert.strictEqual(plan.contract.agent.route, 'AGENTS.md')
-      assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
-      assert.include(plan.contract.commands.verify, '--contract repos/upstream.subtree.json')
-      assert.include(plan.editorSettings.vscode, '"typescript.preferences.autoImportFileExcludePatterns"')
-      assert.include(plan.editorSettings.vscode, '"files.watcherExclude"')
-      assert.include(plan.editorSettings.vscode, '"search.exclude"')
-      assert.notInclude(plan.editorSettings.vscode, '"files.exclude"')
-      assert.include(plan.editorSettings.zed, '"vtsls"')
-      assert.include(plan.editorSettings.zed, '"typescript-language-server"')
-      assert.notInclude(plan.editorSettings.zed, '"file_scan_exclusions"')
-    }))
-
-  it.effect('normalizes explicit contract paths back to target-root relative paths', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-
-      const plan = yield* buildPinPlan({
-        contractPath: join(root, 'repos/upstream.subtree.json'),
-        name: 'upstream',
+      assert.strictEqual(
+        defaultPinContractPath({ name: 'upstream', prefix: 'repos/upstream' }),
+        'repos/upstream.subtree.json',
+      )
+      assert.deepStrictEqual(plan.git, {
+        action: 'add',
+        args: [
+          'subtree',
+          'add',
+          '--prefix=repos/upstream',
+          GitHubRepository,
+          fixture.revision,
+          '--squash',
+        ],
+        command: 'git',
+      })
+      assert.strictEqual(plan.contract.schemaVersion, 2)
+      assert.deepStrictEqual(plan.contract.source, {
+        repository: GitHubRepository,
+        revision: fixture.revision,
+        trackingBranch: 'main',
+      })
+      assert.deepStrictEqual(plan.contract.materialization, {
+        mechanism: 'git-subtree',
         prefix: 'repos/upstream',
-        ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-        repository: 'https://github.com/example/upstream.git',
-        root,
+        split: fixture.revision,
+        trailer: `git-subtree-split: ${fixture.revision}`,
+      })
+      assert.notProperty(plan.contract, 'commands')
+
+      const report = yield* apply(plan, fixture.target)
+      assert.isTrue(report.ok)
+      assert.strictEqual(read(fixture.target, 'repos/upstream/value.txt'), 'one\n')
+      assert.deepStrictEqual(
+        readJson(fixture.target, 'repos/upstream.subtree.json'),
+        plan.contract as unknown as Record<string, unknown>,
+      )
+      assert.include(
+        git(fixture.target, ['log', '--format=%B', '--all']),
+        `git-subtree-split: ${fixture.revision}`,
+      )
+    }), PinTestTimeout)
+
+  it.effect('plans and applies a real git-subtree update without reselecting the approved revision', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const addPlan = yield* buildPinPlan(addPlanOptions(fixture))
+      yield* apply(addPlan, fixture.target)
+      commitAll(fixture.target, 'record Source Pin contract')
+
+      write(fixture.upstream, 'value.txt', 'two\n')
+      commitAll(fixture.upstream, 'second')
+      const nextRevision = git(fixture.upstream, ['rev-parse', 'HEAD']).trim()
+      const updatePlan = yield* buildPinPlan({
+        contractPath: 'repos/upstream.subtree.json',
+        operation: 'update',
+        root: fixture.target,
       })
 
-      assert.strictEqual(plan.contractPath, 'repos/upstream.subtree.json')
-      assert.include(plan.contract.commands.update, '--contract repos/upstream.subtree.json')
-      assert.include(plan.contract.commands.verify, '--contract repos/upstream.subtree.json')
-    }))
-
-  it.effect('accepts a valid GitHub subtree pin contract from the default path', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      write(root, '.vscode/settings.json', encodeJson({
-        'javascript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
-        'typescript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
-      }))
-      write(root, '.zed/settings.json', encodeJson({
-        lsp: {
-          vtsls: {
-            settings: {
-              javascript: {
-                preferences: {
-                  autoImportFileExcludePatterns: ['repos/upstream/**'],
-                },
-              },
-              typescript: {
-                preferences: {
-                  autoImportFileExcludePatterns: ['repos/upstream/**'],
-                },
-              },
-            },
-          },
-        },
-      }))
-      writeContract(root, validContract())
-
-      const report = yield* inspectPins({ name: 'upstream', root })
-
+      assert.strictEqual(updatePlan.currentRevision, fixture.revision)
+      assert.strictEqual(updatePlan.desiredRevision, nextRevision)
+      assert.deepStrictEqual(updatePlan.git, {
+        action: 'update',
+        args: [
+          'subtree',
+          'pull',
+          '--prefix=repos/upstream',
+          GitHubRepository,
+          nextRevision,
+          '--squash',
+        ],
+        command: 'git',
+      })
+      const report = yield* apply(updatePlan, fixture.target)
       assert.isTrue(report.ok)
-      assert.deepStrictEqual(report.issues, [])
-      assert.strictEqual(report.contractPath, 'repos/upstream.subtree.json')
-      assert.strictEqual(report.entry.name, 'upstream')
-    }))
+      assert.strictEqual(read(fixture.target, 'repos/upstream/value.txt'), 'two\n')
+      const contract = readJson(
+        fixture.target,
+        'repos/upstream.subtree.json',
+      ) as unknown as GitHubSubtreePinContract
+      assert.strictEqual(contract.source.revision, nextRevision)
+      assert.strictEqual(contract.materialization.split, nextRevision)
+    }), PinTestTimeout)
 
-  it.effect('accepts Effect-tsgo as the sole Zed TypeScript server when auto-import exclusions remain configured', () =>
+  it.effect('rejects an altered or unapproved plan hash before writing', () =>
     Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      write(root, '.vscode/settings.json', encodeJson({
-        'javascript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
-        'typescript.preferences.autoImportFileExcludePatterns': ['repos/upstream/**'],
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      const result = yield* Effect.result(applyPinPlan({
+        operation: 'add',
+        plan,
+        planHash: '0'.repeat(64),
+        revision: plan.desiredRevision,
+        root: fixture.target,
       }))
-      write(root, '.zed/settings.json', encodeJson({
+      assert.strictEqual(result._tag, 'Failure')
+      assert.include(String(result), 'plan hash')
+      assert.notInclude(git(fixture.target, ['status', '--short']), 'repos/upstream')
+    }), PinTestTimeout)
+
+  it.effect('rejects a plan when its tracking branch moved after approval', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      write(fixture.upstream, 'value.txt', 'moved\n')
+      commitAll(fixture.upstream, 'branch moved')
+      const result = yield* Effect.result(applyPinPlan({
+        operation: 'add',
+        plan,
+        planHash: plan.planHash,
+        revision: plan.desiredRevision,
+        root: fixture.target,
+      }))
+      assert.strictEqual(result._tag, 'Failure')
+      assert.include(String(result), 'tracking branch moved')
+      assert.notInclude(git(fixture.target, ['status', '--short']), 'repos/upstream')
+    }), PinTestTimeout)
+
+  it.effect('rejects a stale local baseline before writing', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      write(fixture.target, 'after-plan.txt', 'changed\n')
+      commitAll(fixture.target, 'change after plan')
+      const result = yield* Effect.result(applyPinPlan({
+        operation: 'add',
+        plan,
+        planHash: plan.planHash,
+        revision: plan.desiredRevision,
+        root: fixture.target,
+      }))
+      assert.strictEqual(result._tag, 'Failure')
+      assert.include(String(result), 'stale local baseline')
+    }), PinTestTimeout)
+
+  it.effect('fresh-plans recovery after the subtree commit succeeded but contract delivery failed', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const firstPlan = yield* buildPinPlan(addPlanOptions(fixture))
+      git(fixture.target, firstPlan.git.args)
+      const recoveryPlan = yield* buildPinPlan(addPlanOptions(fixture))
+      assert.strictEqual(recoveryPlan.git.action, 'none')
+      assert.strictEqual(recoveryPlan.recovery, true)
+      const report = yield* apply(recoveryPlan, fixture.target)
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(
+        readJson(fixture.target, recoveryPlan.contractPath),
+        recoveryPlan.contract as unknown as Record<string, unknown>,
+      )
+    }), PinTestTimeout)
+
+  it.effect('materializes internal gitlinks as opaque upstream entries without following them', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const gitlinkRevision = '52168999f3dcfc9205432d47f6f600051f02f1a2'
+      git(fixture.upstream, [
+        'update-index',
+        '--add',
+        '--info-only',
+        '--cacheinfo',
+        `160000,${gitlinkRevision},nested`,
+      ])
+      git(fixture.upstream, ['commit', '-m', 'opaque gitlink'])
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      const report = yield* apply(plan, fixture.target)
+      assert.isTrue(report.ok)
+      assert.include(
+        git(fixture.target, ['ls-files', '--stage', '--', 'repos/upstream/nested']),
+        `160000 ${gitlinkRevision}`,
+      )
+      assert.strictEqual(
+        readJson(fixture.target, plan.contractPath).schemaVersion,
+        2,
+      )
+    }), PinTestTimeout)
+
+  it.effect('applies explicit editor decisions and preserves unrelated settings', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      write(
+        fixture.target,
+        '.vscode/settings.json',
+        `${encodeJson({ 'editor.formatOnSave': true })}\n`,
+      )
+      write(
+        fixture.target,
+        '.zed/settings.json',
+        `${encodeJson({ telemetry: false })}\n`,
+      )
+      commitAll(fixture.target, 'editor settings')
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      yield* apply(plan, fixture.target)
+      const vscode = readJson(fixture.target, '.vscode/settings.json')
+      const zed = readJson(fixture.target, '.zed/settings.json')
+      assert.strictEqual(vscode['editor.formatOnSave'], true)
+      assert.deepStrictEqual(
+        vscode['typescript.preferences.autoImportFileExcludePatterns'],
+        ['repos/upstream/**'],
+      )
+      assert.deepStrictEqual(
+        vscode['javascript.preferences.autoImportFileExcludePatterns'],
+        ['repos/upstream/**'],
+      )
+      assert.deepStrictEqual(vscode['files.watcherExclude'], {
+        'repos/upstream/**': true,
+      })
+      assert.deepStrictEqual(vscode['search.exclude'], {
+        'repos/upstream/**': true,
+      })
+      assert.notProperty(vscode, 'files.exclude')
+      assert.strictEqual(zed.telemetry, false)
+      assert.include(encodeJson(zed), 'repos/upstream/**')
+    }), PinTestTimeout)
+
+  it.effect('accepts Effect-tsgo as the sole Zed TypeScript server', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      yield* apply(plan, fixture.target)
+      write(fixture.target, '.zed/settings.json', `${encodeJson({
         lsp: {
           tsgo: {
             initialization_options: {
@@ -134,237 +264,122 @@ layer(PinTestLayer)('Partita pins', (it) => {
             },
           },
         },
-      }))
-      writeContract(root, validContract())
+      })}\n`)
 
-      const report = yield* inspectPins({ name: 'upstream', root })
-
-      assert.isTrue(report.ok)
-      assert.deepStrictEqual(report.issues, [])
-    }))
-
-  it.effect('hard-blocks missing pin prefixes', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      writeContract(root, validContract())
-
-      const report = yield* inspectPins({ name: 'upstream', root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('pin.missing'))
-    }))
-
-  it.effect('hard-blocks non-direct source ownership', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      writeContract(root, {
-        ...validContract(),
-        ownership: { mode: 'artifact' },
-      })
-
-      const report = yield* inspectPins({ name: 'upstream', root })
-
-      assert.isFalse(report.ok)
-      assert.isTrue(report.issues.some(issue =>
-        issue.code === 'pin.contract_missing'
-        && issue.message.includes('pin.ownership.mode')))
-    }))
-
-  it.effect('hard-blocks unsafe GitHub subtree pin contracts', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'repos/upstream/.git', 'gitdir: ../.git/modules/upstream\n')
-      write(root, 'src/app.ts', 'import { value } from "../repos/upstream/packages/pkg/src/index.ts"\n')
-      write(root, '.vscode/settings.json', '{}\n')
-      writeContract(root, {
-        ...validContract(),
-        agent: { route: 'missing/AGENTS.md' },
-        anchor: { llmDocument: 'repos/upstream/LLMS.md' },
-        boundaries: { importBlock: true, readOnly: false },
-        github: {
-          branch: 'main',
-          ref: '',
-          repository: 'https://example.com/not-github.git',
-        },
-        mechanism: '',
-        ownership: { mode: 'direct' },
-        subtree: { split: '', trailer: '' },
-      })
-
-      const report = yield* inspectPins({ name: 'upstream', root })
-      const codes = report.issues.map(issue => issue.code)
-
-      assert.strictEqual(report.ok, false)
-      assert.isTrue(codes.includes('pin.github_only'))
-      assert.isTrue(codes.includes('pin.mechanism_invalid'))
-      assert.isTrue(codes.includes('pin.gitlink'))
-      assert.isTrue(codes.includes('pin.pin_missing'))
-      assert.isTrue(codes.includes('pin.anchor_missing'))
-      assert.isTrue(codes.includes('pin.agent_route_missing'))
-      assert.isTrue(codes.includes('pin.read_only_missing'))
-      assert.isTrue(codes.includes('pin.import_blocked'))
-      assert.isTrue(codes.includes('pin.editor_vscode_auto_import_missing'))
-    }))
-
-  it.layer(pinTestLayer(() => Effect.succeed({
-    exitCode: 0,
-    output: '160000 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6 0\trepos/upstream\n',
-  })))(it => it.effect('recognizes a gitlink from deterministic Git index output', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      writeContract(root, validContract())
-
-      const report = yield* inspectPins({ name: 'upstream', root })
-
-      assert.isFalse(report.ok)
-      assert.isTrue(report.issues.some(issue => issue.code === 'pin.gitlink'))
-    })))
-
-  it.layer(pinTestLayer(() => Effect.succeed({
-    exitCode: 0,
-    output: '160000 52168999f3dcfc9205432d47f6f600051f02f1a2 0\trepos/upstream/typescript-go\n',
-  })))(it => it.effect('allows internal upstream gitlinks as opaque reference boundaries', () =>
-    Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      writeContract(root, validContract())
-
-      const report = yield* inspectPins({ name: 'upstream', root })
+      const report = yield* inspectPins({ name: 'upstream', root: fixture.target })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
-    })))
+    }), PinTestTimeout)
 
-  it.layer(pinTestLayer(() => Effect.succeed({ exitCode: 128, output: 'fatal: index unavailable' })))(it =>
-    it.effect('fails closed when Git cannot inspect the index', () => Effect.gen(function* () {
-      const root = makeFixture()
-      write(root, 'AGENTS.md', '# Agents\n')
-      write(root, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-      writeContract(root, validContract())
-      yield* inspectPins({ name: 'upstream', root }).pipe(
-        Effect.match({
-          onFailure: error => assert.include(error.message, 'git exited with code 128'),
-          onSuccess: () => assert.fail('expected Git inspection to fail closed'),
-        }),
-      )
-    })))
-
-  const statRoot = makeFixture()
-  const sourcePath = join(statRoot, 'src/app.ts')
-  it.layer(Layer.merge(
-    failingStatLayer(sourcePath),
-    Layer.succeed(CommandExecutor, CommandExecutor.of({ run: gitSuccess })),
-  ))(it => it.effect('fails closed when source file stat cannot be completed', () => {
-    write(statRoot, 'AGENTS.md', '# Agents\n')
-    write(statRoot, 'repos/upstream/LLMS.md', '# Upstream LLM guide\n')
-    write(statRoot, 'src/app.ts', 'export const value = 1\n')
-    writeContract(statRoot, validContract())
-    return inspectPins({ name: 'upstream', root: statRoot }).pipe(
+  it.effect('hard-cuts schema version 1 instead of adapting it', () => {
+    const fixture = makeGitFixture()
+    write(
+      fixture.target,
+      'repos/upstream.subtree.json',
+      `${encodeJson({ schemaVersion: 1 })}\n`,
+    )
+    return inspectPins({ name: 'upstream', root: fixture.target }).pipe(
       Effect.match({
-        onFailure: error => assert.include(error.message, 'Stat src/app.ts'),
-        onSuccess: () => assert.fail('expected source stat to fail closed'),
+        onFailure: error => assert.include(error.message, 'schemaVersion 2'),
+        onSuccess: () => assert.fail('expected schema version 1 to be rejected'),
       }),
     )
-  }))
+  }, PinTestTimeout)
 
-  const existsRoot = makeFixture()
-  const contractPath = join(existsRoot, 'repos/upstream.subtree.json')
-  it.layer(Layer.merge(
-    failingExistsLayer(contractPath),
-    Layer.succeed(CommandExecutor, CommandExecutor.of({ run: gitSuccess })),
-  ))(it => it.effect('fails closed when path existence cannot be checked', () => {
-    writeContract(existsRoot, validContract())
-    return inspectPins({ name: 'upstream', root: existsRoot }).pipe(
-      Effect.match({
-        onFailure: error => assert.include(error.message, `Check ${contractPath}`),
-        onSuccess: () => assert.fail('expected path check to fail closed'),
-      }),
-    )
-  }))
+  it.effect('hard-blocks imports from the pinned prefix and exact-prefix gitlinks', () =>
+    Effect.gen(function* () {
+      const fixture = makeGitFixture()
+      const plan = yield* buildPinPlan(addPlanOptions(fixture))
+      yield* apply(plan, fixture.target)
+      write(fixture.target, 'src/app.ts', 'import "../repos/upstream/value.txt"\n')
+      const imported = yield* inspectPins({ name: 'upstream', root: fixture.target })
+      assert.isTrue(imported.issues.some(issue => issue.code === 'pin.import_blocked'))
+
+      git(fixture.target, ['rm', '--quiet', '-r', '--cached', 'repos/upstream'])
+      git(fixture.target, [
+        'update-index',
+        '--add',
+        '--info-only',
+        '--cacheinfo',
+        `160000,${plan.desiredRevision},repos/upstream`,
+      ])
+      const gitlinked = yield* inspectPins({ name: 'upstream', root: fixture.target })
+      assert.isTrue(gitlinked.issues.some(issue => issue.code === 'pin.gitlink'))
+    }), PinTestTimeout)
 })
 
-function failingStatLayer(target: string) {
-  return Layer.effect(
-    FileSystem.FileSystem,
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem
-      return FileSystem.FileSystem.of({
-        ...fs,
-        stat: path => path === target ? fs.stat(`${target}.missing`) : fs.stat(path),
-      })
-    }),
-  ).pipe(Layer.provide(NodeServices.layer))
-}
-
-function failingExistsLayer(target: string) {
-  return Layer.effect(
-    FileSystem.FileSystem,
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem
-      return FileSystem.FileSystem.of({
-        ...fs,
-        exists: path => path === target ? fs.stat(`${target}.missing`).pipe(Effect.as(true)) : fs.exists(path),
-      })
-    }),
-  ).pipe(Layer.provide(NodeServices.layer))
-}
-
-function makeFixture(): string {
-  return mkdtempSync(join(tmpdir(), 'partita-pin-'))
-}
-
-function validContract(): GitHubSubtreePinContract {
+function addPlanOptions(fixture: GitFixture) {
   return {
-    schemaVersion: 1,
-    agent: {
-      route: 'AGENTS.md',
-    },
-    anchor: {
-      llmDocument: 'repos/upstream/LLMS.md',
-    },
-    boundaries: {
-      importBlock: true,
-      readOnly: true,
-    },
-    commands: {
-      update: 'pnpm source:update',
-      verify: 'pnpm source:verify',
-    },
-    editorPolicy: {
-      autoImportExclude: 'block',
-      filesExclude: 'disabled',
-      searchExclude: 'recommended',
-      watcherExclude: 'recommended',
-    },
-    local: {
-      prefix: 'repos/upstream',
-    },
-    mechanism: 'git-subtree',
+    agentRoute: 'AGENTS.md',
+    anchor: 'repos/upstream/LLMS.md',
+    branch: 'main',
     name: 'upstream',
-    ownership: {
-      mode: 'direct',
-    },
-    subtree: {
-      split: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-      trailer: 'git-subtree-split: 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-    },
-    github: {
-      branch: 'main',
-      ref: '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6',
-      repository: 'https://github.com/example/upstream.git',
-    },
+    operation: 'add' as const,
+    prefix: 'repos/upstream',
+    repository: GitHubRepository,
+    root: fixture.target,
   }
 }
 
-function writeContract(root: string, contract: unknown) {
-  write(root, 'repos/upstream.subtree.json', `${encodeJson(contract)}\n`)
+function apply(plan: PinPlan, root: string) {
+  return applyPinPlan({
+    operation: plan.operation,
+    plan,
+    planHash: plan.planHash,
+    revision: plan.desiredRevision,
+    root,
+  })
+}
+
+interface GitFixture {
+  readonly revision: string
+  readonly target: string
+  readonly upstream: string
+}
+
+function makeGitFixture(): GitFixture {
+  const base = mkdtempSync(join(tmpdir(), 'partita-pin-lifecycle-'))
+  const upstream = join(base, 'upstream')
+  const target = join(base, 'target')
+  mkdirSync(upstream, { recursive: true })
+  mkdirSync(target, { recursive: true })
+  initRepository(upstream)
+  write(upstream, 'LLMS.md', '# Upstream reference\n')
+  write(upstream, 'value.txt', 'one\n')
+  commitAll(upstream, 'first')
+  const revision = git(upstream, ['rev-parse', 'HEAD']).trim()
+
+  initRepository(target)
+  write(target, 'AGENTS.md', '# Agent route\n')
+  commitAll(target, 'initial target')
+  git(target, ['config', `url.${upstream}.insteadOf`, GitHubRepository])
+  return { revision, target, upstream }
+}
+
+function initRepository(root: string) {
+  git(root, ['init', '--quiet', '--initial-branch=main'])
+  git(root, ['config', 'user.email', 'partita@example.invalid'])
+  git(root, ['config', 'user.name', 'Partita Test'])
+}
+
+function commitAll(root: string, message: string) {
+  git(root, ['add', '--all'])
+  git(root, ['commit', '--quiet', '-m', message])
+}
+
+function git(root: string, args: ReadonlyArray<string>): string {
+  return execFileSync('git', [...args], { cwd: root, encoding: 'utf8' })
+}
+
+function read(root: string, path: string): string {
+  return readFileSync(join(root, path), 'utf8')
+}
+
+function readJson(root: string, path: string): Record<string, unknown> {
+  return Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(
+    read(root, path),
+  ) as Record<string, unknown>
 }
 
 function encodeJson(value: unknown): string {
