@@ -118,9 +118,11 @@ const inspectSkillRuntime = Effect.fn('inspectSkillRuntime')(
     const sourceSkills = (yield* loadPartitaSourceSkillCatalog(root)).skills
     const runtime = yield* listSkillRuntime({ root })
     const expectedSkills = sourceSkills.map(skill => skill.name).sort()
-    const installedSkills = [...runtime.entries].sort((left, right) => left.name.localeCompare(right.name))
-    const installedNames = new Set(installedSkills.map(skill => skill.name))
     const expectedNames = new Set(expectedSkills)
+    const installedSkills = runtime.entries
+      .filter(skill => expectedNames.has(skill.name))
+      .sort((left, right) => left.name.localeCompare(right.name))
+    const installedNames = new Set(installedSkills.map(skill => skill.name))
     const runtimeByName = new Map(installedSkills.map(skill => [skill.name, skill]))
     const issues: Array<SkillRuntimeIssue> = []
 
@@ -129,16 +131,6 @@ const inspectSkillRuntime = Effect.fn('inspectSkillRuntime')(
         issues.push({
           code: 'runtime_skill.missing',
           message: `missing installed Codex skill: ${expected}`,
-        })
-      }
-    }
-
-    for (const installed of installedSkills) {
-      if (!expectedNames.has(installed.name)) {
-        issues.push({
-          code: 'runtime_skill.unmanaged',
-          message: `installed Codex skill is not Partita source-owned: ${installed.name}`,
-          path: installed.path,
         })
       }
     }
@@ -182,7 +174,7 @@ export const printSkillRuntimeStatus = Effect.fn('printSkillRuntimeStatus')(
   function* (options: SkillRuntimeOptions = {}) {
     const status = yield* inspectSkillRuntime(options)
     yield* Console.log(`Partita Codex skill source: ${status.expectedSkills.join(', ') || '(none)'}`)
-    yield* Console.log(`Codex global runtime: ${status.installedSkills.map(skill => skill.name).join(', ') || '(none)'}`)
+    yield* Console.log(`Partita-owned Codex global runtime: ${status.installedSkills.map(skill => skill.name).join(', ') || '(none)'}`)
     if (status.issues.length === 0) {
       yield* Console.log('Partita Codex skill runtime matches source.')
       return status
@@ -203,7 +195,7 @@ export const printSkillRuntimeVerify = Effect.fn('printSkillRuntimeVerify')(
 )
 
 const parseSkillRuntimeEntries = Effect.fn('parseSkillRuntimeEntries')(function* (output: string) {
-  const parsed = yield* parseJson(output)
+  const parsed = yield* parseJson(skillRuntimeJsonPayload(output))
   if (!Array.isArray(parsed)) {
     return yield* skillRuntimeError('npx skills list returned non-array JSON')
   }
@@ -213,6 +205,12 @@ const parseSkillRuntimeEntries = Effect.fn('parseSkillRuntimeEntries')(function*
   }
   return entries
 })
+
+function skillRuntimeJsonPayload(output: string): string {
+  const start = output.indexOf('[')
+  const end = output.lastIndexOf(']')
+  return start === -1 || end < start ? output : output.slice(start, end + 1)
+}
 
 const parseJson = Effect.fn('parseSkillRuntimeJson')((output: string) =>
   Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(output).pipe(

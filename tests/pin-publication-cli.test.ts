@@ -1,4 +1,4 @@
-import { assert, describe, it } from '@effect/vitest'
+import { afterEach, assert, describe, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
@@ -9,6 +9,7 @@ const {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  rmSync,
   symlinkSync,
   writeFileSync,
 } = process.getBuiltinModule('node:fs')
@@ -18,6 +19,14 @@ const { fileURLToPath } = process.getBuiltinModule('node:url')
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const cliEntrypoint = join(repositoryRoot, 'bin/partita.ts')
+const publicationFixtureRoots = new Set<string>()
+
+afterEach(() => {
+  for (const root of publicationFixtureRoots) {
+    rmSync(root, { force: true, recursive: true })
+  }
+  publicationFixtureRoots.clear()
+})
 
 describe('partita pin publish CLI', () => {
   it.effect('publishes byte-identical canonical archives and provenance for identical verified input', () => Effect.sync(() => {
@@ -204,6 +213,7 @@ describe('partita pin publish CLI', () => {
   it.effect('rejects publication through an output parent symlink that escapes the repository', () => Effect.sync(() => {
     const root = makeFixture()
     const outside = mkdtempSync(join(tmpdir(), 'partita-pin-publication-outside-'))
+    publicationFixtureRoots.add(outside)
     symlinkSync(outside, join(root, 'out'))
 
     const result = publish(root, 'escaping-output')
@@ -311,6 +321,7 @@ function publish(
 
 function makeFixture(options: { readonly initializeGit?: boolean } = {}): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-pin-publication-'))
+  publicationFixtureRoots.add(root)
   write(root, 'AGENTS.md', '# Agents\n')
   write(root, 'repos/upstream/LLMS.md', '# Upstream\n')
   write(root, 'repos/upstream/README.md', 'hello\n')

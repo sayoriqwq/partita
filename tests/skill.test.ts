@@ -1,6 +1,6 @@
 import type { SkillRuntimeCommand } from '../src/partita/skill.ts'
 import * as NodeServices from '@effect/platform-node/NodeServices'
-import { assert, describe, it } from '@effect/vitest'
+import { afterAll, assert, describe, it } from '@effect/vitest'
 import { Effect, Layer } from 'effect'
 import * as Schema from 'effect/Schema'
 import { CommandExecutor } from '../src/partita/process.ts'
@@ -10,7 +10,7 @@ import {
   syncSkillRuntime,
 } from '../src/partita/skill.ts'
 
-const { mkdirSync, mkdtempSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { mkdirSync, mkdtempSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
@@ -79,8 +79,26 @@ describe('Partita skill runtime', () => {
         }),
       )))
 
+  it.layer(commandExecutorLayer(() => Effect.succeed({
+    exitCode: 0,
+    output: `npm warn Unknown env config "manage-package-manager-versions".\n${encodeJson([{
+      agents: ['Codex'],
+      name: 'demo',
+      path: '/Users/sayori/.agents/skills/demo',
+      scope: 'global',
+    }])}`,
+  })))(it => it.effect('parses the skills list when npx writes a leading warning', () =>
+    Effect.gen(function* () {
+      const result = yield* listSkillRuntime({ root: '/tmp/partita-test-root' })
+
+      assert.deepStrictEqual(result.entries.map(entry => entry.name), ['demo'])
+    })))
+
   const catalogRoot = mkdtempSync(join(tmpdir(), 'partita-skill-runtime-catalog-'))
   const skillDirectory = join(catalogRoot, 'skills/expression/density')
+  afterAll(() => {
+    rmSync(catalogRoot, { force: true, recursive: true })
+  })
   write(catalogRoot, 'skills/expression/density/SKILL.md', [
     '---',
     'name: density',
@@ -91,19 +109,28 @@ describe('Partita skill runtime', () => {
   ].join('\n'))
   const runtimeLayer = commandExecutorLayer(() => Effect.succeed({
     exitCode: 0,
-    output: encodeJson([{
-      agents: ['Codex'],
-      name: 'density',
-      path: skillDirectory,
-      scope: 'global',
-    }]),
+    output: encodeJson([
+      {
+        agents: ['Codex'],
+        name: 'density',
+        path: skillDirectory,
+        scope: 'global',
+      },
+      {
+        agents: ['Codex'],
+        name: 'external-skill',
+        path: '/Users/sayori/.agents/skills/external-skill',
+        scope: 'global',
+      },
+    ]),
   }))
 
   it.layer(runtimeLayer)((it) => {
-    it.effect('uses catalog family discovery for runtime comparison', () =>
+    it.effect('audits only Partita source-owned skills from the global runtime', () =>
       printSkillRuntimeStatus({ root: catalogRoot }).pipe(
         Effect.flatMap(status => Effect.sync(() => {
           assert.deepStrictEqual(status.expectedSkills, ['density'])
+          assert.deepStrictEqual(status.installedSkills.map(skill => skill.name), ['density'])
           assert.deepStrictEqual(status.issues, [])
         })),
       ))

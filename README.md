@@ -90,9 +90,9 @@ pnpm skill-verify
 
 `skill-sync` 运行 `npx skills add ./skills -a codex -g --skill '*' -y --full-depth`。
 
-`skill-status` 运行 `npx skills list -g -a codex --json`，并比对 Partita source skill names 和 installed runtime names。
+`skill-status` 运行 `npx skills list -g -a codex --json`，只从 global list 中选择 Partita source catalog 同名 skills 进行比对；其他 global skills 是预期状态，不属于 Partita audit scope。
 
-`skill-verify` 在 status 之上 hard-check runtime folder contents 是否和 Partita source skill directories 一致。
+`skill-verify` 在 status 之上 hard-check Partita-owned runtime folder contents 是否和 Partita source skill directories 一致。
 
 不要同时把 Partita 安装进 personal Codex plugin marketplace；plugin cache 会生成 `partita:<skill>` 副本，和 flat global skill 形成双入口。
 

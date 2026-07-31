@@ -1,6 +1,6 @@
 import type { GitHubSubtreePinContract, PinPlan } from '../src/partita/pin.ts'
 import * as NodeServices from '@effect/platform-node/NodeServices'
-import { assert, layer } from '@effect/vitest'
+import { afterEach, assert, layer } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
@@ -13,7 +13,7 @@ import {
 import { CommandExecutorLive } from '../src/partita/process.ts'
 
 const { execFileSync } = process.getBuiltinModule('node:child_process')
-const { mkdirSync, mkdtempSync, readFileSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
@@ -22,6 +22,14 @@ const PinTestTimeout = 20_000
 const PinTestLayer = CommandExecutorLive.pipe(
   Layer.provideMerge(NodeServices.layer),
 )
+const pinFixtureRoots = new Set<string>()
+
+afterEach(() => {
+  for (const root of pinFixtureRoots) {
+    rmSync(root, { force: true, recursive: true })
+  }
+  pinFixtureRoots.clear()
+})
 
 layer(PinTestLayer)('Partita Source Pins', (it) => {
   it.effect('plans and applies a real git-subtree add from an immutable branch resolution', () =>
@@ -340,6 +348,7 @@ interface GitFixture {
 
 function makeGitFixture(): GitFixture {
   const base = mkdtempSync(join(tmpdir(), 'partita-pin-lifecycle-'))
+  pinFixtureRoots.add(base)
   const upstream = join(base, 'upstream')
   const target = join(base, 'target')
   mkdirSync(upstream, { recursive: true })

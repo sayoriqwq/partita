@@ -62,7 +62,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - executable setup、sync 和 verification mechanisms 属于 owning harness 或 CLI repo。
 - Partita skills 可以调用这些 mechanisms，但 SHOULD NOT 用 prose 重新实现它们。
 - global runtime skill mutation MUST 通过 skills.sh CLI；Partita 只能提供 thin wrapper，例如 `partita skill sync`。
-- global runtime skill status 和 verification SHOULD 通过 `partita skill status` 与 `partita skill verify` 比对 Partita source 和 skills.sh runtime list。
+- global runtime skill status 和 verification SHOULD 通过 `partita skill status` 与 `partita skill verify` 只比对 Partita source catalog 同名 skills；其他 global skills 是预期状态，不属于 Partita audit scope。
 - user-home materialization MUST 通过 chezmoi；Partita 只能提供 thin wrapper，例如 `partita home status`、`partita home diff` 和显式写入的 `partita home apply --write`。
 - agent MUST NOT 直接编辑 `~/.agents/skills` 里的 installed runtime copy。
 - zero skills MUST 保持为合法 framework state。
