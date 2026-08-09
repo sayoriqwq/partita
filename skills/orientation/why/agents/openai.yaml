@@ -1,0 +1,6 @@
+interface:
+  display_name: "Why"
+  short_description: "The user explicitly reconstructs the Why behind one ADR"
+  default_prompt: "Use og:why when the user explicitly reconstructs the Why behind one ADR."
+policy:
+  allow_implicit_invocation: false
