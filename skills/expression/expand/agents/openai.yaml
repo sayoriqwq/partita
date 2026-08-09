@@ -1,6 +1,6 @@
 interface:
   display_name: "Expand"
-  short_description: "The user explicitly invokes expand to give concept A more source-grounded detail and context-fit examples for clearer explanation"
-  default_prompt: "Use ex:expand when the user explicitly invokes expand to give concept A more source-grounded detail and context-fit examples for clearer explanation."
+  short_description: "The user explicitly clarifies one concept with a concrete example"
+  default_prompt: "Use ex:expand when the user explicitly clarifies one concept with a concrete example."
 policy:
   allow_implicit_invocation: false

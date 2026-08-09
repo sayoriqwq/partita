@@ -1,6 +1,6 @@
 ---
 name: expand
-description: "Use when the user explicitly invokes expand to give concept A more source-grounded detail and context-fit examples for clearer explanation. Not for broad research, border comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation."
+description: "Use when the user explicitly clarifies one concept with a concrete example. Not for broad research, comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation."
 ---
 
 # Expand
@@ -9,63 +9,70 @@ description: "Use when the user explicitly invokes expand to give concept A more
 
 ## Rule
 
-面对用户显式调用 `expand` 来把 concept A 解释得更清楚时，MUST 先标明扩展依据来自源材料、当前上下文、用户记忆还是 agent 推断，再给出贴合当前上下文和用户理解路径的例子，避免泛讲概念、把猜测伪装成来源、或给出脱离用户学习场景的通用例子。
+面对用户显式要求把一处模糊、抽象或不讲人话的 concept A 展开时，MUST 使用 context-fit example 建立具体理解，再把 example 映射回原表达并提炼 plain-language point，避免用更多抽象词重复同一句话。
 
 ## Pattern
 
 Use when:
 
-- the user explicitly invokes expand to give concept A more source-grounded detail and context-fit examples for clearer explanation.
+- the user explicitly clarifies one concept with a concrete example.
 
 Do not use when:
 
-- broad research, border comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation.
+- broad research, comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation.
 
 ## Boundary
 
 Soft:
 
-- MUST 保持一个 primary concept A；如果有多个候选概念，先询问用户要展开哪一个。
-- MUST 优先使用当前上下文中的源材料，例如代码片段、论文原文、文档段落、文件路径、当前浏览页面或用户刚刚引用的内容。
-- MUST 区分 source-grounded content、context inference、user-memory fit 和 agent inference。
-- MUST 在没有可验证源材料时明确说明“以下是基于当前上下文的推断”或等价说明。
-- MUST 给出至少一个服务于 concept A 的 example；example SHOULD 优先来自当前上下文，其次来自仓库语境、用户长期偏好或已知学习路径。
-- SHOULD 把原文或代码依据摘要化引入，而不是大段复制。
-- SHOULD 让例子承担解释功能：展示 concept A 如何运作、为什么重要、何处容易误解，或如何在当前项目/论文/学习路径里落地。
+- MUST 保持一个 primary concept A；优先选择用户直接指向或上一条 agent 回复中最小的 unclear unit，只有存在多个 materially different candidates 时才问一个最小澄清问题。
+- MUST 使用以下 explanation model，并省略不需要的 `Boundary`：
+  - `Example`: 给出当前上下文中的具体 actors、input、action 与 result；不能只换词复述 abstraction。
+  - `Mapping`: 明确指出 example 中的 material parts 分别对应 concept A 的哪些 term、relation 或 mechanism。
+  - `Point`: 用 plain language 说明 concept A 真正表达什么，以及它对当前理解或动作意味着什么。
+  - `Boundary`: example 是 analogy、只覆盖部分机制或可能诱发错误类推时，说明它在哪里停止成立。
+- Example MUST 优先来自当前 conversation、用户刚刚引用的 artifact 或 workspace 语境；这些都不足时 MAY 使用清楚标为 hypothetical 的最小例子。
+- MUST 保持 semantic invariance；术语无法删除时，MUST 在首次出现处立刻用普通语言解释。
+- source、context inference 与 agent inference 的界线 MUST 保持准确，但只有其 factual status 会影响用户理解或信任时才需要显式标注。
+- SHOULD 让一个例子承担主要解释工作；只有第一个例子无法覆盖 material distinction 时才增加第二个。
 
 Hard:
 
 - When: 用户没有显式调用 `expand`。
-  Do: MUST NOT 使用 `💬 expand` marker 或套用 `expand` 协议。
-
-- When: 源头是代码、论文片段、文档或用户当前浏览材料。
-  Do: MUST 优先基于该源头摘要扩展，并标明来源类型；不能把外部常识或 agent 推断写成源头内容。
-
-- When: 内容来自 agent 推断、一般领域知识或用户记忆适配。
-  Do: MUST 明确标注它不是直接源材料。
+  Do: MUST NOT 使用 `💬 expand` marker 或套用 explanation model。
 
 - When: 无法确定 concept A。
-  Do: MUST 只问一个最小澄清问题，要求用户给出要 expand 的概念。
+  Do: MUST 只问一个最小澄清问题并停止。
+
+- When: example 来自 analogy、hypothesis 或 agent inference。
+  Do: MUST NOT 把它写成 source evidence、历史事实或用户已经接受的 premise。
 
 - When: `expand` 已激活并且 concept A 已确定。
-  Do: MUST 返回一条 assistant message 完成展开，不能先输出计划或拆成多轮。
+  Do: MUST 在一条 assistant message 中完成解释，不得先输出计划、启动 research、替用户做 downstream decision 或继续原始任务。
 
 ## Effects
 
-- Conversation: MAY 展示 concept A 的 source-grounded expansion、来源标注、上下文推断、用户适配例子、最小澄清问题或不确定性边界。
+- Conversation: MAY 显示 concept A 的 Example、Mapping、Point、必要 Boundary、最小澄清问题或 inference label。
 - Filesystem: none.
 - External: none.
 
 ## Workflow
 
 1. 确认用户显式调用了 `expand`；否则不激活。
-2. 从用户输入和当前上下文确定单一 concept A；不能确定时，只问一个最小澄清问题并停止。
-3. 收集可用依据，并按优先级标注：直接源材料、当前上下文、仓库/项目语境、用户记忆或偏好、agent 推断。
-4. 用第一段说明 concept A 需要补充的核心信息，并标明这一段依据来自哪里。
-5. 如果有代码、论文、文档或实际片段，先用摘要形式引入原始依据；不要复制长段原文。
-6. 展开 concept A 的关键结构、机制、边界或用途，只写能帮助解释清楚 concept A 的信息。
-7. 给出贴合当前上下文的 example；如果当前上下文不足，再使用仓库语境、用户长期学习偏好或显式标注的 agent 推断例子。
-8. 标出不确定性：哪些是源材料支持，哪些是为了帮助理解而作的类比、迁移或推断。
+2. 从用户指向与 immediately preceding context 确定一个最小 concept A；无法唯一确定时只问一个最小问题并停止。
+3. 选择最贴近当前上下文的 concrete example；没有直接实例时创建并标明 hypothetical example。
+4. 写出 `Example`，让 actors、input、action 与 result 足够具体，使用户无需先理解原 abstraction。
+5. 写出 `Mapping`，逐项连接 example 与 concept A 的 material terms、relations 或 mechanism。
+6. 写出 `Point`，用普通语言收束 concept A 对当前上下文的实际含义。
+7. 只有 example 可能误导时追加 `Boundary`；完成后停止。
+
+```text
+💬 expand
+Example: <context-fit concrete example>
+Mapping: <example parts → concept A>
+Point: <plain-language meaning>
+Boundary: <only when the example could mislead>
+```
 
 ## References
 
@@ -77,11 +84,11 @@ Before done:
 
 - 第一条用户可见行包含内联 `💬 expand`；
 - `expand` 只在用户显式调用后使用；
-- 回复只展开一个 primary concept A，或已只问一个最小澄清问题；
-- 已标明关键内容的来源层级：源材料、当前上下文、用户记忆/偏好或 agent 推断；
-- 源头是代码、论文或文档片段时，已用摘要形式引入，而不是把推断伪装成原文；
-- 至少给出一个贴合当前上下文、仓库语境或用户理解路径的 example；
-- 不确定性和 agent inference 已明确标注；
-- 回复是一条 assistant message，没有先输出计划或拆成多轮；
-- Effects 保持在声明的 filesystem 和 external scope 内；
-- target runtime 或 landing 要求的 checks 已通过，或准确 blocker 已报告。
+- 回复只解释一个最小 concept A，或已只问一个最小澄清问题；
+- `Example` 具体且贴合当前 context，不是抽象改写；
+- `Mapping` 已把 material example parts 映射回 concept A；
+- `Point` 使用普通语言并说明当前意义；
+- analogy、hypothesis 或 inference 没有被冒充为 source evidence；
+- `Boundary` 只在可能误导时出现；
+- 回复是一条 assistant message，没有启动 research、替用户决策或继续原始任务；
+- 没有创建 filesystem 或 external state。
