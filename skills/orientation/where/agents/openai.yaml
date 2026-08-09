@@ -1,0 +1,6 @@
+interface:
+  display_name: "Where?"
+  short_description: "The user explicitly invokes where for a current-session bearing"
+  default_prompt: "Use og:where when the user explicitly invokes where for a current-session bearing."
+policy:
+  allow_implicit_invocation: false
