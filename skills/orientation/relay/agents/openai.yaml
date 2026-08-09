@@ -1,0 +1,6 @@
+interface:
+  display_name: "Relay"
+  short_description: "The user explicitly relays a work slice into another Codex task"
+  default_prompt: "Use og:relay when the user explicitly relays a work slice into another Codex task."
+policy:
+  allow_implicit_invocation: false
