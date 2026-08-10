@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ground"
+  short_description: "The user explicitly bounds an answer to a named evidence scope"
+  default_prompt: "Use ex:ground when the user explicitly bounds an answer to a named evidence scope."
+policy:
+  allow_implicit_invocation: true
