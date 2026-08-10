@@ -1,6 +1,6 @@
 ---
 name: probe
-description: "Use when the user explicitly asks to probe a load-bearing implementation uncertainty in the actual task environment. Not for aligning human decisions, researching source claims, prototyping design behavior, ordinary implementation, scaling a supported route, or governing side effects."
+description: "Use when the user explicitly invokes probe to test a load-bearing implementation uncertainty in the actual task environment. Not for aligning human decisions, researching source claims, prototyping design behavior, ordinary implementation, scaling a supported route, or governing side effects."
 ---
 
 # Probe
@@ -15,7 +15,7 @@ description: "Use when the user explicitly asks to probe a load-bearing implemen
 
 Use when:
 
-- the user explicitly asks to probe a load-bearing implementation uncertainty in the actual task environment.
+- the user explicitly invokes probe to test a load-bearing implementation uncertainty in the actual task environment.
 
 Do not use when:
 
@@ -48,7 +48,7 @@ Soft:
 
 Hard:
 
-- When: 用户没有显式调用 `probe` 或明确要求进行同义的经验性探针。
+- When: 用户没有显式调用 `probe`。
   Do: MUST NOT 使用 `🧭 Probe` marker 或自行进入本协议。
 
 - When: 未知属于 human-owned decision、source claim 或 sandbox design behavior。
@@ -113,7 +113,7 @@ Next: <supported next work, not executed | none>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Probe` 开头，且用户已经显式调用或明确要求经验性探针；
+- 第一条用户可见行以 `🧭 Probe` 开头，且用户已经显式调用 `probe`；
 - Aim、scope、authority、Unknown、actual environment 与 Next commitment 均可辨认；
 - Unknown 是 load-bearing empirical premise，不是 human decision、source claim 或 sandbox design question；
 - probe 使用 cheapest falsifier，没有先扩大准备性工作；

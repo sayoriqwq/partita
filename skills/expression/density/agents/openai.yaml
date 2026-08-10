@@ -1,6 +1,6 @@
 interface:
   display_name: "Density"
-  short_description: "The user explicitly invokes density or asks for sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler"
-  default_prompt: "Use ex:density when the user explicitly invokes density or asks for sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler."
+  short_description: "The user explicitly invokes density to use sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler"
+  default_prompt: "Use ex:density when the user explicitly invokes density to use sustained controlled high-density Chinese with stable symbol vocabulary, terse collaboration, semantic invariance, and low filler."
 policy:
   allow_implicit_invocation: false

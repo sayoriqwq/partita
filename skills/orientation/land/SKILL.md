@@ -1,6 +1,6 @@
 ---
 name: land
-description: "Use when the user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic. Not for open brainstorming, later-version planning, ordinary aim drift warnings, or when no landing topic exists yet."
+description: "Use when the user explicitly invokes land to keep a first version or current topic from expanding before it is landed. Not for open brainstorming, later-version planning, ordinary aim drift warnings, or when no landing topic exists yet."
 ---
 
 # Land
@@ -15,7 +15,7 @@ description: "Use when the user wants to keep a first version or current topic f
 
 Use when:
 
-- the user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic.
+- the user explicitly invokes land to keep a first version or current topic from expanding before it is landed.
 
 Do not use when:
 
@@ -26,9 +26,11 @@ Do not use when:
 Soft:
 
 - MUST 依赖 `aim` 作为 current topic source；没有 active aim 时，MUST 推测最小 landing target，或询问一个最小问题。
+- 只有显式调用 `land` 才能 set/reset active Land handle；后续 gate enforcement 属于已建立 state 的 continuation，不是 implicit invocation。
 - set/reset 后，MUST 把 `land` 视为持续 gate。
 - set/reset 时，MUST 显示完整 `Land` 和 done condition。
 - 正常持续且没有 expansion 时，SHOULD 只显示 `🧭`。
+- 另一个显式调用的 orientation workflow owns 当前 response 时，Land 只贡献 classification 与 gate；outer workflow 保留 named marker、envelope、effects 与 termination，但 MUST 在其下一次 transition 前服从 Land gate。
 - MUST 将新点分类为 `v1`、`blocker`、`scope-expand`、`switch`、`done` 或 `unknown`。
 - `v1` 和 `blocker` work MAY 继续推进。
 - `scope-expand` 和 `switch` work MUST 在执行前阻断。
@@ -39,6 +41,7 @@ Soft:
 
 Hard:
 
+- active Land handle 不存在且用户没有显式调用 `land` 时，MUST NOT 使用 Land marker、分类或 gate。
 - MUST NOT 被 `aim` 取代；`aim` 只提醒，`land` 可以阻断。
 - MUST NOT 在用户选择前继续 `scope-expand` 或 `switch` work。
 - MUST NOT 创建 backlog、issue、roadmap 或 later-version artifact，除非用户显式要求。
@@ -53,7 +56,7 @@ Hard:
 
 ## Workflow
 
-1. set/reset 时，显示 `🧭 Land: <v1 target>; Done: <done condition>`。
+1. 确认用户显式调用 `land` 来 set/reset，或 active Land handle 已存在；set/reset 时显示 `🧭 Land: <v1 target>; Done: <done condition>`。
 2. 如果 active land 已经约束当前回复且没有 expansion，只用 `🧭` 前缀继续。
 3. 每次出现新点，先分类为 `v1`、`blocker`、`scope-expand`、`switch`、`done` 或 `unknown`。
 4. 对 `v1` 或 `blocker`，继续推进，并保持回答指向下一个可验证 landing step。

@@ -1,6 +1,6 @@
 ---
 name: score
-description: "Use when the user explicitly invokes score or asks to apply sayoriqwq-style Markdown writing preferences to Markdown docs. Not for implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
+description: "Use when the user explicitly invokes score to apply sayoriqwq-style Markdown writing preferences to Markdown docs. Not for implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
 ---
 
 # Score
@@ -15,7 +15,7 @@ description: "Use when the user explicitly invokes score or asks to apply sayori
 
 Use when:
 
-- the user explicitly invokes score or asks to apply sayoriqwq-style Markdown writing preferences to Markdown docs.
+- the user explicitly invokes score to apply sayoriqwq-style Markdown writing preferences to Markdown docs.
 
 Do not use when:
 

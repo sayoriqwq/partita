@@ -1,6 +1,6 @@
 ---
 name: align
-description: "Use when the user explicitly aligns an Aim through decision-tree rounds. Not for one-assertion pressure tests, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment."
+description: "Use when the user explicitly invokes align to align an Aim through decision-tree rounds. Not for one-assertion pressure tests, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment."
 ---
 
 # Align
@@ -15,7 +15,7 @@ description: "Use when the user explicitly aligns an Aim through decision-tree r
 
 Use when:
 
-- the user explicitly aligns an Aim through decision-tree rounds.
+- the user explicitly invokes align to align an Aim through decision-tree rounds.
 
 Do not use when:
 
@@ -26,6 +26,7 @@ Do not use when:
 Soft:
 
 - MUST 以 conversation-local `Aim` 作为 decision tree root。
+- 用户显式调用 `align` 创建一个 bounded alignment session；在 closing condition 前对该 session 问题的回复属于 continuation，不是 implicit invocation。alignment session owns `🧭 Align` marker、question envelope 与 termination；active Aim/Tempo 只贡献 state。
 - 已有 active Aim 时，MUST 在开始时显示它；没有时，MUST 提议并显示最小 Aim，把确认或改写 Aim 作为第一个 decision。
 - conversation 中存在用户显式设置的 active Tempo 时，MUST 在开始时显示其 `Depth` 与 `Cadence`；MUST NOT 自行创建或推测 Tempo。
 - active Tempo 的 `Depth` MUST 决定哪些 decision 进入 tree：

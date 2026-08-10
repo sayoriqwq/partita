@@ -1,6 +1,6 @@
 ---
 name: notate
-description: "Use when creating a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
+description: "Use when the user explicitly invokes notate to create a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
 ---
 
 # Notate
@@ -15,7 +15,7 @@ description: "Use when creating a case-rooted Partita skill from an evidence-anc
 
 Use when:
 
-- creating a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family.
+- the user explicitly invokes notate to create a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family.
 
 Do not use when:
 
@@ -30,6 +30,7 @@ Soft:
 - MUST NOT 编造 case、evidence、pressure、recognition surface、governance action、target runtime shape 或本地概念定义。
 - MUST 创建 Partita source skill；OpenAI/Codex shape 只是 Partita source skill 的 runtime compatibility target。
 - MUST 应用 Partita family、source shape、policy 和 checks。
+- Partita public skill MUST 默认使用 `policy.allow_implicit_invocation: false`；只有用户明确要求 future internal/model-invoked role 且 composition ownership、effects 与 disclosure 已通过 interpretation gate 时，才可使用 `true`。
 - MUST 先判定 source family，再通过 projection 确定 path、handle、marker 和 `agents/openai.yaml` metadata。
 - MUST NOT 把 Partita landing 的新 skill 默认放进 `skills/primitive/`；只有 Partita-managed base skill 才使用 primitive family。
 - MUST 对齐 Partita family marker convention；expression 使用 `💬`，link 使用 `🔗`，orientation 使用 `🧭`，maintenance 使用 `🧹`，primitive 使用 `🎼 <name>`。
@@ -41,6 +42,9 @@ Soft:
 - 如果材料不足但可补救，SHOULD 只询问最小缺失 case material。
 
 Hard:
+
+- When: 用户没有显式调用 `notate`。
+  Do: MUST NOT 使用 `🎼 notate` marker、创建 source skill 或套用本协议。
 
 - When: Partita landing 中修改 skill frontmatter、`agents/openai.yaml`、source skill files 或 generated files。
   Do: MUST 运行 `pnpm verify`。
@@ -56,13 +60,13 @@ Hard:
 
 ## Workflow
 
-1. 读取 evidence-anchored skill case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
+1. 确认用户显式调用了 `notate`，再读取 evidence-anchored skill case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
 2. 读取 [case](references/case.md)，确认输入是可治理的真实 skill case。
 3. 读取 [skill creation](references/skill-creation.md)，按 information collection flow 补齐 creation fields。
 4. 读取 [rule](references/rule.md)，确保新 skill 的 `## Rule` 是从 case governance action 投影出的单一 runtime imperative。
 5. 读取 [Partita skill](references/partita-skill.md)，确定 Partita family、handle、marker、shape、policy 和 checks。
 6. 读取 [OpenAI skill](references/openai-skill.md)，确认 Partita source skill 满足 OpenAI/Codex runtime shape。
-7. 确认目标不是 public workflow skill 或已有 skill patch；否则路由到 `conduct` 或 `retune`。
+7. 确认目标不是 public workflow skill 或已有 skill patch；否则停止并给出显式调用 `conduct` 或 `retune` 的 typed recommendation，不得自动激活另一个 explicit-only skill。
 8. 使用 [skill creation](references/skill-creation.md) 中的可复制模板创建 `SKILL.md`；创建可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 9. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 

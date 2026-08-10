@@ -1,6 +1,6 @@
 interface:
   display_name: "Probe"
-  short_description: "The user explicitly asks to probe a load-bearing implementation uncertainty in the actual task environment"
-  default_prompt: "Use og:probe when the user explicitly asks to probe a load-bearing implementation uncertainty in the actual task environment."
+  short_description: "The user explicitly invokes probe to test a load-bearing implementation uncertainty in the actual task environment"
+  default_prompt: "Use og:probe when the user explicitly invokes probe to test a load-bearing implementation uncertainty in the actual task environment."
 policy:
   allow_implicit_invocation: false

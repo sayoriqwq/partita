@@ -80,7 +80,7 @@ creation:
       do_not_use_when:
         - English exclusion phrase
     policy:
-      allow_implicit_invocation: true | false
+      allow_implicit_invocation: false # current public default; true requires an explicit internal/model-invoked role gate
   rule:
     required_action: 从 case.governance_action 投影出的 runtime imperative
   body:

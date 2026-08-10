@@ -1,6 +1,6 @@
 interface:
   display_name: "Aim"
-  short_description: "The user explicitly asks to set, reset, sustain, or check the current conversation aim or asks for visible alignment against a current direction"
-  default_prompt: "Use og:aim when the user explicitly asks to set, reset, sustain, or check the current conversation aim or asks for visible alignment against a current direction."
+  short_description: "The user explicitly invokes aim to set, reset, sustain, or check the current conversation aim or request visible alignment against a current direction"
+  default_prompt: "Use og:aim when the user explicitly invokes aim to set, reset, sustain, or check the current conversation aim or request visible alignment against a current direction."
 policy:
   allow_implicit_invocation: false

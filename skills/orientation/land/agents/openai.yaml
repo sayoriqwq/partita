@@ -1,6 +1,6 @@
 interface:
   display_name: "Land"
-  short_description: "The user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic"
-  default_prompt: "Use og:land when the user wants to keep a first version or current topic from expanding before it is landed, especially after they name a v1 landing topic. Blocks scope expansion and asks whether the new point is necessary for v1 or off-topic."
+  short_description: "The user explicitly invokes land to keep a first version or current topic from expanding before it is landed"
+  default_prompt: "Use og:land when the user explicitly invokes land to keep a first version or current topic from expanding before it is landed."
 policy:
   allow_implicit_invocation: false

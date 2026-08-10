@@ -7,7 +7,7 @@
 - Semantic invariance > language density。
 - 压缩 MUST NOT 改变、丢失或模糊核心语义。
 - 语义有损失风险时，MUST 降低密度或补充必要说明。
-- 未覆盖 case 先清楚表达，再回到 skill 维护中扩展协议。
+- 未覆盖 case 先清楚表达；只有用户另行显式授权维护 skill source 时才扩展协议。
 
 ## 分行
 

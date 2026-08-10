@@ -258,6 +258,10 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 `policy.allow_implicit_invocation` MUST 位于 `agents/openai.yaml` 的 `policy` block 下。
 
+当前 Partita-owned public runtime catalog 是 explicit-only：所有现有 skill 的 `policy.allow_implicit_invocation` 都是 `false`。显式调用可以创建 skill 声明的 conversation-local state；该 state 在 lifecycle 内继续生效属于 continuation，不是新的 implicit invocation。
+
+workflow 组合 state/protocol 时只有一个 outer owner：workflow owns top-level marker、response envelope、effects 与 termination。它可以读取已经显式建立的 state、处理用户显式 co-invocation，或携带自包含的 local contract projection；不得自动激活另一个 explicit-only public skill。未来若引入 internal/model-invoked role，必须先明确 composition ownership、effects、disclosure 与 invocation policy。
+
 source namespaces 只影响 Partita source organization；frontmatter 和 global installed skills 保持 short skill name。
 
 新增或修改 skill 后运行：

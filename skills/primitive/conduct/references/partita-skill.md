@@ -4,13 +4,14 @@
 
 Partita family 是 source 组织方式。
 
-- public workflow skills 使用 `skills/` 下受支持的 direct skill path。
-- internal primitive skills 使用 `skills/primitive/<name>/`。
+- public workflow skills MAY 使用 `skills/` 下受支持的 direct skill path。
+- `skills/primitive/<name>/` 是 Partita-managed base/source-governance family；目录本身不赋予 internal、private 或 model-invoked runtime role。
 - expression protocol skills 使用 `skills/expression/<name>/`。
 - external authority link skills 使用 `skills/link/<name>/`。
 - orientation skills 使用 `skills/orientation/<name>/`。
 - maintenance skills 使用 `skills/maintenance/<name>/`。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
+- state、protocol、workflow 与 router 是 runtime role，MUST 与 Partita family 分开判断。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。
 
 ## Shape
@@ -33,9 +34,9 @@ local references MUST 能被 installed runtime skill 直接加载。
 
 ## Policy
 
-`policy.allow_implicit_invocation` MUST 根据 Pattern precision 和 side-effect risk 决定。
+current Partita-owned public runtime catalog MUST 使用 `policy.allow_implicit_invocation: false`。
 
-side-effect risk 高的 workflow skill SHOULD 默认使用 `false`。
+新 public workflow skill MUST 默认使用 `false`。只有用户明确要求 future internal/model-invoked role，且 role、composition ownership、effects、disclosure 与 trigger precision 已通过 interpretation gate 时，才可选择 `true`。
 
 ## Checks
 

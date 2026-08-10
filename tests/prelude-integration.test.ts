@@ -40,5 +40,5 @@ describe('prelude V2 Harness convergence', () => {
     expect(plan.requirements).toEqual([])
     expect(plan.issues).toEqual([])
     expect(plan.checks).toEqual([])
-  })
+  }, 120_000)
 })

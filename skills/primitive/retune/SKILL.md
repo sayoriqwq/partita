@@ -1,6 +1,6 @@
 ---
 name: retune
-description: "Use when patching an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure. In Partita landing, patches an existing valid Partita source skill without rewriting identity. Not for creating new skills, structure audits without a patch case, identity-invalid skills, external skill migration, ordinary code review, or prose cleanup."
+description: "Use when the user explicitly invokes retune to patch an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure. Not for creating new skills, structure audits without a patch case, identity-invalid skills, external skill migration, ordinary code review, or prose cleanup."
 ---
 
 # Retune
@@ -15,7 +15,7 @@ description: "Use when patching an existing identity-valid OpenAI/Codex skill fr
 
 Use when:
 
-- patching an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure. In Partita landing, patches an existing valid Partita source skill without rewriting identity.
+- the user explicitly invokes retune to patch an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure.
 
 Do not use when:
 
@@ -32,6 +32,7 @@ Soft:
 - target identity 不成立时，MUST 停止并报告；MUST NOT patch 它。
 - MUST 默认 patch OpenAI/Codex skill，除非用户指定其他 target。
 - MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
+- current Partita-owned public runtime skill MUST 保持 `policy.allow_implicit_invocation: false`；改为 implicit 是 role change，必须先通过 interpretation gate。
 - MUST 让 skill runtime 携带执行自身 Rule、Pattern、Boundary、Workflow 和 Validation 所需的本地概念定义。
 - 没有 evidence-anchored patch case 时，MUST NOT 运行 structure-audit。
 - MUST 在修改前定位 target skill source truth。
@@ -42,6 +43,9 @@ Soft:
 - MUST 把 case feedback 写到治理失败的 target skill；如果 recurrence 暴露的是 creation 或 patching workflow 失败，MUST patch `notate`、`conduct` 或 `retune` 这类 owning governance skill，而不是只给被创建/被移动的 leaf skill 加局部 case。
 
 Hard:
+
+- When: 用户没有显式调用 `retune`。
+  Do: MUST NOT 使用 `🎼 retune` marker、patch skill 或套用本协议。
 
 - When: Partita landing 中修改 skill source、local references、frontmatter、`agents/openai.yaml` 或 generated files。
   Do: MUST 运行 `pnpm verify`。
@@ -61,7 +65,7 @@ Hard:
 
 ## Workflow
 
-1. 读取 target skill 和 evidence-anchored patch case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
+1. 确认用户显式调用了 `retune`，再读取 target skill 和 evidence-anchored patch case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
 2. 读取 [case](references/case.md)，确认输入是可治理的 evidence-anchored patch case。
 3. 读取 [skill patch](references/skill-patch.md) 和 [case feedback](references/case-feedback.md)，确认 patch case 字段可读。
 4. 定位 target skill source truth；如果读到的是 installed/runtime copy，先找到 owning source skill。

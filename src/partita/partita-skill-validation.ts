@@ -134,7 +134,16 @@ export const checkPartitaSourceSkillFiles = Effect.fn('checkPartitaSourceSkillFi
 
     issues.push(...checkPartitaSkillBodyShape(skill.text, skill.relativePath))
     issues.push(...projection.issues)
-    issues.push(...(yield* checkOpenAiMetadata(fs, path, root, validation.fields.name, skill.path, title, projection.openAiInterface)))
+    issues.push(...(yield* checkOpenAiMetadata(
+      fs,
+      path,
+      root,
+      validation.fields.name,
+      skill.path,
+      title,
+      projection.openAiInterface,
+      false,
+    )))
   }
 
   return {
@@ -368,6 +377,7 @@ const checkOpenAiMetadata = Effect.fn('checkOpenAiMetadata')(function* (
   skillPath: string,
   expectedDisplayName: string | undefined,
   expectedInterface: ExpectedOpenAiInterfaceProjection | undefined,
+  expectedAllowImplicitInvocation: boolean,
 ) {
   const metadataPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml')
   const relativeMetadataPath = relativePathFrom(path, root, metadataPath)
@@ -436,6 +446,13 @@ const checkOpenAiMetadata = Effect.fn('checkOpenAiMetadata')(function* (
   if (metadata.allowImplicitInvocation === undefined) {
     issues.push(issue('openai_metadata.missing_invocation_policy', 'agents/openai.yaml must declare policy.allow_implicit_invocation', relativeMetadataPath))
     return issues
+  }
+  if (metadata.allowImplicitInvocation !== expectedAllowImplicitInvocation) {
+    issues.push(issue(
+      'openai_metadata.invocation_policy_projection',
+      `policy.allow_implicit_invocation must be ${expectedAllowImplicitInvocation} for the current Partita public runtime catalog`,
+      relativeMetadataPath,
+    ))
   }
 
   return issues

@@ -1,6 +1,6 @@
 interface:
   display_name: "Reconcile"
-  short_description: "A completed and verified task phase may still contain garbage state, residue, obsolete surfaces, stale dependencies, or stale authority that could mislead future agents. Audits before cleanup"
-  default_prompt: "Use mt:reconcile when a completed and verified task phase may still contain garbage state, residue, obsolete surfaces, stale dependencies, or stale authority that could mislead future agents. Audits before cleanup."
+  short_description: "The user explicitly invokes reconcile to recall a settled case and audit residue before cleanup"
+  default_prompt: "Use mt:reconcile when the user explicitly invokes reconcile to recall a settled case and audit residue before cleanup."
 policy:
   allow_implicit_invocation: false

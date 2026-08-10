@@ -1,6 +1,6 @@
 ---
 name: argue
-description: "Use when the user explicitly asks to argue, challenge, or pressure-test an unstable assertion under the current aim before treating it as a premise. Not for ordinary implementation, code review, blank-page brainstorming, expanding a vague seed, recording consensus, settled decisions, harmless preferences, or adversarial debate."
+description: "Use when the user explicitly invokes argue to challenge or pressure-test an unstable assertion under the current aim before treating it as a premise. Not for ordinary implementation, code review, blank-page brainstorming, expanding a vague seed, recording consensus, settled decisions, harmless preferences, or adversarial debate."
 ---
 
 # Argue
@@ -15,7 +15,7 @@ description: "Use when the user explicitly asks to argue, challenge, or pressure
 
 Use when:
 
-- the user explicitly asks to argue, challenge, or pressure-test an unstable assertion under the current aim before treating it as a premise.
+- the user explicitly invokes argue to challenge or pressure-test an unstable assertion under the current aim before treating it as a premise.
 
 Do not use when:
 
@@ -26,6 +26,7 @@ Do not use when:
 Soft:
 
 - MUST 依赖 `aim`：`Aim` 是当前主目标，`Assertion` 是该 aim 下被测试的一条判断。
+- 用户显式调用 `argue` 创建一个只处理当前 assertion 的 bounded session；在 result label 关闭前的回复属于 continuation，不是 implicit invocation。argue owns 当前 pressure-test envelope；active Aim 只贡献 state。
 - 没有 active aim 时，MUST 推测并显示最小 `Aim`；如果不对，由用户 reset。
 - MUST 一次只 pressure-test 一条 assertion。
 - 用户要求 argue 但没有指定 assertion 时，SHOULD 推测最贴近 aim 且最承重的一条 assertion。
@@ -48,8 +49,8 @@ Hard:
 - MUST NOT 只为了制造 challenge 而浏览、跑工具或扫描仓库。
 - MUST NOT 虚构事实、证据、用户动机、外部约束或 baseline 共识。
 - MUST NOT 对多条 assertion 做清单式大范围批判。
-- `Accepted`、`Rejected` 或 `Deferred` 后，MUST NOT 继续套用 `argue`，除非用户重新激活或 assertion 发生变化。
-- MUST NOT 在本 skill 未激活时使用 `🧭`。
+- `Accepted | Revised | Rejected | Assumption | Deferred` 任一 result label 都关闭 bounded argue session；后续只有用户再次显式调用 `argue` 才能新开 session，assertion 变化本身不构成重新激活。
+- MUST NOT 在本 skill 未激活时显示 `Assertion`、`Pressure test` 或 argue result label；其他 orientation skill 仍可使用 family marker `🧭`。
 
 ## Effects
 
@@ -71,7 +72,7 @@ Hard:
    - `Rejected`: 原 assertion 不成立，不应继续作为前提。
    - `Assumption`: 证据不足但可带条件推进，条件 MUST 可见。
    - `Deferred`: 当前 aim 不需要解决，或缺少最小信息。
-8. 关闭结果后停止套用 `argue`，除非用户重新激活或 assertion 发生变化。
+8. 关闭结果后停止套用 `argue`；只有用户再次显式调用 `argue` 才能对 revised 或其他 assertion 新开 session。
 
 ## References
 

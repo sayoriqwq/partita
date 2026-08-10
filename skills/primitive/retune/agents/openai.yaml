@@ -1,6 +1,6 @@
 interface:
   display_name: "Retune"
-  short_description: "Patching an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure. In Partita landing, patches an existing valid Partita source skill without rewriting identity"
-  default_prompt: "Use pm:retune when patching an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure. In Partita landing, patches an existing valid Partita source skill without rewriting identity."
+  short_description: "The user explicitly invokes retune to patch an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure"
+  default_prompt: "Use pm:retune when the user explicitly invokes retune to patch an existing identity-valid OpenAI/Codex skill from an evidence-anchored patch case that exposes a stale local surface, including Partita source structure."
 policy:
   allow_implicit_invocation: false

@@ -65,6 +65,10 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - global runtime skill status 和 verification SHOULD 通过 `partita skill status` 与 `partita skill verify` 只比对 Partita source catalog 同名 skills；其他 global skills 是预期状态，不属于 Partita audit scope。
 - user-home materialization MUST 通过 chezmoi；Partita 只能提供 thin wrapper，例如 `partita home status`、`partita home diff` 和显式写入的 `partita home apply --write`。
 - agent MUST NOT 直接编辑 `~/.agents/skills` 里的 installed runtime copy。
+- current Partita-owned public runtime skill catalog MUST 保持 explicit-only；每个现有 `agents/openai.yaml` MUST 使用 `policy.allow_implicit_invocation: false`。
+- explicit invocation 创建的 conversation-local state 可在其声明的 lifecycle 内继续生效；这属于 state continuation，不是 implicit skill invocation。
+- workflow MUST NOT 自动激活另一个 explicit-only public skill；只能读取已显式建立的 state、处理用户显式 co-invocation，或携带自包含的 local contract projection。
+- future internal/model-invoked role 或 invocation policy 变化 MUST 先明确 role、composition ownership、effects 和 disclosure，并通过 interpretation gate。
 - zero skills MUST 保持为合法 framework state。
 - 修改 skill names、trigger policy、harness install behavior、global skill state 或 marker conventions 前，如果用户指令有多种解读，MUST 使用 interpretation gate。
 

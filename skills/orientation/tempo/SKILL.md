@@ -1,6 +1,6 @@
 ---
 name: tempo
-description: "Use when the user explicitly sets alignment depth and cadence for an Aim. Not for performing alignment, implementation, task planning, general response verbosity, or teaching difficulty."
+description: "Use when the user explicitly invokes tempo to set alignment depth and cadence for an Aim. Not for performing alignment, implementation, task planning, general response verbosity, or teaching difficulty."
 ---
 
 # Tempo
@@ -15,7 +15,7 @@ description: "Use when the user explicitly sets alignment depth and cadence for 
 
 Use when:
 
-- the user explicitly sets alignment depth and cadence for an Aim.
+- the user explicitly invokes tempo to set alignment depth and cadence for an Aim.
 
 Do not use when:
 
@@ -26,6 +26,8 @@ Do not use when:
 Soft:
 
 - MUST 依赖 conversation-local `Aim`；有 active Aim 时使用并显示它，没有时推测并显示最小 Aim，无法安全推测时只问一个最小问题。
+- 只有显式调用 `tempo` 才能创建、reset 或退出 active Tempo contract；后续由显式调用的 workflow 读取该 contract 属于 state continuation，不是 implicit invocation。
+- 另一个显式调用的 orientation workflow 读取 active Tempo 时，Tempo 只贡献 `Depth × Cadence` state；outer workflow 保留 named marker、envelope、effects 与 termination。
 - `Depth` MUST 只使用以下值：
   - `Probe`: 只在实现前对齐会阻塞安全试做，或一旦推翻会使近期试做失效、产生实质浪费的 human-owned decision；其余判断交给实现证据与 agent 推断。
   - `Shape`: 在 `Probe` 之上，对齐 observable behavior、boundary、public seam 与昂贵或不可逆的 trade-off；局部实现判断交给 agent。

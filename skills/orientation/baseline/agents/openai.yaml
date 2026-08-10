@@ -1,6 +1,6 @@
 interface:
   display_name: "Baseline"
-  short_description: "The user explicitly asks to record, capture, or summarize the accepted consensus since the current conversation aim began"
-  default_prompt: "Use og:baseline when the user explicitly asks to record, capture, or summarize the accepted consensus since the current conversation aim began."
+  short_description: "The user explicitly invokes baseline to record the accepted consensus since the current conversation aim began"
+  default_prompt: "Use og:baseline when the user explicitly invokes baseline to record the accepted consensus since the current conversation aim began."
 policy:
   allow_implicit_invocation: false

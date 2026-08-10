@@ -1,6 +1,6 @@
 ---
 name: afk
-description: "Use when the user asks the agent to continue a task unattended. Not for ordinary long-running work, passive monitoring, delegation, or tasks that still expect interactive collaboration."
+description: "Use when the user explicitly invokes afk to continue a task unattended. Not for ordinary long-running work, passive monitoring, delegation, or tasks that still expect interactive collaboration."
 ---
 
 # AFK
@@ -9,13 +9,13 @@ description: "Use when the user asks the agent to continue a task unattended. No
 
 ## Rule
 
-面对用户将离开但要求继续当前任务时，MUST 将完整执行图中可预见的 `Need-human` 移入 `Human window`，在任务实际使用的 environment 中完成并验证这些依赖；只有剩余工作能够自主完成时才可越过 `AFK boundary`，并立即继续执行。
+面对用户显式调用 `afk` 并将离开、但要求继续当前任务时，MUST 将完整执行图中可预见的 `Need-human` 移入 `Human window`，在任务实际使用的 environment 中完成并验证这些依赖；只有剩余工作能够自主完成时才可越过 `AFK boundary`，并立即继续执行。
 
 ## Pattern
 
 Use when:
 
-- the user asks the agent to continue a task unattended.
+- the user explicitly invokes afk to continue a task unattended.
 
 Do not use when:
 
@@ -46,7 +46,7 @@ Soft:
 
 Hard:
 
-- When: 用户没有表达离开、无人值守继续或等价意图，也没有显式调用 `afk`。
+- When: 用户没有显式调用 `afk`。
   Do: MUST NOT 使用 `🧭 AFK` marker、提前触发 permission，或套用本协议。
 
 - When: Aim、scope、destructive boundary 或其他 human-owned decision 仍无法安全推断。
@@ -78,7 +78,7 @@ Hard:
 
 ## Workflow
 
-1. 显示 `🧭 AFK: preparing`，解析 current Aim、completion criteria、scope 与 authority；只有 material human-owned input 无法推断时才立即提问。
+1. 确认用户显式调用了 `afk`；显示 `🧭 AFK: preparing`，解析 current Aim、completion criteria、scope 与 authority；只有 material human-owned input 无法推断时才立即提问。
 2. 展开到 completion 的可预见 execution graph，建立内部 Need-human ledger：记录 `Gate`、`Environment`、`Persistence`、`Verification` 与 `Status`。
 3. 重排 prerequisite，把每个 Gate 移到 Human window 内最早的安全 executable frontier；先建立最终执行 environment，再进行 interaction。
 4. 向用户紧凑展示已知 Need-human，并通过 native flow 完成 decision、approval、credential、MFA、device 或 consent；不得收集 secret 文本。
@@ -122,7 +122,7 @@ Resume: <one exact action that resumes execution>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 AFK` 开头，且用户确实表达了无人值守继续的意图或显式调用；
+- 第一条用户可见行以 `🧭 AFK` 开头，且用户已经显式调用 `afk`；
 - current Aim、completion criteria、scope 与 authority 没有因 AFK 被扩大或替换；
 - Need-human scan 覆盖了完整可预见执行图，不只覆盖下一条 command；
 - 每个 Gate 都在最终 execution environment 中完成 staging、interaction 与 verification；

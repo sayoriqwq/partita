@@ -1,6 +1,6 @@
 ---
 name: expand
-description: "Use when the user explicitly clarifies one concept with a concrete example. Not for broad research, comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation."
+description: "Use when the user explicitly invokes expand to clarify one concept with a concrete example. Not for broad research, comparison, summarization, rewriting, unsupported speculation, or implicit ordinary explanation."
 ---
 
 # Expand
@@ -15,7 +15,7 @@ description: "Use when the user explicitly clarifies one concept with a concrete
 
 Use when:
 
-- the user explicitly clarifies one concept with a concrete example.
+- the user explicitly invokes expand to clarify one concept with a concrete example.
 
 Do not use when:
 

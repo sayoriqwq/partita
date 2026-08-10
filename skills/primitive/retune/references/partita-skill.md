@@ -46,7 +46,7 @@ Partita V1 section 顺序是：
 
 `policy.allow_implicit_invocation` MUST 保持 `true` 或 `false`。
 
-如果 patch 改变 trigger precision 或 side-effect risk，MUST 重新判断 invocation policy。
+current Partita-owned public runtime skill MUST 保持 `false`。如果 patch 试图改为 implicit，MUST 先把它视为 future internal/model-invoked role change，并对 role、composition ownership、effects、disclosure 与 trigger precision 使用 interpretation gate。
 
 ## Checks
 

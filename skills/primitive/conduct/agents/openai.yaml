@@ -1,6 +1,6 @@
 interface:
   display_name: "Conduct"
-  short_description: "Creating a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape. Defaults to OpenAI/Codex skill target; in Partita landing creates a public workflow source skill"
-  default_prompt: "Use pm:conduct when creating a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape. Defaults to OpenAI/Codex skill target; in Partita landing creates a public workflow source skill."
+  short_description: "The user explicitly invokes conduct to create a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape"
+  default_prompt: "Use pm:conduct when the user explicitly invokes conduct to create a public workflow skill from an evidence-anchored workflow case with default failure, workflow pressure, recognition surface, orchestration action, and target runtime shape."
 policy:
   allow_implicit_invocation: false

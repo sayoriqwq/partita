@@ -1,6 +1,6 @@
 interface:
   display_name: "Align"
-  short_description: "The user explicitly aligns an Aim through decision-tree rounds"
-  default_prompt: "Use og:align when the user explicitly aligns an Aim through decision-tree rounds."
+  short_description: "The user explicitly invokes align to align an Aim through decision-tree rounds"
+  default_prompt: "Use og:align when the user explicitly invokes align to align an Aim through decision-tree rounds."
 policy:
   allow_implicit_invocation: false

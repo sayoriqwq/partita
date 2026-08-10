@@ -48,12 +48,44 @@ case:
 
 `public workflow skill` 是用户可直接调用的 workflow runtime skill。
 
+## Roles
+
+- `state primitive` 定义 bounded state、合法 transition、reset/terminal condition 与 scope。显式调用创建或改变 handle；后续读取或约束属于已建立 state 的 continuation，不是 implicit invocation。
+- `protocol primitive` 定义一个 bounded transformation、classification 或 judgment contract，包括 input、output、effect ceiling 与 stop condition。
+- `public workflow` owns 用户请求的 Aim、gate order、component routing、top-level marker/envelope、effect budget、disclosure 与 termination。
+- `router` 是 public workflow 的一个 sub-role：它选择 destination 或 component，但仍必须遵守 workflow ownership。
+- `internal` 描述 composition responsibility，不自动表示 hidden、model-invoked 或可绕过用户 invocation policy。
+
+Partita family 与 runtime role 正交。一个 skill 位于 `orientation`、`expression`、`link`、`maintenance` 或 `primitive`，不能单独证明它是 state、protocol 或 workflow。
+
+## Composition Contract
+
+workflow 组装 primitive 时，MUST 为每个 component 明确：
+
+- `Input`: workflow 提供或读取的 state/evidence；
+- `Transition`: component 改变、分类或投影什么；
+- `Output`: 返回给 workflow 的 typed result；
+- `Effects`: component 的 effect ceiling，MUST NOT 扩大 workflow authority；
+- `Termination`: component 在什么 observable condition 下结束；
+- `Disclosure`: 哪些 state/result 对用户可见。
+
+composition 只允许一个 outer owner：
+
+- public workflow owns top-level marker、response envelope、mutation effects 与 final termination；
+- state/protocol primitive 在被组装时贡献 contract，不竞争 top-level output ownership；
+- active state 必须来自用户先前显式创建的 handle，或由当前 workflow 明确声明为 workflow-local state；
+- explicit-only public skill MUST NOT 被另一个 skill 自动激活。组合它的语义时，只能读取已经 active 的 state、处理用户显式 co-invocation，或把必要且自包含的 contract 投影进 owning workflow；
+- 多个显式调用都要求 outer ownership 且没有确定 precedence 时，MUST 在 mutation 前只问一个最小 owner 问题；
+- component failure、blocked state 与 uncertainty MUST 回到 owning workflow 的 gate，不得被吞掉或改写成成功。
+
 ## Rules
 
 - workflow skill MUST 有自己的 governance rule。
 - workflow skill MUST NOT 变成松散的 internal skills bundle。
 - workflow skill MUST 先定义 gate logic，再定义 internal routing。
+- workflow skill MUST 先确定 outer owner，再定义每个 component 的 Input、Transition、Output、Effects、Termination 与 Disclosure。
 - workflow skill MUST 定义什么展示给用户，什么保持 internal。
 - workflow skill MUST 定义完成前可检查的 validation。
+- workflow skill MUST NOT 把 explicit-only public skill 当作可自动调用的 internal dependency。
 - 无法识别 evidence、workflow default failure、至少一个 workflow pressure、recognition surface 或 orchestration action 的材料 MUST 被打回。
 - agent MUST NOT 编造 workflow case、evidence、gate logic、internal routing、disclosure boundary、recognition surface 或 A/Y/X。

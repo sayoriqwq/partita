@@ -61,9 +61,9 @@ local references MUST 能被 installed runtime skill 直接加载。
 
 `policy.allow_implicit_invocation` MUST 是 `true` 或 `false`。
 
-side-effect risk 高的 skill SHOULD 默认使用 `false`。
+current Partita-owned public runtime catalog 与新 public skill MUST 默认使用 `false`。
 
-creation、patching、migration、verification 和 file-writing workflow skills SHOULD 默认使用 `false`。
+只有用户明确要求 future internal/model-invoked role，且 role、composition ownership、effects、disclosure 与 trigger precision 已通过 interpretation gate 时，才可选择 `true`。
 
 ## Checks
 

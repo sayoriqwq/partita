@@ -1,6 +1,6 @@
 ---
 name: pin
-description: "Use when the user explicitly asks to add, update, inspect, verify, or publish a GitHub repository as a Source Pin through Partita's approved git-subtree lifecycle. Not for non-GitHub sources, package pins, temporary clones, fetched copies, or UI/thread pinning."
+description: "Use when the user explicitly invokes pin to add, update, inspect, verify, or publish a GitHub repository as a Source Pin through Partita's approved git-subtree lifecycle. Not for non-GitHub sources, package pins, temporary clones, fetched copies, or UI/thread pinning."
 ---
 
 # Pin
@@ -26,7 +26,7 @@ Pinned Reference Tree 是 Harness-owned、reference-only 的 Target 内容，不
 
 Use when:
 
-- the user explicitly asks to add, update, inspect, verify, or publish a GitHub repository as a Source Pin through Partita's approved git-subtree lifecycle.
+- the user explicitly invokes pin to add, update, inspect, verify, or publish a GitHub repository as a Source Pin through Partita's approved git-subtree lifecycle.
 
 Do not use when:
 

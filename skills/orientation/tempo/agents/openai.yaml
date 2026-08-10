@@ -1,6 +1,6 @@
 interface:
   display_name: "Tempo"
-  short_description: "The user explicitly sets alignment depth and cadence for an Aim"
-  default_prompt: "Use og:tempo when the user explicitly sets alignment depth and cadence for an Aim."
+  short_description: "The user explicitly invokes tempo to set alignment depth and cadence for an Aim"
+  default_prompt: "Use og:tempo when the user explicitly invokes tempo to set alignment depth and cadence for an Aim."
 policy:
   allow_implicit_invocation: false

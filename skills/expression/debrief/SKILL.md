@@ -1,6 +1,6 @@
 ---
 name: debrief
-description: "Use when the user explicitly asks to debrief completed or paused work. Not for clarifying one concept, current-session bearings, handoff, ordinary progress updates, implementation, or command-by-command transcripts."
+description: "Use when the user explicitly invokes debrief to reconstruct completed or paused work. Not for clarifying one concept, current-session bearings, handoff, ordinary progress updates, implementation, or command-by-command transcripts."
 ---
 
 # Debrief
@@ -15,7 +15,7 @@ description: "Use when the user explicitly asks to debrief completed or paused w
 
 Use when:
 
-- the user explicitly asks to debrief completed or paused work.
+- the user explicitly invokes debrief to reconstruct completed or paused work.
 
 Do not use when:
 

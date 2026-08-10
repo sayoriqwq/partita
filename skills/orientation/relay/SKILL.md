@@ -1,6 +1,6 @@
 ---
 name: relay
-description: "Use when the user explicitly relays a work slice into another Codex task. Not for ordinary summaries, current-session bearings, standalone compaction, full-history forks, or thread/worktree/host relocation."
+description: "Use when the user explicitly invokes relay to transfer a work slice into another Codex task. Not for ordinary summaries, current-session bearings, standalone compaction, full-history forks, or thread/worktree/host relocation."
 ---
 
 # Relay
@@ -15,7 +15,7 @@ description: "Use when the user explicitly relays a work slice into another Code
 
 Use when:
 
-- the user explicitly relays a work slice into another Codex task.
+- the user explicitly invokes relay to transfer a work slice into another Codex task.
 
 Do not use when:
 

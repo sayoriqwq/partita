@@ -1,6 +1,6 @@
 ---
 name: why
-description: "Use when the user explicitly reconstructs the Why behind one ADR. Not for drafting ADRs, comparing multiple ADRs, making or superseding decisions, general code-history research, or explaining current architecture."
+description: "Use when the user explicitly invokes why to reconstruct the Why behind one ADR. Not for drafting ADRs, comparing multiple ADRs, making or superseding decisions, general code-history research, or explaining current architecture."
 ---
 
 # Why
@@ -15,7 +15,7 @@ description: "Use when the user explicitly reconstructs the Why behind one ADR. 
 
 Use when:
 
-- the user explicitly reconstructs the Why behind one ADR.
+- the user explicitly invokes why to reconstruct the Why behind one ADR.
 
 Do not use when:
 

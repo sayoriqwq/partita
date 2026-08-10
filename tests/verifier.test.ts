@@ -196,7 +196,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(codes.includes('partita_skill.legacy_section'))
     }))
 
-  it.effect('reports missing OpenAI metadata for implicit skills', () =>
+  it.effect('reports missing OpenAI metadata for source skills', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
       rmSync(join(root, 'skills/demo/agents/openai.yaml'))
@@ -228,6 +228,21 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(codes.includes('openai_metadata.missing_invocation_policy'))
     }))
 
+  it.effect('reports implicit invocation in the current public skill catalog', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/demo/agents/openai.yaml', validOpenAiMetadata().replace(
+        'allow_implicit_invocation: false',
+        'allow_implicit_invocation: true',
+      ))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.strictEqual(report.ok, false)
+      assert.isTrue(codes.includes('openai_metadata.invocation_policy_projection'))
+    }))
+
   it.effect('reports OpenAI display name projection drift', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
@@ -237,7 +252,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
         '  short_description: "Demo skill fixture"',
         '  default_prompt: "Use $demo for verifier tests."',
         'policy:',
-        '  allow_implicit_invocation: true',
+        '  allow_implicit_invocation: false',
       ].join('\n'))
 
       const report = yield* verifySourceProject({ root })
@@ -277,7 +292,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
         '  short_description: "Wrong"',
         '  default_prompt: "Wrong"',
         'policy:',
-        '  allow_implicit_invocation: true',
+        '  allow_implicit_invocation: false',
       ].join('\n'))
 
       const report = yield* verifySourceProject({ root })
@@ -576,7 +591,7 @@ function validOpenAiMetadata(): string {
     '  short_description: "Demo skill fixture"',
     '  default_prompt: "Use $demo for verifier tests."',
     'policy:',
-    '  allow_implicit_invocation: true',
+    '  allow_implicit_invocation: false',
   ].join('\n')
 }
 
@@ -587,7 +602,7 @@ function validOpenAiMetadataFor(handle: string): string {
     '  short_description: "Verifying Partita skill shape in tests"',
     `  default_prompt: "Use ${handle} when verifying Partita skill shape in tests."`,
     'policy:',
-    '  allow_implicit_invocation: true',
+    '  allow_implicit_invocation: false',
   ].join('\n')
 }
 

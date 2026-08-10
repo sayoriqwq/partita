@@ -1,6 +1,6 @@
 ---
 name: baseline
-description: "Use when the user explicitly asks to record, capture, or summarize the accepted consensus since the current conversation aim began. Not for setting aims, maintaining direction, unresolved questions, decision making, meeting notes, durable documentation, or ordinary summaries."
+description: "Use when the user explicitly invokes baseline to record the accepted consensus since the current conversation aim began. Not for setting aims, maintaining direction, unresolved questions, decision making, meeting notes, durable documentation, or ordinary summaries."
 ---
 
 # Baseline
@@ -15,7 +15,7 @@ description: "Use when the user explicitly asks to record, capture, or summarize
 
 Use when:
 
-- the user explicitly asks to record, capture, or summarize the accepted consensus since the current conversation aim began.
+- the user explicitly invokes baseline to record the accepted consensus since the current conversation aim began.
 
 Do not use when:
 
