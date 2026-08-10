@@ -1,6 +1,6 @@
 interface:
   display_name: "Argue"
-  short_description: "The user explicitly invokes argue to challenge or pressure-test an unstable assertion under the current aim before treating it as a premise"
-  default_prompt: "Use og:argue when the user explicitly invokes argue to challenge or pressure-test an unstable assertion under the current aim before treating it as a premise."
+  short_description: "The user explicitly invokes argue to enter an adversarial exchange against one uncertain assertion under the current aim"
+  default_prompt: "Use og:argue when the user explicitly invokes argue to enter an adversarial exchange against one uncertain assertion under the current aim."
 policy:
   allow_implicit_invocation: false

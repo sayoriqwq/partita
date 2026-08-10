@@ -1,6 +1,6 @@
 ---
 name: align
-description: "Use when the user explicitly invokes align to align an Aim through decision-tree rounds. Not for one-assertion pressure tests, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment."
+description: "Use when the user explicitly invokes align to align an Aim through decision-tree rounds. Not for one-assertion adversarial exchanges, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment."
 ---
 
 # Align
@@ -19,7 +19,7 @@ Use when:
 
 Do not use when:
 
-- one-assertion pressure tests, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment.
+- one-assertion adversarial exchanges, ordinary fact finding, implementation, baseline snapshots, Aim display, or decision recording without alignment.
 
 ## Boundary
 
@@ -62,7 +62,7 @@ Soft:
 - 用户明确批准、明确结束，或给出 `Standard` 时，MUST 立即结束 alignment；剩余 `Open` decisions 视为已授权 agent 后续自行推断。
 - `Standard` MUST 是 current-Aim-local soft constraint；Aim reset 或用户覆盖后失效。
 - `align` MUST 与 `land` 完全分开：alignment 只受 Aim 约束，执行阶段的 scope gate 由 `land` 独立负责。
-- 单条 assertion 的对抗性 pressure test 属于 `argue`；`align` 只处理需要共享判断的 dependent decision tree。
+- 单条 Assertion 的 adversarial exchange 属于 `argue`；`align` 只处理需要共享判断的 dependent decision tree。
 - accepted-consensus snapshot 属于 `baseline`；`align` 不自动创建或更新 baseline。
 - persistence MAY 在任意轮次显式开启，但默认是 conversation-only。
 
