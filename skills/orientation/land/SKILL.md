@@ -9,7 +9,7 @@ description: "Use when the user wants to keep a first version or current topic f
 
 ## Rule
 
-面对 active v1 landing target 和新的 requirement、theory branch、implementation expansion、cleanup expansion、artifact expansion 或 topic switch 时，MUST 先分类并阻断 `expand` / `switch`，避免 v1 在落地前被合理但非必要的扩展吞掉。
+面对 active v1 landing target 和新的 requirement、theory branch、implementation expansion、cleanup expansion、artifact expansion 或 topic switch 时，MUST 先分类并阻断 `scope-expand` / `switch`，避免 v1 在落地前被合理但非必要的扩展吞掉。
 
 ## Pattern
 
@@ -29,9 +29,10 @@ Soft:
 - set/reset 后，MUST 把 `land` 视为持续 gate。
 - set/reset 时，MUST 显示完整 `Land` 和 done condition。
 - 正常持续且没有 expansion 时，SHOULD 只显示 `🧭`。
-- MUST 将新点分类为 `v1`、`blocker`、`expand`、`switch`、`done` 或 `unknown`。
+- MUST 将新点分类为 `v1`、`blocker`、`scope-expand`、`switch`、`done` 或 `unknown`。
 - `v1` 和 `blocker` work MAY 继续推进。
-- `expand` 和 `switch` work MUST 在执行前阻断。
+- `scope-expand` 和 `switch` work MUST 在执行前阻断。
+- `scope-expand` MUST 按新点对 landing scope 的实际影响判断；解释当前 v1 内概念的请求不因名称包含 `expand` 而自动成为 scope expansion。
 - `unknown` MUST 先问是否纳入当前 v1。
 - `done` MUST 对照 done condition 或 verification 判断。
 - v1 落地、用户切换主题或用户退出时，MUST 停止持续 gate。
@@ -39,7 +40,7 @@ Soft:
 Hard:
 
 - MUST NOT 被 `aim` 取代；`aim` 只提醒，`land` 可以阻断。
-- MUST NOT 在用户选择前继续 `expand` 或 `switch` work。
+- MUST NOT 在用户选择前继续 `scope-expand` 或 `switch` work。
 - MUST NOT 创建 backlog、issue、roadmap 或 later-version artifact，除非用户显式要求。
 - MUST NOT 阻断 landing 必需的 validation failure、missing information 或 blocker。
 - MUST NOT 使用 `🧭`，除非 `land` 或同族 orientation skill 激活。
@@ -54,9 +55,9 @@ Hard:
 
 1. set/reset 时，显示 `🧭 Land: <v1 target>; Done: <done condition>`。
 2. 如果 active land 已经约束当前回复且没有 expansion，只用 `🧭` 前缀继续。
-3. 每次出现新点，先分类为 `v1`、`blocker`、`expand`、`switch`、`done` 或 `unknown`。
+3. 每次出现新点，先分类为 `v1`、`blocker`、`scope-expand`、`switch`、`done` 或 `unknown`。
 4. 对 `v1` 或 `blocker`，继续推进，并保持回答指向下一个可验证 landing step。
-5. 对 `expand` 或 `switch`，停止并显示 `🧭 Land gate: <classification>; <reason>; 是否纳入当前 v1？`
+5. 对 `scope-expand` 或 `switch`，停止并显示 `🧭 Land gate: <classification>; <reason>; 是否纳入当前 v1？`
 6. 对 `unknown`，先问是否属于当前 v1，再继续。
 7. 对 `done`，检查 done condition 或 verification；成立时显示 `🧭 Land complete: <verification>` 并停止持续 gate。
 
@@ -71,8 +72,8 @@ Before done:
 - `land` 激活时 `🧭` 可见；
 - set/reset 显示完整 `Land` 和 done condition；
 - 持续推进只使用 marker，除非发生 reset、gate 或 complete；
-- expansion 或 topic switch 产生阻断性的 `Land gate`；
-- 用户选择前没有执行 `expand` 或 `switch` work；
+- scope expansion 或 topic switch 产生阻断性的 `Land gate`；
+- 用户选择前没有执行 `scope-expand` 或 `switch` work；
 - v1 landing 仍然绑定 concrete done 或 verification condition；
 - 没有创建 filesystem、durable artifact 或 external state；
 - v1 落地、用户切换主题或用户退出时，`land` 停止。
