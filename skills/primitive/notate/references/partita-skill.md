@@ -31,11 +31,13 @@ agent MUST NOT 因为 target 是 Partita landing 就默认选择 `primitive`。
 
 Partita family marker convention:
 
-- `expression`: handle `ex:<name>`，marker `💬` 或 `💬 <name>`。
-- `link`: handle `lk:<name>`，marker `🔗` 或 `🔗 <name>`。
-- `orientation`: handle `og:<name>`，marker `🧭` 或 `🧭 <name>`。
-- `maintenance`: handle `mt:<name>`，marker `🧹` 或 `🧹 <name>`。
-- `primitive`: handle `pm:<name>`，marker `🎼 <name>`。
+- `expression`: handle `ex:<name>`，primary marker `💬 <Markdown title/display name>`。
+- `link`: handle `lk:<name>`，primary marker `🔗 <Markdown title/display name>`。
+- `orientation`: handle `og:<name>`，primary marker `🧭 <Markdown title/display name>`。
+- `maintenance`: handle `mt:<name>`，primary marker `🧹 <Markdown title/display name>`。
+- `primitive`: handle `pm:<name>`，primary marker `🎼 <Markdown title/display name>`。
+
+skill 激活期间，每条用户可见回复的第一行 MUST 是 primary marker，可在同一行追加实质改变本次回复的其他已显式激活/共同调用 skill：` + <Display Name>`。owner 保持第一位且独占 envelope、effects 和 termination ownership；active-but-inert skill 与 local contract projection 不得作为 contributor。
 
 `agents/openai.yaml` 的 `default_prompt` SHOULD 使用同一 handle。
 

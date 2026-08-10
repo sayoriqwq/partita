@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes baseline to record the accept
 
 # Baseline
 
-激活时，第一条用户可见行 MUST 以内联 `🧭` 开头。
+当 `baseline` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Baseline` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -44,13 +44,13 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY show `🧭`、推测或 active `Aim`，以及扁平 `Baseline` 列表。
+- Conversation: MAY show `🧭 Baseline` marker、推测或 active `Aim`，以及扁平 `Baseline` 列表。
 - Filesystem: none.
 - External: none.
 
 ## Workflow
 
-1. 识别 active aim；如果不存在，从当前 conversation 推测最小 aim 并显示。
+1. 显示 `🧭 Baseline` primary marker line，并按实际生效的 explicit contributors 追加 suffix；识别 active aim；如果不存在，从当前 conversation 推测最小 aim 并显示，但不得为 inferred aim 追加 ` + Aim`。
 2. 只扫描该 aim 约束的 conversation span。
 3. 提取能约束后续工作的 accepted consensus。
 4. 把每个 item 改写成一句简洁 assertion，不使用叙事主体。
@@ -65,7 +65,7 @@ Hard:
 
 Before done:
 
-- `baseline` 激活时 `🧭` 可见；
+- 每条回复的第一行只含 primary `🧭 Baseline` marker 和 materially effective、already-explicit contributor suffix；
 - 输出包含 active 或 inferred `Aim`；
 - 每个 baseline item 都是一句简洁的 accepted-consensus assertion；
 - 未解决问题、rationale、process 和普通上下文没有进入 baseline；

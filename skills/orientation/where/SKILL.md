@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes where for a current-session b
 
 # Where?
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并完整显示 `🧭 Where?`。
+当 `where` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Where?` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -51,7 +51,7 @@ Hard:
 
 ## Workflow
 
-1. 收集当前 session 的 user intent、已完成 turns、已确认结果和仍然有效的 open state；只在必要时补一个最小只读 workspace check。
+1. 确定 `🧭 Where?` primary marker，并只为实际生效的 explicit contributors 追加 suffix；收集当前 session 的 user intent、已完成 turns、已确认结果和仍然有效的 open state；只在必要时补一个最小只读 workspace check。
 2. 向 Luna worker 提供 current task/session identifier 或原始 session evidence，不提供预期答案；显式设置 `agent_type: luna` 和 `reasoning_effort: max`。
 3. 让 worker 使用 `Aim`、`Baseline`、`Position`、`Next` 生成 brief；只有同 workspace metadata 已经清楚时才附一句 `Workspace`。
 4. 校验并删除无证据、重复或超出 scope 的内容；关键 uncertainty 保留在 `Position`。
@@ -80,7 +80,7 @@ Workspace: <optional one-sentence lightweight judgment>
 
 Before done:
 
-- 第一条用户可见行以内联 `🧭 Where?` 开头；
+- 每条回复的第一行只含 primary `🧭 Where?` marker 和 materially effective、already-explicit contributor suffix；
 - synthesis 由 Luna 第五档最高 effort `max` worker 完成，没有模型或 effort 降级；
 - brief 使用 `Aim`、`Baseline`、`Position` 和 `Next`，且只有一个自然下一步；
 - `Baseline` 只包含 accepted consensus，`Aim` 没有被激活或持续维护；

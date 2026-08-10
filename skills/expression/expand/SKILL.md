@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes expand to clarify one concept
 
 # Expand
 
-激活时，第一条用户可见行 MUST 以内联 `💬 expand` 开头。
+当 `expand` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `💬 Expand` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -39,7 +39,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `expand`。
-  Do: MUST NOT 使用 `💬 expand` marker 或套用 explanation model。
+  Do: MUST NOT 使用 `💬 Expand` marker 或套用 explanation model。
 
 - When: 无法确定 concept A。
   Do: MUST 只问一个最小澄清问题并停止。
@@ -67,7 +67,7 @@ Hard:
 7. 只有 example 可能误导时追加 `Boundary`；完成后停止。
 
 ```text
-💬 expand
+💬 Expand
 Example: <context-fit concrete example>
 Mapping: <example parts → concept A>
 Point: <plain-language meaning>
@@ -82,7 +82,7 @@ Boundary: <only when the example could mislead>
 
 Before done:
 
-- 第一条用户可见行包含内联 `💬 expand`；
+- 每条 `expand`-owned 用户可见回复的第一行仅为 `💬 Expand`，或在其他已显式且 materially active skill 存在时为 `💬 Expand + <Display Name>`；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - `expand` 只在用户显式调用后使用；
 - 回复只解释一个最小 concept A，或已只问一个最小澄清问题；
 - `Example` 具体且贴合当前 context，不是抽象改写；

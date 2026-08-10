@@ -30,18 +30,17 @@ describe('Partita projection', () => {
     })
 
     assert.deepStrictEqual(projection.identity, {
-      acceptedMarkers: ['🎼 notate'],
       displayName: 'Notate',
       family: 'primitive',
       handle: 'pm:notate',
-      marker: '🎼 notate',
+      marker: '🎼 Notate',
       slug: 'notate',
       sourcePath: 'skills/primitive/notate/',
       title: 'Notate',
     })
   }))
 
-  it.effect('projects non-primitive markers using the family marker convention', () => Effect.sync(() => {
+  it.effect('projects named markers for every family using the Markdown title', () => Effect.sync(() => {
     const projection = projectSkillForm({
       identity: {
         family: 'orientation',
@@ -63,8 +62,7 @@ describe('Partita projection', () => {
       },
     })
 
-    assert.strictEqual(projection.identity.marker, '🧭')
-    assert.deepStrictEqual(projection.identity.acceptedMarkers, ['🧭', '🧭 argue'])
+    assert.strictEqual(projection.identity.marker, '🧭 Argue')
   }))
 
   it.effect('projects invocation into frontmatter, pattern, and OpenAI metadata', () => Effect.sync(() => {

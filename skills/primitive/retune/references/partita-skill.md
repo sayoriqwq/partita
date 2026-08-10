@@ -10,17 +10,19 @@ Partita family 是 source 组织方式。
 
 ## Structure Surface
 
-Partita source structure 包括 family、source path、namespaced handle、marker、metadata default prompt、local references placement 和 generated projection shape。
+Partita source structure 包括 family、source path、namespaced handle、primary marker、metadata display name/default prompt、local references placement 和 generated projection shape。
 
 当 evidence-anchored patch case 暴露这些结构面错误时，retune MAY move source skill folder and update metadata，但 MUST 保持 target skill identity。
 
 Family marker convention:
 
-- `expression`: handle `ex:<name>`，marker `💬` 或 `💬 <name>`。
-- `link`: handle `lk:<name>`，marker `🔗` 或 `🔗 <name>`。
-- `orientation`: handle `og:<name>`，marker `🧭` 或 `🧭 <name>`。
-- `maintenance`: handle `mt:<name>`，marker `🧹` 或 `🧹 <name>`。
-- `primitive`: handle `pm:<name>`，marker `🎼 <name>`。
+- `expression`: handle `ex:<name>`，primary marker `💬 <Markdown title/display name>`。
+- `link`: handle `lk:<name>`，primary marker `🔗 <Markdown title/display name>`。
+- `orientation`: handle `og:<name>`，primary marker `🧭 <Markdown title/display name>`。
+- `maintenance`: handle `mt:<name>`，primary marker `🧹 <Markdown title/display name>`。
+- `primitive`: handle `pm:<name>`，primary marker `🎼 <Markdown title/display name>`。
+
+skill 激活期间，每条用户可见回复的第一行 MUST 是 primary marker，可在同一行追加实质改变本次回复的其他已显式激活/共同调用 skill：` + <Display Name>`。owner 保持第一位且独占 envelope、effects 和 termination ownership；active-but-inert skill MUST 省略，local contract projection MUST NOT 伪装成 public skill 或 marker contributor。
 
 If family、handle 或 marker 有多种合理解读，retune MUST use interpretation gate before changing convention.
 

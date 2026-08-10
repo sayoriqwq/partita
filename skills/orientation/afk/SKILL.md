@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes afk to continue a task unatte
 
 # AFK
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 AFK`。
+当 `afk` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 AFK` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -56,7 +56,7 @@ Hard:
   Do: MUST 先完成 staging；不得用另一个 terminal、profile、account 或 session 中成功的认证宣告 Ready。
 
 - When: grant 的 scope、persistence 或 verification 仍未知，或仍有 material Need-human open。
-  Do: MUST 显示 `🧭 AFK: not ready` 与具体 gate；不得暗示用户已经可以离开。
+  Do: MUST 在 `🧭 AFK` marker line 后显示 `Status: not ready` 与具体 gate；不得暗示用户已经可以离开。
 
 - When: permission 是 Per-operation 且后续已知 protected operation 尚未执行。
   Do: MUST 在 Human window 内执行该 operation，或准确报告任务不能进入 AFK-ready 状态。
@@ -72,13 +72,13 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY 显示 `🧭 AFK: preparing | not ready | ready | paused | complete`、Aim、Need-human、grant persistence、verification、blocker 与 Resume。
+- Conversation: MAY 显示 `🧭 AFK` marker、`Status: preparing | not ready | ready | paused | complete`、Aim、Need-human、grant persistence、verification、blocker 与 Resume。
 - Filesystem: 与原任务 scope 相同；MAY 做必要的只读或可逆 staging，MUST NOT 写入 secret 或仅为 AFK 创建 durable artifact。
 - External: 与原任务 scope 相同；MAY 在 Human window 中触发原任务所需的 native approval/authentication，MUST NOT 扩大原任务 authority 或创建 recurring monitor/automation。
 
 ## Workflow
 
-1. 确认用户显式调用了 `afk`；显示 `🧭 AFK: preparing`，解析 current Aim、completion criteria、scope 与 authority；只有 material human-owned input 无法推断时才立即提问。
+1. 确认用户显式调用了 `afk`；先显示 `🧭 AFK` marker line，再显示 `Status: preparing`，解析 current Aim、completion criteria、scope 与 authority；只有 material human-owned input 无法推断时才立即提问。
 2. 展开到 completion 的可预见 execution graph，建立内部 Need-human ledger：记录 `Gate`、`Environment`、`Persistence`、`Verification` 与 `Status`。
 3. 重排 prerequisite，把每个 Gate 移到 Human window 内最早的安全 executable frontier；先建立最终执行 environment，再进行 interaction。
 4. 向用户紧凑展示已知 Need-human，并通过 native flow 完成 decision、approval、credential、MFA、device 或 consent；不得收集 secret 文本。
@@ -86,7 +86,8 @@ Hard:
 6. 仍有 open Gate 时，使用以下 receipt 停止，等待用户完成明确动作：
 
 ```text
-🧭 AFK: not ready
+🧭 AFK
+Status: not ready
 Aim: <current task aim>
 Need-human:
 - <open gate> — <actual environment and reason>
@@ -96,7 +97,8 @@ Ready when: <one exact user action or verification>
 7. ledger 已清空时，使用以下 receipt；随后不等待回复，立即继续原任务：
 
 ```text
-🧭 AFK: ready
+🧭 AFK
+Status: ready
 Aim: <current task aim>
 Cleared:
 - <gate> — <Durable | Lease | Per-operation completed>; <verification>
@@ -106,13 +108,14 @@ Remaining: autonomous
 8. 按原 completion criteria 持续执行并验证。出现 unexpected Need-human 时，先完成 independent safe work，再使用以下 checkpoint 停止：
 
 ```text
-🧭 AFK: paused
+🧭 AFK
+Status: paused
 Completed: <durable progress>
 Need-human: <one exact gate>
 Resume: <one exact action that resumes execution>
 ```
 
-9. 原任务完成时显示 `🧭 AFK: complete`，并按原任务要求交付结果；AFK receipt 不取代正常 completion evidence。
+9. 原任务完成时先显示 `🧭 AFK` marker line，再显示 `Status: complete`，并按原任务要求交付结果；AFK receipt 不取代正常 completion evidence。
 
 ## References
 
@@ -122,7 +125,8 @@ Resume: <one exact action that resumes execution>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 AFK` 开头，且用户已经显式调用 `afk`；
+- 每条回复的第一行只含 primary `🧭 AFK` marker 和 materially effective、already-explicit contributor suffix，且用户已经显式调用 `afk`；
+- preparing、not ready、ready、paused 与 complete 位于 marker line 后的 `Status` field；
 - current Aim、completion criteria、scope 与 authority 没有因 AFK 被扩大或替换；
 - Need-human scan 覆盖了完整可预见执行图，不只覆盖下一条 command；
 - 每个 Gate 都在最终 execution environment 中完成 staging、interaction 与 verification；

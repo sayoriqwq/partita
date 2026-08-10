@@ -17,6 +17,8 @@ updated: 2026-07-06
 
 agent 使用 `notate` 后，把 `expand` 创建在 `skills/primitive/expand/`，使用 `🎼 expand` marker 和 `pm:expand` handle。此前 `border` 也被创建在 `skills/primitive/border/`，使用 `🎼 border` 和 `pm:border`。
 
+上述 lowercase slug marker 是历史 evidence，不是当前 canonical marker；当前规则使用 `<family emoji> <Markdown title/display name>` 的 marker-only first line。
+
 用户纠正：family marker 不需要在 `border` 或 `expand` 里单独加 case；应该修复 `notate` 为什么没有正确识别到 family 和 marker。
 
 ## Failure

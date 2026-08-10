@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes why to reconstruct the Why be
 
 # Why
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 Why`。
+当 `why` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Why` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -76,7 +76,7 @@ Hard:
 
 ## Workflow
 
-1. 显示 `🧭 Why`，唯一解析一个 Target ADR，并读取其 title、status、Decision/Choice、references 与现有 rationale。
+1. 显示 `🧭 Why` primary marker line，并按实际生效的 explicit contributors 追加 suffix；唯一解析一个 Target ADR，并读取其 title、status、Decision/Choice、references 与现有 rationale。
 2. 定位 ADR 的 introducing revision 与 decision-time window；读取 ADR history、关联 commit/PR/issue/spec/handoff/task/session，以及当时 revision 的相关 code、tests、config 与 harness。
 3. 建立 claim-to-source Trace；逐项把 Frame、historical Options、Gain、Loss 与候选 Why 标成 `Recovered`、`Corroborated`、`Inferred` 或 `Missing`。
 4. 对 Choice 做 counterfactual check：识别它接受了哪些 Loss、拒绝了哪些 Gain，以及什么 priority ordering 使该交换在 Then 成立。
@@ -138,7 +138,7 @@ Choice stops winning if:
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Why` 开头，且只解析了一个 Target ADR；
+- 每条回复的第一行只含 primary `🧭 Why` marker 和 materially effective、already-explicit contributor suffix，且只解析了一个 Target ADR；
 - Frame、Option、Gain、Loss、Choice 与 Why 使用一致定义；
 - Then 与 Now 完全分开，新可能性没有伪装成历史 Option；
 - 每个 material historical claim 有 evidence grade 与可解析 provenance，无法恢复的内容明确为 Missing；

@@ -28,7 +28,9 @@ case-rooted skill 工作在材料不足时 MUST 打回，MUST NOT 生成草案�
 ## 打回模板
 
 ```md
-🎼 <handle>：材料不足，不能<目标动作>。
+🎼 <Display Name>
+
+材料不足，不能<目标动作>。
 
 缺少：
 - <missing item>

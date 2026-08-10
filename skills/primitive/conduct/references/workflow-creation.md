@@ -52,7 +52,7 @@ case:
 
 - `state primitive` 定义 bounded state、合法 transition、reset/terminal condition 与 scope。显式调用创建或改变 handle；后续读取或约束属于已建立 state 的 continuation，不是 implicit invocation。
 - `protocol primitive` 定义一个 bounded transformation、classification 或 judgment contract，包括 input、output、effect ceiling 与 stop condition。
-- `public workflow` owns 用户请求的 Aim、gate order、component routing、top-level marker/envelope、effect budget、disclosure 与 termination。
+- `public workflow` owns 用户请求的 Aim、gate order、component routing、primary marker/envelope、effect budget、disclosure 与 termination。
 - `router` 是 public workflow 的一个 sub-role：它选择 destination 或 component，但仍必须遵守 workflow ownership。
 - `internal` 描述 composition responsibility，不自动表示 hidden、model-invoked 或可绕过用户 invocation policy。
 
@@ -71,11 +71,13 @@ workflow 组装 primitive 时，MUST 为每个 component 明确：
 
 composition 只允许一个 outer owner：
 
-- public workflow owns top-level marker、response envelope、mutation effects 与 final termination；
+- public workflow owns primary marker、response envelope、mutation effects 与 final termination；owner 保持 marker 第一位，并且是唯一 envelope/effects/termination owner；
 - state/protocol primitive 在被组装时贡献 contract，不竞争 top-level output ownership；
 - active state 必须来自用户先前显式创建的 handle，或由当前 workflow 明确声明为 workflow-local state；
 - explicit-only public skill MUST NOT 被另一个 skill 自动激活。组合它的语义时，只能读取已经 active 的 state、处理用户显式 co-invocation，或把必要且自包含的 contract 投影进 owning workflow；
-- 多个显式调用都要求 outer ownership 且没有确定 precedence 时，MUST 在 mutation 前只问一个最小 owner 问题；
+- 只有实质改变本次回复的其他已显式激活/共同调用 skill 才以 ` + <Display Name>` 追加在 marker-only 第一行；active 但未实质参与的 skill MUST 省略；
+- local contract projection 是 owning workflow 的自包含本地合约，MUST NOT 声称、显示或标记为另一个 public skill；
+- 多个显式调用都要求 outer ownership 且没有确定 precedence 时，MUST 在激活任何 candidate、显示 marker 或产生 effects 前，只问一个不带 skill marker 的最小 owner 问题；
 - component failure、blocked state 与 uncertainty MUST 回到 owning workflow 的 gate，不得被吞掉或改写成成功。
 
 ## Rules

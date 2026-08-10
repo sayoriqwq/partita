@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes score to apply sayoriqwq-styl
 
 # Score
 
-激活时，第一条用户可见行 MUST 以内联 `🎼 score` 开头。
+当 `score` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🎼 Score` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -42,7 +42,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `score`。
-  Do: MUST NOT 使用 `🎼 score` marker 或套用 `score` protocol。
+  Do: MUST NOT 使用 `🎼 Score` marker 或套用 `score` protocol。
 
 - When: 当前 repo 明确声明了覆盖本次 Markdown 变更 surface 的本地 verifier。
   Do: MUST 运行该 repo-local verifier；`pnpm verify` 只在当前 repo 存在 `package.json` 且声明 `scripts.verify`，或本地指令明确要求它时使用。

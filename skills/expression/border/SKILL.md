@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes border to separate two concep
 
 # Border
 
-激活时，第一条用户可见行 MUST 以内联 `💬 border` 开头。
+当 `border` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `💬 Border` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -37,7 +37,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `border`。
-  Do: MUST NOT 使用 `💬 border` marker 或套用 `border` 协议。
+  Do: MUST NOT 使用 `💬 Border` marker 或套用 `border` 协议。
 
 - When: 用户显式给出了两个概念。
   Do: MUST 使用用户给出的概念，不能替换为 agent 自己推断的 pair。
@@ -73,7 +73,7 @@ Hard:
 
 Before done:
 
-- 第一条用户可见行包含内联 `💬 border`；
+- 每条 `border`-owned 用户可见回复的第一行仅为 `💬 Border`，或在其他已显式且 materially active skill 存在时为 `💬 Border + <Display Name>`；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - `border` 只在用户显式调用后使用；
 - 已优先尊重用户显式给出的两个概念；
 - 如果从上下文推断 A/B，推断依据在回复中可见；

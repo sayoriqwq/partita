@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes retune to patch an existing i
 
 # Retune
 
-激活时，第一条用户可见行 MUST 以内联 `🎼 retune` 开头。
+当 `retune` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🎼 Retune` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -27,7 +27,7 @@ Soft:
 
 - MUST 在修改 skill 前要求 evidence-anchored patch case。
 - MUST 识别 target skill 和 case 暴露的 stale surface。
-- MUST 把 Partita source family、path、handle、marker、metadata default prompt 和 reference placement 视为可修补的 source structure surface。
+- MUST 把 Partita source family、path、handle、primary marker、metadata display name/default prompt 和 reference placement 视为可修补的 source structure surface。
 - MUST 保持 target skill identity。
 - target identity 不成立时，MUST 停止并报告；MUST NOT patch 它。
 - MUST 默认 patch OpenAI/Codex skill，除非用户指定其他 target。
@@ -45,7 +45,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `retune`。
-  Do: MUST NOT 使用 `🎼 retune` marker、patch skill 或套用本协议。
+  Do: MUST NOT 使用 `🎼 Retune` marker、patch skill 或套用本协议。
 
 - When: Partita landing 中修改 skill source、local references、frontmatter、`agents/openai.yaml` 或 generated files。
   Do: MUST 运行 `pnpm verify`。
@@ -101,7 +101,7 @@ Before done:
 - 治理失败的 target skill references 已按 case feedback 格式添加或更新真实 recurrence case；
 - patch 小于 rewrite，且限制在 case 暴露的 stale surface 内；
 - 如果 stale surface 是 `## Rule`，patch 后仍是单一 runtime governance constraint，没有展开 workflow、validation、boundary 或 effects；
-- 如果 stale surface 是 Partita source structure，family、path、handle、marker、metadata default prompt 和 case feedback 落点已一致；
+- 如果 stale surface 是 Partita source structure，family、path、handle、primary marker、metadata display name/default prompt 和 case feedback 落点已一致；
 - target runtime shape 仍然成立；
 - Partita landing 中 Partita shape、metadata 和 checks 仍然成立；
 - 如果需要同步 installed runtime，已运行 owning install/sync command；

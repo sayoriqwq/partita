@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes align to align an Aim through
 
 # Align
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 Align`。
+当 `align` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Align` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -26,7 +26,7 @@ Do not use when:
 Soft:
 
 - MUST 以 conversation-local `Aim` 作为 decision tree root。
-- 用户显式调用 `align` 创建一个 bounded alignment session；在 closing condition 前对该 session 问题的回复属于 continuation，不是 implicit invocation。alignment session owns `🧭 Align` marker、question envelope 与 termination；active Aim/Tempo 只贡献 state。
+- 用户显式调用 `align` 创建一个 bounded alignment session；在 closing condition 前对该 session 问题的回复属于 continuation，不是 implicit invocation。alignment session owns `🧭 Align` primary marker、question envelope 与 termination；active Aim/Tempo 只贡献 state，并且仅在实际改变该回复时分别追加 ` + Aim` / ` + Tempo`。
 - 已有 active Aim 时，MUST 在开始时显示它；没有时，MUST 提议并显示最小 Aim，把确认或改写 Aim 作为第一个 decision。
 - conversation 中存在用户显式设置的 active Tempo 时，MUST 在开始时显示其 `Depth` 与 `Cadence`；MUST NOT 自行创建或推测 Tempo。
 - active Tempo 的 `Depth` MUST 决定哪些 decision 进入 tree：
@@ -88,7 +88,7 @@ Hard:
 
 ## Workflow
 
-1. 显示 `🧭 Align`，解析 active Aim；没有 Aim 时提议最小 Aim，并将其作为第一个 decision。存在用户显式设置的 active Tempo 时，同时显示 `Depth` 与 `Cadence`。
+1. 显示 `🧭 Align` primary marker line，并按实际生效的 explicit contributors 追加 suffix；解析 active Aim；没有 Aim 时提议最小 Aim，并将其作为第一个 decision。存在用户显式设置的 active Tempo 时，同时显示 `Depth` 与 `Cadence`。
 2. 读取 current conversation 与必要 evidence，把可查事实从 user decisions 中分离；自行解决事实 prerequisite。
 3. 建立以 Aim 为 root、以 prerequisite 为 edge 的最小 internal decision tree；有 active Tempo 时先按其 Depth 过滤纳入范围；node 只标记 `Open` 或 `Aligned`，不输出 raw ledger。
 4. 扫描 `Known known`、`Known unknown`、`Unknown known` 与 `Unknown unknown`；只展开对 Aim 有后果的 material lane。
@@ -99,7 +99,8 @@ Hard:
 9. 纯模式使用以下 receipt；有 `Standard` 时增加第二行，然后停止：
 
 ```text
-🧭 Aligned: <Aim>
+🧭 Align
+Aligned: <Aim>
 Standard: <optional user-provided standard>
 ```
 
@@ -113,7 +114,7 @@ Standard: <optional user-provided standard>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Align` 开头，active 或 proposed Aim 可见；
+- 每条回复的第一行只含 primary `🧭 Align` marker 和 materially effective、already-explicit contributor suffix，active 或 proposed Aim 可见；
 - tree 只包含 Aim-relevant decisions，active Depth 已正确过滤纳入范围，frontier 中每个 prerequisite 已经 `Aligned`；
 - active Tempo 只来自用户显式设置，开始时 Depth 与 Cadence 可见，Aim shift 后没有静默继承；
 - `Batch` 覆盖当前全部 material frontier，`Step` 只询问最高价值的一个；无 Tempo 时保持 adaptive behavior；
@@ -127,5 +128,5 @@ Before done:
 - `align` 没有调用或模拟 `argue`、`baseline` 或 `land`；
 - conversation-only mode 没有 filesystem write；
 - persistence 只写 non-inferable、user-named、aligned judgment，没有 session history 或 checkpoint；
-- closing receipt、Standard 与 persistence status 准确，关闭后没有继续原始任务；
+- closing receipt 的 `Aligned`、Standard 与 persistence status 位于 marker line 之后且准确，关闭后没有继续原始任务；
 - Effects 保持在声明的 filesystem 和 external scope 内。

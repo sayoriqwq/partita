@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes ground to bound an answer to 
 
 # Ground
 
-Full protocol 激活时，第一条用户可见行 MUST 以内联 `💬 ground` 开头；作为 `Evidence overlay` 时 MUST NOT 显示 ground marker。
+`Full protocol` 中 `ground` owns 当前 response，每条用户可见回复的第一行 MUST 只包含 `💬 Ground` 与可选的 ` + <Display Name>` suffix。`Evidence overlay` 中 owner marker 追加 ` + Ground`，不显示第二个 marker。suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -27,9 +27,9 @@ Soft:
 
 - MUST 先确定 invocation mode：
   - `Full protocol`: 用户显式调用 `ground`，且没有其他 co-invoked skill owns 当前 response envelope；ground owns marker、envelope 与 read-only effects。co-invoked modifier 不影响 Full mode。
-  - `Evidence overlay`: 用户同时显式调用 `ground` 与一个 compatible skill，且该 skill 明确 owns 当前 action 或 response envelope；owning skill 保留 marker、response shape、workflow 与其已授权 effects，ground 只约束 evidence Scope、claim status、provenance、Authority 与 evidence discovery。
-- explicit co-invocation 中只有一个 skill MAY own top-level marker、envelope、workflow、mutation effects 与 termination；另一个 co-invoked skill 是 actual outer owner 时，`ground` MUST 作为 overlay。只有 modifier 时 ground 保持 Full。存在多个可能 owner 或 effects 不兼容时，MUST 只问一个最小 precedence 问题并停止。
-- `Evidence overlay` MUST 把 evidence status 与 Authority 融入 owning skill 的自然结构；不得显示 `💬 ground`、强制完整 envelope，或撤销 owning skill 已有的 effects。ground 的 read-only boundary 只约束 evidence discovery。
+  - `Evidence overlay`: 用户同时显式调用 `ground` 与一个 compatible skill，且该 skill 明确 owns 当前 action 或 response envelope；owning skill 保留 marker、response shape、workflow 与其已授权 effects，在 canonical marker 后追加 ` + Ground`；ground 只约束 evidence Scope、claim status、provenance、Authority 与 evidence discovery。
+- explicit co-invocation 中只有一个 skill MAY own top-level marker、envelope、workflow、mutation effects 与 termination；另一个 co-invoked skill 是 actual outer owner 时，`ground` MUST 作为 overlay。只有 modifier 时 ground 保持 Full。存在多个可能 owner 或 effects 不兼容时，MUST 在激活任何 candidate、显示 marker 或产生 effects 前，只问一个不带 skill marker 的最小 precedence 问题并停止。
+- `Evidence overlay` MUST 把 evidence status 与 Authority 融入 owning skill 的自然结构；owning marker 必须追加 ` + Ground`，不得再显示 `💬 Ground`、强制完整 envelope，或撤销 owning skill 已有的 effects。ground 的 read-only boundary 只约束 evidence discovery。
 - `Scope` MUST 是用户点名的 website、page、domain、file set、directory、repository、revision、supplied artifact 或这些来源的明确组合；“基于 X”“只看 X”“根据 X 回答”均将 X 设为闭合 evidence boundary，直到用户扩展它。
 - MUST 固定可复现的 `Snapshot`：web source 使用实际读取时间与具体 page URL；file 使用具体 path；repository 使用 root、revision，并说明是否包含 working tree；versioned artifact 使用 version、page 或 section。
 - 每个 material claim MUST 恰好使用一个 evidence status；MAY 用同名 section 聚合多个 claims，或以内联 lead word 标记：
@@ -51,10 +51,10 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `ground`。
-  Do: MUST NOT 使用 `💬 ground` marker 或套用本协议。
+  Do: MUST NOT 使用 `💬 Ground` marker 或套用本协议。
 
 - When: ground 作为 `Evidence overlay`。
-  Do: MUST NOT 显示 ground marker、强制 ground envelope 或阻断 owning skill 已授权的 non-evidence effects；MUST 在 owning shape 内保持 claim ledger 与只读 evidence discovery。
+  Do: MUST 让 owning canonical marker 追加 ` + Ground`，且 MUST NOT 显示第二个 ground marker、强制 ground envelope 或阻断 owning skill 已授权的 non-evidence effects；MUST 在 owning shape 内保持 claim ledger 与只读 evidence discovery。
 
 - When: material claim 没有 Scope 内直接 evidence。
   Do: MUST 标为 `Inferred`、`Unresolved` 或允许情况下的 `Outside`；不得标为 `Grounded`，也不得借相邻 citation 洗白。
@@ -79,14 +79,14 @@ Hard:
 
 ## Workflow
 
-1. 确认用户显式调用了 `ground`，再确定 `Full protocol | Evidence overlay`：没有其他 actual envelope/action owner 时使用 Full，即使存在 modifier；与一个 compatible owner 显式共同调用时使用 overlay。解析闭合 Scope；只有 invocation ownership 或 materially different scope interpretations 会改变答案时，才问一个最小澄清问题并停止。仅 `Full protocol` 显示 `💬 ground`。
+1. 确认用户显式调用了 `ground`，再确定 `Full protocol | Evidence overlay`：没有其他 actual envelope/action owner 时使用 Full，即使存在 modifier；与一个 compatible owner 显式共同调用时使用 overlay。解析闭合 Scope；只有 invocation ownership 或 materially different scope interpretations 会改变答案时，才问一个最小澄清问题并停止。`Full protocol` 使用 `💬 Ground`；overlay 只让 owner marker 追加 ` + Ground`。
 2. 固定 Snapshot，并读取足以回答问题的 Scope 内 evidence；记录不可访问、缺失与冲突。
 3. 建立内部 claim ledger：为每个 material claim 指定一个 status、精确 provenance 与 claim-relative Authority。
 4. 校验 claim granularity：source 实际支持哪一层就只写哪一层；综合结论进入 Inferred，无法决定的内容进入 Unresolved。
 5. `Full protocol` 使用以下最小 envelope 输出；`Evidence overlay` 将 ledger 融入 owning shape。empty status section MUST 省略，`Outside` 只有在 Boundary 允许时出现：
 
 ```text
-💬 ground
+💬 Ground
 Scope: <closed evidence set>
 Snapshot: <retrieval time, revision, working-tree state, or artifact version>
 
@@ -116,7 +116,7 @@ Outside:
 
 Before done:
 
-- `Full protocol` 的第一条用户可见行包含内联 `💬 ground`；`Evidence overlay` 没有显示 ground marker；
+- `Full protocol` 的每条用户可见回复第一行仅为 `💬 Ground`，或带其他已显式且 materially active skill suffix；`Evidence overlay` 的 owning marker 追加 ` + Ground` 且没有第二个 top-level marker；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - 用户已经显式调用 `ground`，并给出或澄清了 evidence Scope；
 - invocation mode 准确；overlay 没有争夺 owning skill 的 shape、workflow 或已授权 effects，full protocol 没有同轮执行 mutation；
 - Scope 是闭合且可解析的，Snapshot 足以定位实际读取的版本；

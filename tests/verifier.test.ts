@@ -166,21 +166,102 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
   it.effect('accepts supported namespace skill handles', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/expression/density/SKILL.md', validSkill().replace('name: demo', 'name: density').replace('🧭', '💬'))
+      write(root, 'skills/expression/density/SKILL.md', validSkill().replace('name: demo', 'name: density').replace('🧭', '💬 Demo'))
       write(root, 'skills/expression/density/agents/openai.yaml', validOpenAiMetadataFor('ex:density'))
-      write(root, 'skills/link/pin/SKILL.md', validSkill().replace('name: demo', 'name: pin').replace('🧭', '🔗'))
+      write(root, 'skills/link/pin/SKILL.md', validSkill().replace('name: demo', 'name: pin').replace('🧭', '🔗 Demo'))
       write(root, 'skills/link/pin/agents/openai.yaml', validOpenAiMetadataFor('lk:pin'))
-      write(root, 'skills/orientation/argue/SKILL.md', validSkill().replace('name: demo', 'name: argue'))
+      write(root, 'skills/orientation/argue/SKILL.md', validSkill().replace('name: demo', 'name: argue').replace('🧭', '🧭 Demo'))
       write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue'))
-      write(root, 'skills/maintenance/reconcile/SKILL.md', validSkill().replace('name: demo', 'name: reconcile').replace('🧭', '🧹'))
+      write(root, 'skills/maintenance/reconcile/SKILL.md', validSkill().replace('name: demo', 'name: reconcile').replace('🧭', '🧹 Demo'))
       write(root, 'skills/maintenance/reconcile/agents/openai.yaml', validOpenAiMetadataFor('mt:reconcile'))
-      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 notate'))
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 Demo'))
       write(root, 'skills/primitive/notate/agents/openai.yaml', validOpenAiMetadataFor('pm:notate'))
 
       const report = yield* verifySourceProject({ root })
 
       assert.isTrue(report.ok)
       assert.deepStrictEqual(report.issues, [])
+    }))
+
+  it.effect('accepts canonical named markers and nonempty contributor display names', () =>
+    Effect.gen(function* () {
+      for (const validMarker of ['🧭 Argue', '🧭 Argue + Aim + Tempo', '🧭 Argue + C++']) {
+        const root = makeValidSourceFixture()
+        write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', validMarker))
+        write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+        const report = yield* verifySourceProject({ root })
+
+        assert.isTrue(report.ok, validMarker)
+        assert.deepStrictEqual(report.issues, [], validMarker)
+      }
+    }))
+
+  it.effect('rejects bare, wrong-primary, wrong-title, wrong-case, and empty-contributor namespace markers', () =>
+    Effect.gen(function* () {
+      for (const invalidMarker of ['🧭', '🔗 Argue', '🧭 Probe', '🧭 argue', '🧭 Argue + ', '🧭 Argue +  + Tempo']) {
+        const root = makeValidSourceFixture()
+        write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', invalidMarker))
+        write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+        const report = yield* verifySourceProject({ root })
+
+        assert.isFalse(report.ok, invalidMarker)
+        assert.isTrue(report.issues.some(issue => issue.code === 'partita_projection.marker'), invalidMarker)
+      }
+    }))
+
+  it.effect('does not let a canonical preamble decoy hide the first wrong marker declaration', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', '🧭')
+        .replace('## Rule', 'The canonical marker is `🧭 Argue`.\n\n## Rule'))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.issues.some(issue => issue.code === 'partita_projection.marker'))
+    }))
+
+  it.effect('reports marker projection when a namespaced skill has no Markdown title', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', '🧭 Argue')
+        .replace('# Argue\n', 'Argue\n'))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.issues.some(issue => issue.code === 'partita_projection.marker'))
+    }))
+
+  it.effect('validates the activation preamble marker even when Pattern parsing fails', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', '🧭')
+        .replace('- verifying Partita skill shape in tests.', '- .'))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.isTrue(codes.includes('partita_projection.pattern_missing_use_when'))
+      assert.isTrue(codes.includes('partita_projection.marker'))
+    }))
+
+  it.effect('does not accept a canonical marker mentioned only after Rule', () =>
+    Effect.gen(function* () {
+      const root = makeValidSourceFixture()
+      write(root, 'skills/orientation/argue/SKILL.md', namespacedSkill('argue', 'Argue', '🧭')
+        .replace(
+          'Facing Partita verifier fixture work,',
+          'The canonical marker is `🧭 Argue`. Facing Partita verifier fixture work,',
+        ))
+      write(root, 'skills/orientation/argue/agents/openai.yaml', validOpenAiMetadataFor('og:argue', 'Argue'))
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.issues.some(issue => issue.code === 'partita_projection.marker'))
     }))
 
   it.effect('reports legacy skill section drift', () =>
@@ -285,7 +366,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
   it.effect('reports OpenAI metadata projection drift from Pattern', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
-      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 notate'))
+      write(root, 'skills/primitive/notate/SKILL.md', validSkill().replace('name: demo', 'name: notate').replace('🧭', '🎼 Demo'))
       write(root, 'skills/primitive/notate/agents/openai.yaml', [
         'interface:',
         '  display_name: "Demo"',
@@ -595,15 +676,22 @@ function validOpenAiMetadata(): string {
   ].join('\n')
 }
 
-function validOpenAiMetadataFor(handle: string): string {
+function validOpenAiMetadataFor(handle: string, displayName = 'Demo'): string {
   return [
     'interface:',
-    '  display_name: "Demo"',
+    `  display_name: "${displayName}"`,
     '  short_description: "Verifying Partita skill shape in tests"',
     `  default_prompt: "Use ${handle} when verifying Partita skill shape in tests."`,
     'policy:',
     '  allow_implicit_invocation: false',
   ].join('\n')
+}
+
+function namespacedSkill(name: string, title: string, projectedMarker: string): string {
+  return validSkill()
+    .replace('name: demo', `name: ${name}`)
+    .replace('# Demo', `# ${title}`)
+    .replace('🧭', projectedMarker)
 }
 
 function primitiveReferenceCopySpec(sourcePath: string) {

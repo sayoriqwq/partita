@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes argue to enter an adversarial
 
 # Argue
 
-激活期间，每条用户可见回复的第一行 MUST 是 `🧭 Argue`。
+当 `argue` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Argue` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -26,7 +26,7 @@ Do not use when:
 Soft:
 
 - MUST 读取已有 conversation-local active `Aim`；没有时推测并显示 session-local `Working Aim`，但不得创建、reset 或退出 active Aim handle。
-- 用户显式调用 `argue` 创建一个绑定 `(Aim snapshot, Assertion subject)` 的 bounded session；终局前对该 Assertion 的直接回复属于 continuation，不是 implicit invocation。active Aim 只贡献 state，argue owns 对抗角色、response envelope 与 termination。
+- 用户显式调用 `argue` 创建一个绑定 `(Aim snapshot, Assertion subject)` 的 bounded session；终局前对该 Assertion 的直接回复属于 continuation，不是 implicit invocation。active Aim 只贡献 state，argue owns primary marker、对抗角色、response envelope 与 termination；Aim 实际改变该回复时追加 ` + Aim`，inferred Working Aim 不得成为 suffix。
 - Aim 实质变化时，MUST 关闭为 `Unresolved` 并显示 Aim shift；新 Aim 下的争辩需要再次显式调用。
 - 用户没有指定 Assertion 时，SHOULD 推测最贴近 Aim 且最承重的一条；无法可靠推测时，只询问一个聚焦问题。
 - Proponent 与 Opponent 是程序角色：用户不必确信或亲自认同 Assertion；双方共同目标是发现它是否能经受最强可信反对。
@@ -51,7 +51,7 @@ Hard:
 - MUST NOT 对多条 Assertion 做清单式批判，或在一轮中倾倒多个 objections。
 - Current position 确认后的首个实质回复 MUST 给出 `Opposing position`、一个 `Attack` 与对应 `Burden`，并给用户至少一次 defense 机会；只有不存在 credible material opposition 时，MUST 在开场明确 concession 并关闭为 `Survived`。
 - `Survived | Revised | Defeated | Unresolved` 任一 `Disposition` 都关闭 bounded argue session；关闭后只有用户再次显式调用 `argue` 才能争辩 revised 或其他 Assertion。
-- MUST NOT 在本 skill 未激活时显示 `Opposing position`、`Attack`、`Rebuttal`、argue `Disposition` 或 `🧭 Argue`；其他 orientation skill 仍可使用 family marker `🧭`。
+- MUST NOT 在本 skill 未激活时显示 `Opposing position`、`Attack`、`Rebuttal`、argue `Disposition`、`🧭 Argue` primary marker 或 ` + Argue` suffix；其他 orientation skill 使用自己的 canonical marker。
 
 ## Effects
 
@@ -61,7 +61,7 @@ Hard:
 
 ## Workflow
 
-1. 显示 `🧭 Argue`，读取 active Aim；没有时推测并显示最小 Working Aim。固定 Aim snapshot，不修改 active Aim handle。
+1. 显示 `🧭 Argue` primary marker line，并按实际生效的 explicit contributors 追加 suffix；读取 active Aim；没有时推测并显示最小 Working Aim，但不追加 ` + Aim`。固定 Aim snapshot，不修改 active Aim handle。
 2. 绑定一条 Assertion；没有明确目标时推测最承重的一条，无法可靠推测时询问一个聚焦问题并等待。
 3. 将 Assertion 规范为最强且忠实的 `Current position`；如果规范化会改变核心命题，先让用户确认。
 4. Assertion 已绑定且 Current position 已确认后，寻找与它冲突的 strongest credible `Opposing position`。没有 credible material opposition 时，明确 `Concession` 并直接按第 9 步关闭为 `Survived`；否则选择当前最承重且未解决的一个 Attack。
@@ -105,7 +105,7 @@ Remaining uncertainty: <none, decisive evidence boundary, Aim shift, or cancella
 
 Before done:
 
-- active session 的每条回复第一行是 `🧭 Argue`，active Aim 或 Working Aim 清楚且 ownership 没有混淆；
+- active session 的每条回复第一行只含 primary `🧭 Argue` marker 和 materially effective、already-explicit contributor suffix，active Aim 或 Working Aim 清楚且 ownership 没有混淆；
 - 只存在一条 Assertion，Proponent 与 Opponent 明确；存在 credible material opposition 时，strongest credible Opposing position 明确；
 - 开场包含一个 load-bearing Attack 与对应 Burden，并给用户 defense 机会；
 - 每个 continuation 直接处理上一轮回应，准确显示 Landed，再 rebut、concede 或关闭；

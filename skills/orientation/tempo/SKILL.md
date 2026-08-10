@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes tempo to set alignment depth 
 
 # Tempo
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 Tempo`。
+当 `tempo` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Tempo` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -27,7 +27,7 @@ Soft:
 
 - MUST 依赖 conversation-local `Aim`；有 active Aim 时使用并显示它，没有时推测并显示最小 Aim，无法安全推测时只问一个最小问题。
 - 只有显式调用 `tempo` 才能创建、reset 或退出 active Tempo contract；后续由显式调用的 workflow 读取该 contract 属于 state continuation，不是 implicit invocation。
-- 另一个显式调用的 orientation workflow 读取 active Tempo 时，Tempo 只贡献 `Depth × Cadence` state；outer workflow 保留 named marker、envelope、effects 与 termination。
+- 另一个已显式激活或共同调用的 skill owns 当前 response 并读取 active Tempo 时，Tempo 只贡献 `Depth × Cadence` state；outer owner 保留 primary marker、envelope、effects 与 termination。Tempo 实际改变该回复时，outer marker MUST 追加 ` + Tempo`；否则省略。
 - `Depth` MUST 只使用以下值：
   - `Probe`: 只在实现前对齐会阻塞安全试做，或一旦推翻会使近期试做失效、产生实质浪费的 human-owned decision；其余判断交给实现证据与 agent 推断。
   - `Shape`: 在 `Probe` 之上，对齐 observable behavior、boundary、public seam 与昂贵或不可逆的 trade-off；局部实现判断交给 agent。
@@ -62,7 +62,7 @@ Hard:
 2. 解析 active 或可安全推测的 Aim；无法确定时只问一个最小问题并停止。
 3. 从用户显式措辞解析 `Depth`；没有可区分偏好时使用 `Shape`。
 4. 从用户显式措辞解析 `Cadence`；没有可区分偏好时使用 `Batch`。
-5. 使用以下 receipt 确认 contract，然后停止；不得同轮开始 alignment：
+5. 确认 contract 后停止，不得同轮开始 alignment。Tempo owns response 且没有 material explicit active Aim 时使用以下 receipt；若 explicit active Aim 实际决定当前 contract，第一行 MUST 改为 `🧭 Tempo + Aim`。另一个显式 skill owns response 时，使用 outer marker，并在 Tempo 实际改变该回复时追加 ` + Tempo`；不得显示第二个 marker：
 
 ```text
 🧭 Tempo
@@ -79,7 +79,8 @@ Cadence: <Batch | Step>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Tempo` 开头；
+- Tempo owns response 时，第一行只含 primary `🧭 Tempo` marker 和 materially effective、already-explicit contributor suffix；Tempo 作为 contributor 时只使用 outer marker，并仅在实际生效时追加 ` + Tempo`，没有第二个 marker；
+- explicit active Aim 实际决定 Tempo contract 时，Tempo-owned marker 包含 ` + Aim`；inferred Aim 不得伪装成 contributor；
 - active 或 inferred Aim 可见；
 - Depth 只使用 `Probe | Shape | Specify`，Cadence 只使用 `Batch | Step`；
 - Depth 与 Cadence 由显式措辞确定，或准确使用 `Shape + Batch` default；

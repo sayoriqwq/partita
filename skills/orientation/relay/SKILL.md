@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes relay to transfer a work slic
 
 # Relay
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 Relay`。
+当 `relay` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Relay` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -106,10 +106,11 @@ Suggested skills:
 ```
 
 8. 对新 destination，创建带有 packet 的 fresh task 并让它从 `Next` 立即开始；对 existing destination，发送 packet 作为 follow-up prompt。
-9. 工具未确认 dispatch 时，显示 `🧭 Relay: <Branch | Continue> not delivered`、blocker 和 `Source: unchanged; work not transferred`。工具确认 dispatch 后，使用以下 receipt 结束 source turn；异步 setup 仍在进行时准确显示 `queued`，不得显示 `started`：
+9. 工具未确认 dispatch 时，先显示 `🧭 Relay` marker line，再显示 `Delivery: <Branch | Continue> not delivered`、blocker 和 `Source: unchanged; work not transferred`。工具确认 dispatch 后，使用以下 receipt 结束 source turn；异步 setup 仍在进行时准确显示 `queued`，不得显示 `started`：
 
 ```text
-🧭 Relay: <Branch | Continue> <sent | queued | started>
+🧭 Relay
+Delivery: <Branch | Continue> <sent | queued | started>
 Target: <task title and resolvable reference>
 Aim: <successor aim>
 Source: <unchanged | stopped>
@@ -123,13 +124,13 @@ Source: <unchanged | stopped>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Relay` 开头；
+- 每条回复的第一行只含 primary `🧭 Relay` marker 和 materially effective、already-explicit contributor suffix；
 - mode、successor `Aim` 与 destination 在 mutation 前已经确定；
 - `Branch` 保持 source `Aim` 和 active `Land` gate，`Continue` 没有在 source 重复推进；
 - packet synthesis 由 Luna 第五档最高 effort `max` worker 完成，没有 model 或 effort 降级；
 - packet 只包含 successor-relevant evidence，`Baseline` 只包含 accepted consensus；
 - reference 对 target 可访问，material uncertainty 可见，secret 已清理；
 - 新 task 使用 fresh creation 并立即开始，已有 task 收到 follow-up message；
-- delivery 有工具确认，receipt 准确区分 `sent`、`queued` 与 `started`；
+- delivery status 位于 marker line 后的 `Delivery` field；有工具确认时 receipt 准确区分 `sent`、`queued` 与 `started`；
 - delivery failure 没有产生成功 receipt 或 `Source: stopped`；
 - 没有 full-history fork、thread relocation、relay artifact write 或 source-side execution。

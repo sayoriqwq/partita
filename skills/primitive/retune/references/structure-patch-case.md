@@ -17,6 +17,8 @@ updated: 2026-07-06
 
 agent 把 `border` 和 `expand` 从 primitive family 移到 expression family，并把 marker 改为 `💬`，但同时在 `border` 和 `expand` 自己的 references 中各加了一份 family marker case。
 
+这里的 bare `💬` 是历史 patch 记录，不是当前 canonical marker；当前 expression marker 是 `💬 <Markdown title/display name>` 的 marker-only first line。
+
 用户纠正：family marker 不需要在这些 leaf skills 里单独加；应该修复 `notate` 为什么没有正确识别 family/marker，以及 `retune` 为什么没有修 skill 的结构问题。
 
 ## Failure
@@ -27,7 +29,7 @@ agent 把 `border` 和 `expand` 从 primitive family 移到 expression family，
 
 ## Governance
 
-当真实 case 暴露 Partita source structure 错误时，agent MUST 把 family、path、handle、marker、metadata default prompt 和 reference placement 一起检查。
+当真实 case 暴露 Partita source structure 错误时，agent MUST 把 family、path、handle、primary marker、metadata display name/default prompt 和 reference placement 一起检查。
 
 agent MUST NOT 把 creation 或 patch workflow 的治理失败分散写入无治理职责的 leaf skill references。
 

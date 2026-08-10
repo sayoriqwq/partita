@@ -36,7 +36,7 @@ case:
 
 `stale surface` 是 case 暴露出的局部过时面，例如 trigger、boundary、workflow、effects、reference、metadata、validation 或 Partita source structure。
 
-`source structure` 是 Partita source skill 的 family、path、handle、marker、metadata default prompt、reference placement 或 generated projection shape。
+`source structure` 是 Partita source skill 的 family、path、handle、primary marker、metadata display name/default prompt、reference placement 或 generated projection shape。
 
 `minimum patch` 是能防止该 recurrence 复发的最小修改。
 

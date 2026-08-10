@@ -32,6 +32,10 @@ Partita V1 `SKILL.md` 使用以下 section 顺序：
 
 local references MUST 能被 installed runtime skill 直接加载。
 
+## Marker
+
+Partita skill 激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owning workflow 保持第一位且是唯一 envelope、effects 和 termination owner；只追加实质改变本次回复的其他已显式激活/共同调用 skill。active-but-inert skill 不出现；local contract projection MUST NOT 伪装成 public skill 或 marker contributor。
+
 ## Policy
 
 current Partita-owned public runtime catalog MUST 使用 `policy.allow_implicit_invocation: false`。

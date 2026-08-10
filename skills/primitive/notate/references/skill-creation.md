@@ -102,14 +102,14 @@ creation form MUST 通过 projection 生成 runtime surfaces。
 projection:
   identity:
     handle: family + slug
-    marker: family + slug
+    marker: family emoji + identity.title
     source_path: skills/<family>/<slug>/
   skill_frontmatter:
     name: identity.slug
     description: compress(invocation.selector)
   skill_body:
     title: identity.title
-    marker_instruction: projection.identity.marker
+    marker_instruction: marker-only first line + material contributors
     rule: case + invocation + rule.required_action
     pattern: invocation.selector
   openai_metadata:
@@ -131,6 +131,8 @@ projection:
 
 marker 不属于 optional Conversation effect。marker 的规则写在激活行、Hard boundary 或 Validation；Effects 的 Conversation 只写 skill 可能输出的业务信息。
 
+primary marker MUST 是 `<family emoji> <identity.title>`，其中 `identity.title` 同时是 Markdown `#` title 和 `agents/openai.yaml interface.display_name`。skill 激活期间，每条用户可见回复的第一行 MUST 是 marker-only line；实质改变本次回复的其他已显式激活或共同调用 skill 在 primary marker 后追加 ` + <Display Name>`。owner 仍然排在第一位，并且是唯一 response envelope、effects 和 termination owner。active 但未实质参与的 skill MUST 省略；local contract projection MUST NOT 伪装成 public skill 或 marker contributor。
+
 Partita skill creation 中，family MUST 在创建文件前确定，并与 target behavior 对齐。agent MUST NOT 把 Partita source skill 默认放进 primitive family。
 
 ## Template
@@ -145,7 +147,9 @@ description: "Use when <explicit trigger and target behavior>. Not for <exclusio
 
 # <identity.title>
 
-激活时，第一条用户可见行 MUST 以内联 `<marker>` 开头。
+激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <identity.title>[ + <Display Name>...]`。owner 保持第一位且独占 envelope/effects/termination ownership；只追加实质改变本次回复的其他已显式激活/共同调用 skill，active-but-inert skill 与 local contract projection MUST 省略。
+
+多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活任何 candidate、显示 marker 或产生 effects 前，只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -195,7 +199,8 @@ Hard:
 
 Before done:
 
-- 第一条用户可见行包含内联 `<marker>`；
+- 第一条用户可见行是 marker-only line，primary marker 与 Markdown title/display name 一致，且 contributor suffix 只列出实质参与的已显式激活/共同调用 skill；
+- owner 保持 marker 第一位并独占 response envelope、effects 和 termination ownership；active-but-inert skill 与 local contract projection 没有被写成 contributor；
 - <case-specific invariant>;
 - <boundary-specific invariant>;
 - Effects 保持在声明的 filesystem 和 external scope 内；

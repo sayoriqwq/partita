@@ -250,7 +250,7 @@ Partita skill creation form 使用 projection 生成 runtime surfaces：
 
 - `identity.slug` 投影为 `SKILL.md` frontmatter `name`。
 - `identity.title` 投影为 `agents/openai.yaml` 的 `interface.display_name`。
-- `identity.family + identity.slug` 投影为 handle、marker 和 source path。
+- `identity.family + identity.slug` 投影为 handle 和 source path；`identity.family` 的 emoji 与 `identity.title` 投影为 primary marker。
 - `invocation.selector.use_when` / `do_not_use_when` 投影为 frontmatter `description` 和 `## Pattern`。
 - `invocation.policy.allow_implicit_invocation` 投影为 `agents/openai.yaml` 的 `policy.allow_implicit_invocation`。
 
@@ -260,7 +260,9 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 当前 Partita-owned public runtime catalog 是 explicit-only：所有现有 skill 的 `policy.allow_implicit_invocation` 都是 `false`。显式调用可以创建 skill 声明的 conversation-local state；该 state 在 lifecycle 内继续生效属于 continuation，不是新的 implicit invocation。
 
-workflow 组合 state/protocol 时只有一个 outer owner：workflow owns top-level marker、response envelope、effects 与 termination。它可以读取已经显式建立的 state、处理用户显式 co-invocation，或携带自包含的 local contract projection；不得自动激活另一个 explicit-only public skill。未来若引入 internal/model-invoked role，必须先明确 composition ownership、effects、disclosure 与 invocation policy。
+namespaced Partita skill 激活期间，每条用户可见回复的第一行是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owner 保持第一位；只追加实质改变本次回复的其他已显式激活或共同调用 skill。primitive catalog 对应 `🎼 Conduct`、`🎼 Notate`、`🎼 Retune` 和 `🎼 Score`。
+
+workflow 组合 state/protocol 时只有一个 outer owner：workflow owns primary marker、response envelope、effects 与 termination，并保持在 marker 第一位。只有实质改变本次回复的已显式激活/共同调用 skill 才列为 contributor；active 但未实质参与的 skill 必须省略。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，先用一个不带 skill marker 的最小问题决定 owner，再激活协议。workflow 可以读取已经显式建立的 state、处理用户显式 co-invocation，或携带自包含的 local contract projection；不得自动激活另一个 explicit-only public skill，也不得让 local contract projection 伪装成 public skill 或 marker contributor。未来若引入 internal/model-invoked role，必须先明确 composition ownership、effects、disclosure 与 invocation policy。
 
 source namespaces 只影响 Partita source organization；frontmatter 和 global installed skills 保持 short skill name。
 

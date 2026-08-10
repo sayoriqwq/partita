@@ -1,7 +1,7 @@
 import type { PartitaSkillFamily } from './source-skill-catalog.ts'
 import { partitaSkillFamilies } from './source-skill-catalog.ts'
 
-interface SkillIdentityForm {
+export interface SkillIdentityForm {
   readonly family: PartitaSkillFamily
   readonly slug: string
   readonly title: string
@@ -32,7 +32,6 @@ export interface SkillProjection {
 }
 
 interface IdentityProjection {
-  readonly acceptedMarkers: ReadonlyArray<string>
   readonly displayName: string
   readonly family: PartitaSkillFamily
   readonly handle: string
@@ -101,16 +100,9 @@ export function validateInvocationSelectorEnglish(selector: InvocationSelectorFo
 }
 
 function projectIdentity(identity: SkillIdentityForm): IdentityProjection {
-  const baseMarker = familyMarkers[identity.family]
-  const marker = identity.family === 'primitive'
-    ? `${baseMarker} ${identity.slug}`
-    : baseMarker
-  const acceptedMarkers = identity.family === 'primitive'
-    ? [marker]
-    : [baseMarker, `${baseMarker} ${identity.slug}`]
+  const marker = projectSkillMarker(identity)
 
   return {
-    acceptedMarkers,
     displayName: identity.title,
     family: identity.family,
     handle: `${partitaSkillFamilies[identity.family]}:${identity.slug}`,
@@ -119,6 +111,10 @@ function projectIdentity(identity: SkillIdentityForm): IdentityProjection {
     sourcePath: `skills/${identity.family}/${identity.slug}/`,
     title: identity.title,
   }
+}
+
+export function projectSkillMarker(identity: SkillIdentityForm): string {
+  return `${familyMarkers[identity.family]} ${identity.title}`
 }
 
 function projectOpenAiMetadata(

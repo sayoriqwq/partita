@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes reconcile to recall a settled
 
 # Reconcile
 
-激活时，第一条用户可见行 MUST 以内联 `🧹` 开头。
+当 `reconcile` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧹 Reconcile` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -39,7 +39,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `reconcile`。
-  Do: MUST NOT 使用 `🧹` marker、启动 audit 或套用本协议。
+  Do: MUST NOT 使用 `🧹 Reconcile` marker、启动 audit 或套用本协议。
 
 - MUST NOT 在用户批准 exact cleanup scope 前 repair、delete、rename、rewrite、regenerate 或执行 external mutation。
 - MUST NOT 把 previous task/session、当前 checkout 或当前 repo 当作当然 authority；authority 不可访问或冲突时 MUST 标为 `unknown` 并 defer。
@@ -48,11 +48,11 @@ Hard:
 - Destructive identity MUST 包含 authority/location 和可复核的 immutable revision 或 ID；name alone 不足以授权删除。
 - 硬判断 MUST 尽量用 git status、diff、worktree/branch/ref state、commit/patch/content comparison、search output、tests、schema、package check、current policy 或 authoritative service output 支撑。
 - MUST NOT 把普通 bug、feature work 或 code review 包装成 reconcile。
-- MUST NOT 使用 `🧹`，除非 maintenance skill 激活。
+- MUST NOT 使用 `🧹 Reconcile`，除非 `reconcile` 激活并 owns 当前 response。
 
 ## Effects
 
-- Conversation: MAY show `🧹`、case recall、authority map、coverage gaps、candidate ledger、cleanup proposal、approval question 和 cleanup report。
+- Conversation: MAY show canonical marker `🧹 Reconcile`、case recall、authority map、coverage gaps、candidate ledger、cleanup proposal、approval question 和 cleanup report。
 - Filesystem: MAY read in-scope code、docs、tests、worktrees、local authority、generated metadata 和 manifests；MAY write or delete only exact approved targets and approved generated derivatives。
 - External: MAY read the relevant user-referenced task/session and authoritative service state；MAY mutate only exact external cleanup targets already within the user request and explicit approval tuple。
 
@@ -76,7 +76,7 @@ Hard:
 
 Before done:
 
-- `reconcile` 激活时 `🧹` 可见；
+- 每条 `reconcile`-owned 用户可见回复的第一行仅为 `🧹 Reconcile`，或在其他已显式且 materially active skill 存在时为 `🧹 Reconcile + <Display Name>`；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - case locator、settled/completed surface、expected closure、governing authority 和 evidence scope 已明确，或 gap 已显式 defer；
 - referenced task/session 的相关 case 已召回，并与 current state 分开记录和复核；
 - in-scope inventory 已闭合，每个 candidate 的 identity、provenance、relation 和 disposition 可追踪，protected/out-of-scope items 明确保留；

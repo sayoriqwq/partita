@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes density to use sustained cont
 
 # Density
 
-首次激活且 `density` owns 当前 response 时，第一条用户可见行 MUST 以内联 `💬 density` 开头；存在另一个明确 outer owner 时，MUST 保留 owner marker。
+当 `density` owns 当前 response 时，`Activate | Continue | Exit` 的每条用户可见回复第一行 MUST 只包含 `💬 Density` 与可选的 ` + <Display Name>` suffix。另一个已显式激活/共同调用的 skill owns response 且 Density 实质改变该回复时，owner marker 追加 ` + Density`，不显示第二个 marker。suffix 不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -27,7 +27,7 @@ Soft:
 
 - MUST 持续到用户显式调用 `density` 退出，或更高优先级指令强制取消该 state。
 - 只有显式调用 `density` 才能创建、更新或退出 active Density state；后续应用属于已建立 state 的 continuation，不是 implicit invocation。更高优先级取消属于 forced cancellation，不是 user-controlled exit。
-- 与另一个显式调用且 owns 当前 response envelope 的 expression skill 组合时，owning skill 保留 marker 与 shape；`density` 只在 semantic invariance 允许时转换其 prose，不竞争 top-level output ownership。
+- 与另一个显式调用且 owns 当前 response envelope 的 skill 组合时，owning skill 保留 marker 与 shape；当 `density` materially changes 回复时，owner marker 追加 ` + Density`，Density 不显示第二个 top-level marker。`density` 只在 semantic invariance 允许时转换其 prose，不竞争 top-level output ownership。
 - `Activate | Continue` MUST 应用 [protocol](references/protocol.md) 和 [symbols](references/symbols.md) 中的运行时协议；`Exit | Cancelled` MUST NOT 继续应用。
 - MUST 保持 semantic invariance 高于 language density。
 - SHOULD 用分行、标签、术语保留和稳定符号让判断、行动、风险和问题更快浮现。
@@ -45,7 +45,7 @@ Hard:
   Do: MUST 使用 `symbols.md` 中定义的符号，不能临时发明未定义 operator。
 
 - When: 用户没有显式调用 `density`，且没有由先前显式调用建立的 active Density state。
-  Do: MUST NOT 使用 `💬 density` marker 或创建 Density state；其他 expression skill 仍可使用 family marker `💬`。
+  Do: MUST NOT 使用 `💬 Density` marker、追加 ` + Density` 或创建 Density state；其他 expression skill 仍可使用各自的 canonical named marker。
 
 - When: 用户要求的是一次性总结、代码压缩或古文风格。
   Do: MUST NOT 把请求升级为持续 `density`。
@@ -59,7 +59,14 @@ Hard:
 ## Workflow
 
 1. 将当前 transition 分类为 `Activate | Continue | Exit | Cancelled`：显式调用可 Activate/更新/Exit；已有 state 且未显式退出时 Continue；更高优先级要求恢复普通表达时 Cancelled。
-2. `Exit` 时先关闭 state；没有其他 outer owner 时只输出 `💬 density: off` 并停止。存在 co-invoked outer owner 时，在 owner shape 中显示 `Density: off`，随后以普通表达继续 owner workflow。`Cancelled` 立即停止应用 protocol，并只在准确性需要时报告取消。
+2. `Exit` 时先关闭 state；没有其他 outer owner 时输出 canonical marker 与下一行 off payload 后停止：
+
+   ```text
+   💬 Density
+   off
+   ```
+
+   存在 co-invoked outer owner 时，owner marker 追加 ` + Density`，在 owner shape 中显示 `Density: off`，随后以普通表达继续 owner workflow；不得显示第二个 Density marker。`Cancelled` 立即停止应用 protocol，并只在准确性需要时报告取消。
 3. `Activate | Continue` 时，MUST 应用 [protocol](references/protocol.md) 和 [symbols](references/symbols.md)。
 4. 删除铺垫、礼貌话、重复总结、低信息连接和不必要解释。
 5. 保留判断、行动、风险、问题、顺序、不确定性和必要上下文。
@@ -77,7 +84,7 @@ Hard:
 
 Before done:
 
-- 首次激活且 density owns response 时，第一条用户可见行包含内联 `💬 density`；与 outer owner 组合时只保留 owner marker；
+- `density` owns response 时，`Activate | Continue | Exit` 的每条用户可见回复第一行仅为 `💬 Density`，或带其他已显式且 materially active skill suffix；与 outer owner 组合且 Density materially changes 回复时，owner marker 追加 ` + Density` 且没有第二个 top-level marker；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - `density` 只在显式启用后持续；
 - `Exit` 已关闭 state 并使用准确 off receipt；`Cancelled` 已停止应用 protocol，二者都没有继续用高密度表达；
 - `Activate | Continue` 已按职责应用 `protocol.md` 和 `symbols.md`；`Exit | Cancelled` 没有继续应用；

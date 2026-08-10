@@ -19,6 +19,7 @@ import { PartitaError } from './errors.ts'
 import { validateOpenAiSkillText } from './openai-skill-validation.ts'
 import {
   projectSkillForm,
+  projectSkillMarker,
   validateInvocationSelectorEnglish,
 } from './projection.ts'
 import {
@@ -128,7 +129,7 @@ export const checkPartitaSourceSkillFiles = Effect.fn('checkPartitaSourceSkillFi
     const projection = checkPartitaSkillProjection(validation.fields, skill, skill.text, skill.relativePath, title)
     const description = validation.fields.description.trim()
     issues.push(...checkPartitaSkillDescription(description, skill.relativePath))
-    if (!hasLoadedSkillMarker(skill.text)) {
+    if (skill.family === undefined && !hasLoadedSkillMarker(skill.text)) {
       issues.push(issue('partita_skill.missing_marker', `missing supported marker instruction: ${loadedSkillMarkers.join(', ')}`, skill.relativePath))
     }
 
@@ -164,12 +165,31 @@ function checkPartitaSkillProjection(
   relativePath: string,
   title: string | undefined,
 ): PartitaSkillProjectionCheck {
-  if (skill.family === undefined || title === undefined) {
+  if (skill.family === undefined) {
     return { issues: [], openAiInterface: undefined }
   }
 
+  if (title === undefined) {
+    return {
+      issues: [issue(
+        'partita_projection.marker',
+        'namespaced skill marker projection requires a Markdown H1 title',
+        relativePath,
+      )],
+      openAiInterface: undefined,
+    }
+  }
+
+  const marker = projectSkillMarker({
+    family: skill.family,
+    slug: skill.name,
+    title,
+  })
   const parsedSelector = parsePatternSelector(text, relativePath)
-  const issues = [...parsedSelector.issues]
+  const issues = [
+    ...parsedSelector.issues,
+    ...checkProjectedSkillMarker(text, marker, relativePath),
+  ]
   if (parsedSelector.selector === undefined) {
     return { issues, openAiInterface: undefined }
   }
@@ -200,18 +220,46 @@ function checkPartitaSkillProjection(
     ))
   }
 
-  if (!projection.identity.acceptedMarkers.some(marker => text.includes(`\`${marker}\``))) {
-    issues.push(issue(
-      'partita_projection.marker',
-      `skill marker must match family projection: ${projection.identity.acceptedMarkers.join(' or ')}`,
-      relativePath,
-    ))
-  }
-
   return {
     issues,
     openAiInterface: projection.openAiMetadata.interface,
   }
+}
+
+function checkProjectedSkillMarker(
+  text: string,
+  marker: string,
+  relativePath: string,
+): ReadonlyArray<ValidationIssue> {
+  const candidate = inlineCodeSpans(activationPreamble(text)).find(value =>
+    loadedSkillMarkers.some(familyMarker => value.startsWith(familyMarker)))
+
+  return candidate !== undefined && matchesProjectedMarker(candidate, marker)
+    ? []
+    : [issue(
+        'partita_projection.marker',
+        `skill activation preamble must declare projected marker: ${marker}`,
+        relativePath,
+      )]
+}
+
+function matchesProjectedMarker(value: string, marker: string): boolean {
+  if (value === marker) {
+    return true
+  }
+
+  const suffixPrefix = `${marker} + `
+  if (!value.startsWith(suffixPrefix)) {
+    return false
+  }
+
+  return value.slice(suffixPrefix.length).split(' + ').every(suffix =>
+    suffix !== ''
+    && suffix.trim() === suffix)
+}
+
+function inlineCodeSpans(text: string): ReadonlyArray<string> {
+  return [...text.matchAll(/`([^`\r\n]+)`/gu)].map(match => match[1] ?? '')
 }
 
 interface ParsedPatternSelector {
@@ -750,6 +798,18 @@ function checkReferencesDirectory(
 
 function hasLoadedSkillMarker(text: string): boolean {
   return loadedSkillMarkers.some(marker => text.includes(marker))
+}
+
+function activationPreamble(text: string): string {
+  const titleMatch = /^# [^\r\n]+(?:\r?\n|$)/mu.exec(text)
+  const contentStart = titleMatch === null
+    ? 0
+    : titleMatch.index + titleMatch[0].length
+  const afterTitle = text.slice(contentStart)
+  const ruleMatch = /^## Rule\r?$/mu.exec(afterTitle)
+  return ruleMatch === null
+    ? afterTitle
+    : afterTitle.slice(0, ruleMatch.index)
 }
 
 function sectionBetween(text: string, start: string, end: string): string {

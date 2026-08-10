@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes pin to add, update, inspect, 
 
 # Pin
 
-激活时，第一条用户可见行 MUST 以内联 `🔗` 开头。
+当 `pin` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🔗 Pin` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -145,7 +145,7 @@ CLI operations are derived from schemaVersion 2；contract 不存自由文本 co
 
 Before done:
 
-- 第一条用户可见行包含内联 `🔗`；
+- 每条 `pin`-owned 用户可见回复的第一行仅为 `🔗 Pin`，或在其他已显式且 materially active skill 存在时为 `🔗 Pin + <Display Name>`；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - plan 只读并记录 exact hash、immutable revision 与 current→desired；
 - apply 使用获批 plan file/hash/revision，且没有重新选择 branch tip；
 - schemaVersion 2 contract 与 materialized prefix 一致，split/trailer 匹配 immutable revision；

@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes debrief to reconstruct comple
 
 # Debrief
 
-激活时，第一条用户可见行 MUST 以内联 `💬 debrief` 开头。
+当 `debrief` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `💬 Debrief` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -41,7 +41,7 @@ Soft:
 Hard:
 
 - When: 用户没有显式调用 `debrief`。
-  Do: MUST NOT 使用 `💬 debrief` marker 或套用本协议。
+  Do: MUST NOT 使用 `💬 Debrief` marker 或套用本协议。
 
 - When: claim 只有 agent inference，或 current artifact 无法证明历史动作、ownership、decision 或 rationale。
   Do: MUST 标记为 inference 或 unknown；不得把推测写成已发生事实。
@@ -71,7 +71,7 @@ Hard:
 6. 使用以下稳定形状交付；只有没有 material decision 时才省略 `Decisions`：
 
 ```text
-💬 debrief
+💬 Debrief
 Scope: <completed or paused work slice>
 Aim: <intended outcome or acceptance condition>
 Outcome: <Complete | Partial | Paused> — <current result>
@@ -99,7 +99,7 @@ Residuals:
 
 Before done:
 
-- 第一条用户可见行包含内联 `💬 debrief`；
+- 每条 `debrief`-owned 用户可见回复的第一行仅为 `💬 Debrief`，或在其他已显式且 materially active skill 存在时为 `💬 Debrief + <Display Name>`；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - `debrief` 只在用户显式调用后使用，Scope 是一个可辨认的 completed or paused work slice；
 - Aim、Outcome、每项 material Work、Verification 与 Residuals 均已覆盖；
 - 篇幅由 materiality 决定，没有因为 session 长或上一条回复短而再次过度压缩；

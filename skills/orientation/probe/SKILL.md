@@ -5,7 +5,7 @@ description: "Use when the user explicitly invokes probe to test a load-bearing 
 
 # Probe
 
-激活时，第一条用户可见行 MUST 以 orientation marker `🧭` 开头，并显示 `🧭 Probe`。
+当 `probe` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Probe` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
@@ -77,7 +77,7 @@ Hard:
 
 ## Workflow
 
-1. 显示 `🧭 Probe`，解析 `Aim`、probe scope、authority、`Unknown`、actual environment 与 `Next commitment`；只有多个 materially different interpretations 会改变实验时，才问一个最小问题并停止。
+1. 显示 `🧭 Probe` primary marker line，并按实际生效的 explicit contributors 追加 suffix；解析 `Aim`、probe scope、authority、`Unknown`、actual environment 与 `Next commitment`；只有多个 materially different interpretations 会改变实验时，才问一个最小问题并停止。
 2. 找出当前路线的 load-bearing premise，选择 cheapest falsifier；确认结果来自 actual environment，并检查是否触及 unresolved side-effect seam。
 3. 执行最小 probe，捕获实际输入、环境、observable state 与 receipt；只补充会改变 result 的检查。
 4. 将 route 标为 `Supported | Refuted | Partial | Blocked`。`Refuted` 时，在 `Aim`、scope 与 authority 不变的前提下自动选择下一条 cheapest compatible route，重复步骤 2–4。
@@ -113,7 +113,7 @@ Next: <supported next work, not executed | none>
 
 Before done:
 
-- 第一条用户可见行以 `🧭 Probe` 开头，且用户已经显式调用 `probe`；
+- 每条回复的第一行只含 primary `🧭 Probe` marker 和 materially effective、already-explicit contributor suffix，且用户已经显式调用 `probe`；
 - Aim、scope、authority、Unknown、actual environment 与 Next commitment 均可辨认；
 - Unknown 是 load-bearing empirical premise，不是 human decision、source claim 或 sandbox design question；
 - probe 使用 cheapest falsifier，没有先扩大准备性工作；
