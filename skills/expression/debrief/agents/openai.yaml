@@ -1,0 +1,6 @@
+interface:
+  display_name: "Debrief"
+  short_description: "The user explicitly asks to debrief completed or paused work"
+  default_prompt: "Use ex:debrief when the user explicitly asks to debrief completed or paused work."
+policy:
+  allow_implicit_invocation: false
