@@ -43,28 +43,25 @@ Soft:
 - `Evidence` SHOULD 引用已有 path、commit、diff 或 URL，避免复制已有 artifact。
 - cross-workspace 或 cross-host destination MUST 只接收可访问的 reference；不可访问时，MUST 内联最小必要 evidence，或清楚标记 blocker。
 - `Suggested skills` MAY 只在接收方明显需要时出现。
-- calling agent MUST 校验 packet 中每个 assertion、reference、boundary 与 uncertainty，并删除无关 source history。
-- synthesis worker SHOULD 使用 `fork_turns: none` 的 fresh context；因 agent slot limit 复用已知为 Luna `max` 的 worker 时，MUST 明确让本次 raw evidence 取代 prior task evidence，并检查 cross-task contamination。
+- response owner MUST 校验 packet 中每个 assertion、reference、boundary 与 uncertainty，并删除无关 source history。
 
 Hard:
 
-- MUST 将 packet synthesis 委派给 `agent_type: luna` 且 `reasoning_effort: max` 的 worker。
-- `max` MUST 解释为 Luna 的第五档、最高 effort；MUST NOT 使用 `xhigh`、其他 model 或 calling agent 自行 synthesis 作为替代，也 MUST NOT 静默降级。
-- calling agent MUST 在委派前确定 mode、successor `Aim`、destination 与初始 `Boundary`；worker 不得替用户决定转交授权或 target。
-- Luna `max` worker 不可用时，MUST 在任何 task mutation 前报告 blocker。
+- `relay` 协议只有 response owner 一个 source-side 执行角色；该 owner MUST 使用其已持有的 current-session context 完成 mode、successor `Aim`、destination 与初始 `Boundary` 判断、packet synthesis、validation、delivery、envelope、effects 与 termination ownership。successor task 是 delivery target，不是 internal synthesis role。
+- response owner MUST 在任何 task mutation 前确定 mode、successor `Aim`、destination 与初始 `Boundary`，并完成 packet validation；delivery readiness 只由这些 relay semantics、evidence、reference accessibility、secret redaction 与 target tool availability 决定。
 - 新 task MUST 使用 fresh-task creation，而不是 full-history fork；已有 task MUST 使用 follow-up message delivery。
 - MUST NOT 使用 thread/worktree/host handoff 操作实现 semantic relay。
 - `Branch` MUST NOT reset、replace 或暂停 source `Aim` 或 active `Land` gate，也 MUST NOT 在 source task 中执行被 relay 的工作。
 - `Continue` 成功交付后，MUST NOT 在 source task 中继续重复执行 successor work。
 - MUST NOT 在 source workspace 写 relay document、临时 handoff 文件或其他 packet artifact。
 - MUST NOT 发送 credential、token、secret 或 successor 不需要的敏感信息。
-- target creation 或 message delivery 没有得到工具确认时，MUST 报告未交付状态；不得显示成功 receipt。
-- `Continue` 未交付时，MUST 显示 work 未转移且 source responsibility unchanged；只有成功交付才能显示 `Source: stopped`。
-- 成功交付后，calling agent MUST 只返回 receipt，不得在同一 turn 继续 source 或 successor work。
+- target creation 或 message delivery 被工具明确拒绝时，MUST 报告 `not delivered`；工具没有提供可判定结果时，MUST 报告 `unconfirmed`。两者都不得显示成功 receipt。
+- `Continue` 没有确认成功时，MUST 显示 source responsibility unchanged；明确失败时显示 work not transferred，结果未知时显示 transfer not established。只有成功交付才能显示 `Source: stopped`。
+- 成功交付后，response owner MUST 只返回 receipt，不得在同一 turn 继续 source 或 successor work。
 
 ## Effects
 
-- Conversation: MAY 显示 `🧭 Relay`、一个最小 mode/target 问题、delivery blocker、unsent packet 或成功 receipt。
+- Conversation: MAY 显示 `🧭 Relay`、一个最小 mode/target 问题、delivery blocker、unsent packet、unconfirmed delivery outcome 或成功 receipt。
 - Filesystem: MAY 做 packet validation 所需的最小只读检查；no relay artifact writes。
 - External: MAY 只读 projects/tasks，创建并立即启动一个新 task，或向唯一解析的已有 task 发送 follow-up message；no full-history fork, thread relocation, archive, pin, or source-task mutation。
 
@@ -74,7 +71,7 @@ Hard:
 2. 将 focus 分类为 `Branch` 或 `Continue`；只有 mode 或 target 无法安全确定时，问一个最小问题。
 3. 固定 successor `Aim` 与初始 `Boundary`：`Branch` 创建新 Aim 并保持 source Aim；`Continue` 复用 source Aim。
 4. 收集 successor 需要的 accepted consensus、current position 或 idea seed、material uncertainty、可访问 evidence 与一个自然 `Next`。
-5. 将原始 evidence、mode、successor `Aim`、destination 和初始 `Boundary` 交给 Luna 第五档最高 effort `max` worker；优先使用 `fork_turns: none` 的 fresh context，要求生成 packet draft，不提供预期答案。
+5. response owner 在已持有的 current-session context 中，将原始 evidence、mode、successor `Aim`、destination 和初始 `Boundary` 直接投影为 packet draft。
 6. 校验 draft 的 evidence、scope、reference accessibility、secret redaction 与 target relevance；保留 material uncertainty，删除无关 source history。
 7. 使用以下稳定形状交付；`Branch` 使用 `Seed`，`Continue` 使用 `Position`，其余 optional section 无内容时省略：
 
@@ -106,7 +103,7 @@ Suggested skills:
 ```
 
 8. 对新 destination，创建带有 packet 的 fresh task 并让它从 `Next` 立即开始；对 existing destination，发送 packet 作为 follow-up prompt。
-9. 工具未确认 dispatch 时，先显示 `🧭 Relay` marker line，再显示 `Delivery: <Branch | Continue> not delivered`、blocker 和 `Source: unchanged; work not transferred`。工具确认 dispatch 后，使用以下 receipt 结束 source turn；异步 setup 仍在进行时准确显示 `queued`，不得显示 `started`：
+9. 工具明确拒绝 dispatch 时，先显示 `🧭 Relay` marker line，再显示 `Delivery: <Branch | Continue> not delivered`、blocker 和 `Source: unchanged; work not transferred`；工具没有提供可判定结果时显示 `Delivery: <Branch | Continue> unconfirmed`、observed uncertainty 和 `Source: unchanged; transfer not established`。工具确认 dispatch 后，使用以下 receipt 结束 source turn；异步 setup 仍在进行时准确显示 `queued`，不得显示 `started`：
 
 ```text
 🧭 Relay
@@ -127,10 +124,10 @@ Before done:
 - 每条回复的第一行只含 primary `🧭 Relay` marker 和 materially effective、already-explicit contributor suffix；
 - mode、successor `Aim` 与 destination 在 mutation 前已经确定；
 - `Branch` 保持 source `Aim` 和 active `Land` gate，`Continue` 没有在 source 重复推进；
-- packet synthesis 由 Luna 第五档最高 effort `max` worker 完成，没有 model 或 effort 降级；
+- packet synthesis 与 validation 由 `relay` response owner 从已持有的 current-session context 直接完成，协议没有其他 internal synthesis role 或 availability dependency；
 - packet 只包含 successor-relevant evidence，`Baseline` 只包含 accepted consensus；
 - reference 对 target 可访问，material uncertainty 可见，secret 已清理；
 - 新 task 使用 fresh creation 并立即开始，已有 task 收到 follow-up message；
 - delivery status 位于 marker line 后的 `Delivery` field；有工具确认时 receipt 准确区分 `sent`、`queued` 与 `started`；
-- delivery failure 没有产生成功 receipt 或 `Source: stopped`；
+- delivery failure 或 unconfirmed outcome 没有产生成功 receipt 或 `Source: stopped`，unconfirmed 没有被写成 `not delivered`；
 - 没有 full-history fork、thread relocation、relay artifact write 或 source-side execution。
