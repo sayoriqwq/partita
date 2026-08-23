@@ -145,6 +145,66 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('protects Matt TDDs red-green center against semantic weakening', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/tdd/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      'd160fe8c4762d22c5dc16256cee61c826cf813017bf41d80ae59f5731875cba8',
+    )
+    assert.include(rule, 'Before writing any test, name the public seams under test and obtain the user\'s agreement.')
+    assert.include(rule, 'one behavior test that is observed failing, one minimal implementation that makes it pass')
+    assert.include(boundary, 'expected values MUST come from an independent source of truth')
+    assert.include(boundary, 'Never mock owned internal collaborators.')
+    assert.include(boundary, 'Keep refactoring outside the red → green loop.')
+    assertInOrder(workflow, [
+      'write down the proposed public seams and ask the user to confirm them',
+      'Write exactly one test through the public interface',
+      'observe the test fail for the intended absent behavior',
+      'Add only enough production code to satisfy that test',
+      'observe green',
+      'Repeat Steps 3–5 for the next behavior, one vertical slice at a time',
+    ])
+  }))
+
+  it.effect('pins Matt TDD provenance and the provisional Partita lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/tdd/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/tdd/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/tdd/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/tdd.md': '5028b22f61689c6dd6ee7f428fb9d014e73c6839',
+      'skills/engineering/tdd/SKILL.md': 'ead7781d79eb11cdafa1ac2db978cadef0eba240',
+      'skills/engineering/tdd/agents/openai.yaml': '651b838a7663e027b1b8884491e867f26bb9a021',
+      'skills/engineering/tdd/mocking.md': '71cbfee674d93244ce81d1830b930ca9a69200bd',
+      'skills/engineering/tdd/tests.md': '7ab86479f925a1f9e8ba680af33cb3b12e015381',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual(countOccurrences(skill, 'Recall handoff'), 1)
+    assert.include(skill, 'Every resulting patch MUST be performed through a separate explicit `retune`')
+    assert.include(provenance, 'Static source-fidelity checks can detect drift in this projection; they do not validate Captain use.')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
+  it.effect('keeps Matt TDDs local test references byte-identical to the pinned source', () => Effect.sync(() => {
+    assert.strictEqual(
+      gitBlobId(readFileSync('skills/primitive/tdd/references/tests.md')),
+      '7ab86479f925a1f9e8ba680af33cb3b12e015381',
+    )
+    assert.strictEqual(
+      gitBlobId(readFileSync('skills/primitive/tdd/references/mocking.md')),
+      '71cbfee674d93244ce81d1830b930ca9a69200bd',
+    )
+  }))
+
   it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
     const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
     const rule = markdownSection(skill, '## Rule', '## Pattern')
