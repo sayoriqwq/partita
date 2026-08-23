@@ -205,6 +205,61 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     )
   }))
 
+  it.effect('protects Prototypes one-question throwaway observable-answer core', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/prototype/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      'e27f5bb0f3d871c367b3ada3d0705dbddc55e05e41c308618f88b7dbd92210b5',
+    )
+    assert.include(rule, 'Answer exactly one unresolved design question with the cheapest useful runnable artifact')
+    assert.include(rule, 'choose a logic/state demo')
+    assert.include(rule, 'visibly distinct UI alternatives')
+    assert.include(rule, 'keeping every prototype artifact outside production behavior')
+    assert.include(boundary, 'full relevant state in domain language')
+    assert.include(boundary, 'Variants MUST differ in structure, not merely color or copy.')
+    assert.include(boundary, 'Prototype explores sandbox/design behavior.')
+    assert.include(boundary, '`probe` instead tests a load-bearing empirical premise in the actual task environment')
+    assert.include(boundary, 'Do not call another Skill.')
+    assertInOrder(workflow, [
+      'Write the single unresolved design question in one sentence',
+      'Choose deliberately:',
+      '**Logic/state**',
+      '**UI**',
+      'Run the artifact through its trivial startup path',
+      'collect that verdict from the user',
+      'Stop with the question, branch, artifact locator, observed comparison, one-sentence answer',
+    ])
+  }))
+
+  it.effect('pins Matt Prototype provenance and the provisional Partita lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/prototype/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/prototype/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/prototype/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/prototype.md': 'de86e9cc7472338016b17b367d65893659a1f170',
+      'skills/engineering/prototype/LOGIC.md': '5f5a3fd5a8cbd69c029854e9881ddc6e87ae5093',
+      'skills/engineering/prototype/SKILL.md': '094571156140f5993cce8557dc31383c82817f3e',
+      'skills/engineering/prototype/UI.md': '76c0f6012b016af04d6105fa696a9a0e29dfa53a',
+      'skills/engineering/prototype/agents/openai.yaml': '1618b147965bc729b7bf3e8da5f130132067aadc',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(skill, 'Every patch to this Skill MUST then be performed through a separate explicit `retune`')
+    assert.include(provenance, 'Core governing idea')
+    assert.include(provenance, 'Secondary issue, branch, and commit mechanics')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
   it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
     const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
     const rule = markdownSection(skill, '## Rule', '## Pattern')
