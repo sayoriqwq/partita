@@ -1,0 +1,6 @@
+interface:
+  display_name: "Implement"
+  short_description: "The user explicitly invokes implement to build settled work from a supplied spec, ticket, or agreed plan through Partita TDD, project checks, and terminal Code Review"
+  default_prompt: "Use pm:implement when the user explicitly invokes implement to build settled work from a supplied spec, ticket, or agreed plan through Partita TDD, project checks, and terminal Code Review."
+policy:
+  allow_implicit_invocation: false
