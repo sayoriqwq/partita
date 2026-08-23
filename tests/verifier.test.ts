@@ -16,18 +16,67 @@ import {
 
 const { execFileSync } = process.getBuiltinModule('node:child_process')
 const { createHash } = process.getBuiltinModule('node:crypto')
-const { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
 const marker = '🧭'
 
 layer(NodeServices.layer)('Partita verifier', (it) => {
-  it.effect('keeps score explicit invocation only', () => Effect.sync(() => {
-    const metadata = readFileSync('skills/primitive/score/agents/openai.yaml', 'utf8')
+  it.effect('keeps arrange explicit invocation only', () => Effect.sync(() => {
+    const metadata = readFileSync('skills/primitive/arrange/agents/openai.yaml', 'utf8')
 
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
+
+  it.effect('accepts the complete reviewed Score-to-Arrange projection', () =>
+    Effect.gen(function* () {
+      const root = makeArrangeProjectionFixture()
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.ok)
+      assert.deepStrictEqual(report.issues, [])
+    }))
+
+  it.effect('reports changed upstream and target Arrange behavior files', () =>
+    Effect.gen(function* () {
+      const root = makeArrangeProjectionFixture()
+      write(root, 'repos/score/references/audience.md', '# Changed upstream\n')
+      write(root, 'skills/primitive/arrange/references/assertion.md', '# Changed target\n')
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.include(codes, 'arrange_source.upstream_drift')
+      assert.include(codes, 'arrange_source.projection_drift')
+    }))
+
+  it.effect('reports missing and extra behavior files on both Arrange projection sides', () =>
+    Effect.gen(function* () {
+      const root = makeArrangeProjectionFixture()
+      rmSync(join(root, 'repos/score/references/section.md'))
+      write(root, 'repos/score/references/extra.md', '# Extra upstream\n')
+      rmSync(join(root, 'skills/primitive/arrange/references/module.md'))
+      write(root, 'skills/primitive/arrange/references/extra.md', '# Extra target\n')
+
+      const report = yield* verifySourceProject({ root })
+      const codes = report.issues.map(issue => issue.code)
+
+      assert.include(codes, 'arrange_source.upstream_missing')
+      assert.include(codes, 'arrange_source.upstream_extra')
+      assert.include(codes, 'arrange_source.target_missing')
+      assert.include(codes, 'arrange_source.target_extra')
+    }))
+
+  it.effect('reports Arrange provenance overlay drift', () =>
+    Effect.gen(function* () {
+      const root = makeArrangeProjectionFixture()
+      write(root, 'skills/primitive/arrange/references/source-provenance.md', '# Changed provenance\n')
+
+      const report = yield* verifySourceProject({ root })
+
+      assert.isTrue(report.issues.some(issue => issue.code === 'arrange_source.overlay_drift'))
+    }))
 
   it.effect('locks composition-only creation routing and native Density interruption', () => Effect.sync(() => {
     const agents = readFileSync('AGENTS.md', 'utf8')
@@ -957,6 +1006,15 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(projectCodes.includes('openai_metadata.missing'))
     }))
 })
+
+function makeArrangeProjectionFixture(): string {
+  const root = makeValidSourceFixture()
+  mkdirSync(join(root, 'repos'), { recursive: true })
+  mkdirSync(join(root, 'skills/primitive'), { recursive: true })
+  cpSync('repos/score', join(root, 'repos/score'), { recursive: true })
+  cpSync('skills/primitive/arrange', join(root, 'skills/primitive/arrange'), { recursive: true })
+  return root
+}
 
 function makeValidSourceFixture(): string {
   const root = mkdtempSync(join(tmpdir(), 'partita-verifier-'))

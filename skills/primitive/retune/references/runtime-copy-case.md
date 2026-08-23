@@ -19,6 +19,8 @@ agent 触发 `retune` 后，先直接修改了 installed runtime skill copy。
 
 用户纠正：skills 真源在 Partita 的 `skills/primitive/score/` 下，必须改真源并运行 Partita 指令。
 
+这里的 `score` 和 `skills/primitive/score/` 记录当时的 predecessor identity；当前真源位置是 `skills/primitive/arrange/`。
+
 agent 随后修改了 Partita 真源并运行生成、验证和安装命令。
 
 用户再次纠正：具体失败样例也需要补充到 target skill 的 `references/` 里。

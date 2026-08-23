@@ -167,7 +167,7 @@ partita pin publish --contract repos/effect.subtree.json --archive out/effect.pt
 repos/effect.subtree.json
 ```
 
-`repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
+`repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。Score 的已审查 baseline 固定在 `repos/score/`，其 Partita-owned、自包含 runtime projection 是 `skills/primitive/arrange/`。
 
 Pinned upstream 内部的 gitlinks 是 opaque reference boundaries。`partita pin verify` 只 hard-block pin prefix 本身被 materialize 为 mode `160000` 的 gitlink；不会 follow、fetch、checkout、materialize 内部 gitlink，也不要求为它们创建额外 subtree contract。
 
@@ -260,7 +260,7 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 当前 Partita-owned public runtime catalog 是 explicit-only：所有现有 skill 的 `policy.allow_implicit_invocation` 都是 `false`。显式调用可以创建 skill 声明的 conversation-local state；该 state 在 lifecycle 内继续生效属于 continuation，不是新的 implicit invocation。
 
-namespaced Partita skill 激活期间，每条用户可见回复的第一行是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owner 保持第一位；只追加实质改变本次回复的其他已显式激活或共同调用 skill。primitive catalog 对应 `🎼 Conduct`、`🎼 Notate`、`🎼 Retune` 和 `🎼 Score`。
+namespaced Partita skill 激活期间，每条用户可见回复的第一行是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owner 保持第一位；只追加实质改变本次回复的其他已显式激活或共同调用 skill。primitive catalog 对应 `🎼 Arrange`、`🎼 Conduct`、`🎼 Notate`、`🎼 Retune`。
 
 top-level skill invocation 保持 explicit-only。显式调用 Workflow 后，Workflow 可以调用 closed、finite、predeclared component Skills；component call 是 typed composition，不是 component 的 top-level implicit invocation。Primitive 的 implementation 不调用 Skill；Workflow 的 implementation 调用一个或多个 predeclared Skills，这是唯一 classifier，和步骤数、阶段、分支、本地 state/protocol、router/controller shape 或 source namespace 无关。Workflow 保持 outer owner：owns overall outcome、primary marker、response envelope、effect policy、termination 与 next-step decision，并保持在 marker 第一位；component 在声明 scope 内执行自己的 Effect，通过 typed input/output 或 Effect Requirements 返回。只有实质改变本次回复的已显式激活/共同调用 skill 才列为 contributor；active 但未实质参与的 skill 必须省略。多个 co-invoked top-level skill 争夺 ownership 且 precedence 未确定时，先用一个不带 skill marker 的最小问题决定 owner。未来若引入 internal/model-invoked top-level role，必须先明确 composition ownership、effects、disclosure 与 invocation policy。
 

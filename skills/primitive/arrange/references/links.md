@@ -19,15 +19,15 @@ updated: 2026-06-27
 
 ## Rules
 
-- `score` 在支持 OFM 的外部文档系统里 MAY 使用 wiki link 语法。
+- `arrange` 在支持 OFM 的外部文档系统里 MAY 使用 wiki link 语法。
 - Partita repo-local docs SHOULD 使用明确 Markdown path 或普通文本 reference。
 - link 目标 SHOULD 是明确 module。
-- `score` 不定义复杂 relationship。
+- `arrange` 不定义复杂 relationship。
 - 普通 Markdown link 只在目标 surface 不支持 OFM、链接 repo 外文件或外部 URL 时使用。
 
 ## Examples
 
 ```md
-skills/primitive/score/references/assertion.md
-skills/primitive/score/references/language.md
+skills/primitive/arrange/references/assertion.md
+skills/primitive/arrange/references/language.md
 ```

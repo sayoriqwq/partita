@@ -50,6 +50,7 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - 外部 repos MUST 通过 `partita pin` 的 GitHub git-subtree pin 进入 Partita。
 - GitHub subtree pin contract MUST 使用 sibling path，例如 `repos/<name>.subtree.json`。
 - `repos/<name>/` 是 read-only external source materialization，不是 Partita-owned skill source。
+- 修改 Arrange source projection 或核对 Score provenance 时，MUST 先读取 `repos/score/SKILL.md`；runtime target 保持自包含，且不得从 `repos/score/` import。
 - Partita owns generic Source Pin verification and deterministic publication through the Prelude Contract canonical archive codec.
 - Source Pin publication MUST remain free of Harness-specific Target locators, routes, anchors, and `referenceOnly` delivery policy.
 - generic helper package 已废弃；MUST NOT 恢复 marker DSL 或 repo-internal materialization abstraction。

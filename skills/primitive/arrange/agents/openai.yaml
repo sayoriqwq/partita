@@ -1,0 +1,6 @@
+interface:
+  display_name: "Arrange"
+  short_description: "The user explicitly invokes arrange to reshape a concrete Markdown artifact under Score while preserving its meaning"
+  default_prompt: "Use pm:arrange when the user explicitly invokes arrange to reshape a concrete Markdown artifact under Score while preserving its meaning."
+policy:
+  allow_implicit_invocation: false

@@ -1,21 +1,21 @@
 ---
-name: score
-description: "Use when the user explicitly invokes score to apply sayoriqwq-style Markdown writing preferences to Markdown docs. Not for implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
+name: arrange
+description: "Use when the user explicitly invokes arrange to reshape a concrete Markdown artifact under Score while preserving its meaning. Not for implicit Markdown editing, non-Markdown prose, product copy, release notes, social posts, translation, localization, code comments, commit messages, skill creation, workflow creation, or skill patching."
 ---
 
-# Score
+# Arrange
 
-当 `score` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🎼 Score` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
+当 `arrange` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🎼 Arrange` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 skill，不改变 ownership，active-but-inert skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 skill marker 的最小 owner 问题。
 
 ## Rule
 
-面对用户显式调用 `score` 处理 Markdown 时，MUST 按 sayoriqwq-style Markdown preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。
+面对用户显式调用 `arrange` 处理 concrete Markdown artifact 时，MUST 在保持语义不变的前提下按 Score writing preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。
 
 ## Pattern
 
 Use when:
 
-- the user explicitly invokes score to apply sayoriqwq-style Markdown writing preferences to Markdown docs.
+- the user explicitly invokes arrange to reshape a concrete Markdown artifact under Score while preserving its meaning.
 
 Do not use when:
 
@@ -41,8 +41,8 @@ Soft:
 
 Hard:
 
-- When: 用户没有显式调用 `score`。
-  Do: MUST NOT 使用 `🎼 Score` marker 或套用 `score` protocol。
+- When: 用户没有显式调用 `arrange`。
+  Do: MUST NOT 使用 `🎼 Arrange` marker 或套用 `arrange` protocol。
 
 - When: 当前 repo 明确声明了覆盖本次 Markdown 变更 surface 的本地 verifier。
   Do: MUST 运行该 repo-local verifier；`pnpm verify` 只在当前 repo 存在 `package.json` 且声明 `scripts.verify`，或本地指令明确要求它时使用。
@@ -50,7 +50,7 @@ Hard:
 - When: 完成 repo 变更前。
   Do: MUST 运行已发现的 repo-local verifier；如果没有可发现 verifier，MUST 报告未发现本地 verifier，并且 MUST NOT 反复运行硬编码的全局命令。
 
-- When: 在 Partita landing 中修改 `score` source、local references、generated files、frontmatter 或 `agents/openai.yaml`。
+- When: 在 Partita landing 中修改 `arrange` source、local references、generated files、frontmatter 或 `agents/openai.yaml`。
   Do: MUST 从 Partita repo root 运行 `pnpm verify`。
 
 ## Effects
@@ -61,7 +61,7 @@ Hard:
 
 ## Workflow
 
-1. 确认用户显式调用了 `score`；否则不激活。
+1. 确认用户显式调用了 `arrange`；否则不激活。
 2. 读取与当前 Markdown surface 相关的本地 preference references。
 3. 识别 target module 及其 boundary。
 4. 查找同一文档集是否已有 index、README、routing table 或模块清单；需要描述文档职责或阅读路线时，先更新该入口。
@@ -85,16 +85,17 @@ Hard:
 - 需要 agent-facing structures 或 template 定义时，读取 [pattern](references/pattern.md)。
 - 需要 index 和短 scope filename 时，读取 [path](references/path.md)。
 - 需要 OFM-first linking 时，读取 [links](references/links.md)。
+- 需要核对 Score source、projection boundary 或 Partita overlay 时，读取 [source provenance](references/source-provenance.md)。
 
 ## Validation
 
 Before done:
 
-- `score` 只在用户显式调用后使用；
-- target surface 是 Markdown；
+- `arrange` 只在用户显式调用后使用；
+- target surface 是 concrete Markdown artifact，且 reshape 保持其 meaning；
 - 相关本地 preference references 已应用；
 - 当变更触及 metadata、audience、module boundary、sections、assertions、language、keywords、pattern、path 或 links 时，这些面已被处理；
 - 当变更触及文档职责、阅读路线或模块边界，且文档集存在 index/routing module 时，这些 assertions 已集中到 index/routing module；
-- `score` 没有执行非 Markdown prose polish、product copy、workflow skill、primitive skill、skill patch、code comment、commit message、PR description 或 issue reply；
+- `arrange` 没有执行非 Markdown prose polish、product copy、workflow skill、primitive skill、skill patch、code comment、commit message、PR description 或 issue reply；
 - Effects 保持在声明的 filesystem scope 内；
 - 要求的 Hard checks 已通过，或准确 blocker 已报告。

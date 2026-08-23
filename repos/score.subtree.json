@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "name": "score",
+  "source": {
+    "repository": "https://github.com/sayoriqwq/score",
+    "trackingBranch": "main",
+    "revision": "d7b2c2685e5feacc469f8a144bd5c46d13a0a6cc"
+  },
+  "materialization": {
+    "prefix": "repos/score",
+    "mechanism": "git-subtree",
+    "split": "d7b2c2685e5feacc469f8a144bd5c46d13a0a6cc",
+    "trailer": "git-subtree-split: d7b2c2685e5feacc469f8a144bd5c46d13a0a6cc"
+  },
+  "ownership": {
+    "mode": "direct"
+  },
+  "agent": {
+    "anchor": "repos/score/SKILL.md",
+    "route": "AGENTS.md",
+    "readOnly": true,
+    "importBlock": true
+  },
+  "workspace": {
+    "autoImport": "excluded",
+    "watch": "excluded",
+    "search": "excluded",
+    "files": "visible"
+  }
+}

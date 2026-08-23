@@ -3,7 +3,7 @@ audience: agent
 authors:
   - codex
 reviewed_by: []
-purpose: 记录 score 在文档职责说明被写入 leaf module 时的复发样例。
+purpose: 记录 arrange 在文档职责说明被写入 leaf module 时的复发样例。
 status: active
 sources: []
 updated: 2026-07-01
@@ -24,11 +24,11 @@ agent 把文档职责和边界写进了 leaf modules 正文，例如“本文件
 
 ## Failure
 
-`score` 当时只要求维护 module boundary。
+`arrange` 当时只要求维护 module boundary。
 
-`score` 没有明确要求先查找文档集入口。
+`arrange` 没有明确要求先查找文档集入口。
 
-`score` 没有明确要求把文档职责、阅读路线和模块边界集中写进 index 或 routing module。
+`arrange` 没有明确要求把文档职责、阅读路线和模块边界集中写进 index 或 routing module。
 
 ## Governance
 

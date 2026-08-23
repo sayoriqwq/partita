@@ -37,7 +37,7 @@ updated: YYYY-MM-DD
 - 在 sayoriqwq-style docs 中，module MUST 使用 frontmatter metadata。
 - metadata 承载文档级状态，不承载正文论述。
 - metadata SHOULD 帮 agent 稳定读取读者、作者、review 状态、用途、维护状态、来源和更新时间。
-- 如果目标文件已有 metadata，`score` MUST 维护它，不应该让它和正文漂移。
+- 如果目标文件已有 metadata，`arrange` MUST 维护它，不应该让它和正文漂移。
 - 如果当前项目或用户明确禁止 frontmatter，则遵循更高优先级约束。
 
 ## Fields
@@ -74,4 +74,4 @@ updated: YYYY-MM-DD
 - `sources` 不等于 review。
 - `sources` 不自动让 module active。
 - 如果 assertion 是用户在当前聊天中确认的，`sources` 可以是 `[]`。
-- `score` MUST NOT 强行发明 source。
+- `arrange` MUST NOT 强行发明 source。
