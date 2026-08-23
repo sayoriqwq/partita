@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code Review"
+  short_description: "The user explicitly invokes code-review to review committed changes since a supplied fixed point against repository standards and an originating spec"
+  default_prompt: "Use pm:code-review when the user explicitly invokes code-review to review committed changes since a supplied fixed point against repository standards and an originating spec."
+policy:
+  allow_implicit_invocation: false

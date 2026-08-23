@@ -99,6 +99,52 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('locks the Matt-centered two-axis review against center-of-gravity drift', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/code-review/SKILL.md', 'utf8')
+    const baseline = readFileSync('skills/primitive/code-review/references/smell-baseline.md', 'utf8')
+    const behavioralBody = markdownSection(skill, '## Rule', '## References')
+    const reportShape = /```markdown\n([\s\S]*?)\n```/u.exec(
+      skill.slice(skill.indexOf('under exactly these peer headings')),
+    )?.[1] ?? ''
+
+    assert.strictEqual(
+      sha256(behavioralBody),
+      '86a2d6812d7d4a6d000830c23c5623f0fd07893e6619cb4078916056fe1d6d45',
+    )
+    assert.strictEqual(
+      sha256(baseline),
+      '9f037f3f96a1fe8a83d6a1306de5bffaf7fd7b279927dabe614c68465fb837ab',
+    )
+    assert.deepStrictEqual(
+      [...reportShape.matchAll(/^## (Standards|Spec)$/gmu)].map(match => match[1]),
+      ['Standards', 'Spec'],
+    )
+    assert.include(behavioralBody, 'without merging, cross-axis reranking, or letting one axis mask the other')
+    assert.include(behavioralBody, 'no spec available')
+  }))
+
+  it.effect('pins Matt code-review provenance and the provisional Partita lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/code-review/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/code-review/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/code-review/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/code-review.md': '5cabe864334b4958764e78bf51a688367f35212f',
+      'skills/engineering/code-review/SKILL.md': '2d276fe88bddd363395b4887a555769222a34975',
+      'skills/engineering/code-review/agents/openai.yaml': '9076774ba327f49068db9273feceda03bfe940fa',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(skill, 'every patch requires a later explicit retune')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST be performed through a later explicit `retune`.')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
   it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
     const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
     const rule = markdownSection(skill, '## Rule', '## Pattern')
