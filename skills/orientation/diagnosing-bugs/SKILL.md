@@ -5,11 +5,11 @@ description: "Use when the user explicitly invokes diagnosing-bugs to investigat
 
 # Diagnosing Bugs
 
-当 `diagnosing-bugs` owns 当前 response 时，每条用户可见回复的第一行 MUST 只包含 `🧭 Diagnosing Bugs` 与可选的 ` + <Display Name>` suffix；suffix 只列出实质改变该回复的其他已显式激活/共同调用 Skill，不改变 ownership，active-but-inert Skill 与 local contract projection MUST 省略，其他内容从第二行开始。多个 co-invoked Skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问一个不带 Skill marker 的最小 owner 问题。
+When `diagnosing-bugs` owns a response, its first user-visible line MUST be `🧭 Diagnosing Bugs`, optionally followed only by material explicitly co-invoked contributors. Diagnosing Bugs retains envelope, effects, and termination ownership. If co-invoked owners conflict and precedence is unknown, ask one minimal owner question without a marker before activation.
 
 ## Rule
 
-面对一个已观察到的具体 defect 或 performance regression，MUST 先建立能命中该症状的可运行诊断信号并保留 evidence，再形成 cause theory 或修改实现，避免靠代码阅读猜测原因、修复相邻但不同的失败，或无法证明修复有效。
+**The tight, red-capable feedback loop is the Skill. Everything else is mechanical.** Spend disproportionate effort engineering one named command that has already gone red on the user's exact symptom, runs in seconds, is deterministic or has a measured high reproduction rate, and is agent-runnable. No such loop means no cause hypothesis and no production fix.
 
 ## Pattern
 
@@ -25,83 +25,119 @@ Do not use when:
 
 Soft:
 
-- Status MUST 保持为 `provisional / case-pending`：本 V1 来自外部 source evidence，尚无 Captain-observed Partita use case；它不是 Captain-validated theory。
-- 本 Skill 的 provisional exception 只适用于当前明确授权的 `diagnosing-bugs` V1，不改变其他 identity-valid Skill 的 case requirement，也不建立通用 provisional-Skill framework。
-- MUST 在首次 substantive response 和完成报告中披露 provisional/case-pending status。
-- MUST 固定用户描述的 exact symptom、task authority、environment 和 evidence scope；相邻 failure 不得替代目标 bug。
-- MUST 优先得到一个 agent-runnable signal：具体 command 已实际运行，能在当前 bug 上给出失败 verdict，并能在修复后给出成功 verdict。
-- flaky bug 的 signal MAY 以固定次数和观察到的 reproduction rate 表示；目标是把 rate 提高到足以区分假设，而不是伪装为 deterministic。
-- MUST 在 causal theory 前复现 symptom；能缩减时逐项移除非承重 input、config、caller 或 step，并在每次缩减后重跑 signal。
-- MUST 形成一组小而有排序的 falsifiable hypotheses；每个 hypothesis 都要有能被 probe 推翻的 prediction。
-- probe MUST 对应一个 prediction，一次改变一个变量；temporary instrumentation MUST 使用本次 diagnosis 唯一 tag，便于完成前清除。
-- performance regression MUST 先记录可重复 baseline，再使用 profiler、query plan、bisection 或 differential measurement；不得以大量 logging 替代 measurement。
-- regression test MUST 位于能覆盖真实 bug pattern 的 seam；不存在正确 seam 时明确记录，不得用过浅 test 冒充 coverage。
-- evidence 中的 credential、token、cookie、personal data、auth header 和其他 secret MUST 在用户可见输出前 redacted；不足以诊断时请求更安全的最小 evidence。
-- diagnosis 完成时 MUST 输出一个 `Recall handoff`，记录 target Skill、evidence/session scope、trigger、actual process、outcome 和 observed divergence，供用户之后显式调用 `recall`；MUST NOT 自动激活 `recall`。
+- On the first substantive response, disclose once: `Status: provisional / case-pending; source-backed, not Captain-validated.`
+- Redact credentials, tokens, cookies, personal data, auth headers, and sensitive payloads before showing commands, output, or captured artifacts. If the redacted evidence is insufficient, request the smallest safer evidence.
 
 Hard:
 
-- When: 用户没有显式调用 `diagnosing-bugs`。
-  Do: MUST NOT 使用 `🧭 Diagnosing Bugs` marker、进入 diagnosis loop 或产生本 Skill effects。
-
-- When: 尚无一个已实际运行、能命中 exact symptom 的失败 signal。
-  Do: MUST NOT 提出 cause theory 或修改 production implementation；列出已尝试的最小 routes，并请求缺失的 access、redacted artifact 或 instrumentation authority。
-
-- When: evidence 含 secret 或敏感 payload。
-  Do: MUST 只保留支撑 verdict 的 redacted excerpt；MUST NOT 把原始敏感 artifact 粘贴到 conversation、issue 或 PR。
-
-- When: fix 已准备提交完成判断。
-  Do: MUST 重跑 original signal 和 regression coverage，删除 temporary instrumentation，并记录实际支持的 cause；任一项缺失都必须作为 gap 报告。
-
-- When: 本次真实使用结束。
-  Do: MUST 保持 case debt 可见并输出 Recall handoff；在用户显式调用 `recall` 重建真实 case 前，MUST NOT 称本 Skill case-grounded 或 Captain-validated。
+- Without explicit invocation, produce no marker and no effects from this Skill.
+- Treat every phase gate in the Workflow as a stop condition. Stay in the current phase while its completion criterion is unmet; never replace missing evidence with code-reading theory.
+- Keep filesystem and external actions within the current bug task. Ask the user before adding production instrumentation or another new external mutation.
 
 ## Effects
 
-- Conversation: MAY 展示 provisional status、redacted signal receipts、minimised repro、ranked hypotheses、probe results、cause、verification、remaining gaps 和 Recall handoff。
-- Filesystem: MAY 在当前 bug task authority 内创建或修改 repro、temporary instrumentation、regression tests 和 implementation fix；MUST 在完成前清除未获保留授权的 temporary artifacts。
-- External: MAY 在当前 bug task authority 内运行现有 diagnostic surfaces；新增 external mutation 或 production instrumentation 需要独立明确 authority。
+- Conversation: MAY show the status disclosure, redacted loop receipts, minimised repro, ranked hypotheses, probe results, cause, verification, gaps, and final handoff.
+- Filesystem: MAY create or modify repros, temporary instrumentation, regression tests, and the implementation fix for the current bug; remove temporary artifacts before completion unless the user asks to retain them.
+- External: MAY run existing diagnostic surfaces for the current bug; ask the user before production instrumentation or a new external mutation.
 
 ## Workflow
 
-1. 显示 `🧭 Diagnosing Bugs` marker，并披露 `Status: provisional / case-pending; source-backed, not Captain-validated.`；固定 exact symptom、environment、authority 和 evidence scope。
-2. 构造最小 diagnostic signal。优先使用已有 test seam、CLI/HTTP invocation、captured input replay、small harness、repeatable stress loop 或 old/new differential；实际运行 command，并保留 redacted input、output 和 verdict receipt。
-3. 确认 signal 命中用户报告的同一 symptom。重复运行或记录 reproduction rate；逐项缩减 scenario，直到剩余元素均有可观察的 load-bearing evidence，或准确说明无法继续缩减。
-4. 在修改实现前写出小而有序的 hypotheses，每项包含 cause candidate、prediction 和最便宜的 falsifier。
-5. 按顺序 probe hypotheses，一次改变一个变量。使用 debugger 或 targeted tagged instrumentation；performance branch 使用 measurement。每次 probe 都回到原 signal 判断。
-6. 找到 evidence-supported cause 后，在正确 seam 先加入能失败的 regression test；若没有正确 seam，记录 architecture gap。实施最小 fix，再让 regression test 和 original signal 通过。
-7. 清除 tagged instrumentation 和未保留的 throwaway artifacts；重跑 original signal、相关 regression coverage 和 repository-required checks。报告 cause 只到 evidence 支持的边界。
-8. 以以下字段结束，并提醒用户如需把该 use 转为治理 case，应之后显式调用 `recall`：
+### Phase 1 — Build and tighten the feedback loop
+
+Be aggressive and creative here. Try these routes in roughly this order until one catches the actual symptom:
+
+1. A failing unit, integration, or end-to-end test at a seam that reaches the bug.
+2. A curl or HTTP script against a running development server.
+3. A CLI invocation with fixture input and known-good output.
+4. A headless browser script that asserts on DOM, console, or network behavior.
+5. Replay of a captured request, payload, trace, or event log through the code path.
+6. A throwaway harness containing only the subset needed to exercise the path.
+7. A property or fuzz loop for intermittently wrong output.
+8. A bisection harness suitable for automated state, dataset, version, or `git bisect run` checks.
+9. A differential loop that runs identical input through old/new versions or configurations.
+10. As a last resort, a human-in-the-loop script based on [`scripts/hitl-loop.template.sh`](scripts/hitl-loop.template.sh): the agent runs the structured loop, the human follows prompts, and parseable observations return to the agent.
+
+Treat the loop as a product, not a disposable setup step. Repeatedly tighten it:
+
+- make it faster by caching setup, narrowing scope, and skipping unrelated initialization;
+- make its verdict sharper by asserting the exact symptom rather than a generic crash or success;
+- make it deterministic by pinning time, seeding randomness, isolating the filesystem, and freezing the network.
+
+For a non-deterministic bug, raise and measure the reproduction rate instead of pretending it is deterministic: loop the trigger, parallelise, stress the system, narrow timing windows, or inject sleeps. Record a fixed run count and observed rate high enough to distinguish probes.
+
+If no route can produce a loop, stop. List the routes attempted and request one of: access to the reproducing environment, a redacted captured artifact, or permission for temporary instrumentation. Do not hypothesise anyway.
+
+**Gate to Phase 2:** name one command already run at least once and show its redacted invocation, output, and verdict. It must be:
+
+- **exact-symptom red-capable:** it exercises the real bug path and fails on the user's symptom, then can go green when that symptom is fixed;
+- **fast:** seconds rather than minutes;
+- **deterministic or measured high-rate:** repeated runs give the same verdict, or a pinned flake run gives a high observed reproduction rate;
+- **agent-runnable:** the agent can repeat it unattended, with human actions structured only through the shipped HITL helper.
+
+### Phase 2 — Reproduce and minimise
+
+Run the loop and confirm it reproduces the user's failure rather than a nearby one. Capture the exact error, wrong output, or slow measurement, and repeat enough runs to establish determinism or the measured reproduction rate.
+
+Then shrink the repro to the smallest scenario that stays red. Remove inputs, callers, configuration, data, and steps **one variable at a time**, rerunning after every cut. Keep only elements proven load-bearing.
+
+**Gate to Phase 3:** the exact symptom is reproduced and the repro is minimised until removing any remaining element makes the loop green. Both conditions are mandatory.
+
+### Phase 3 — Rank falsifiable hypotheses
+
+Generate **3–5 ranked hypotheses before testing any of them**. Each must state a falsifiable prediction:
+
+> If X is the cause, changing Y will remove the symptom, or changing Z will make it measurably worse.
+
+Discard or sharpen any hypothesis without a prediction. Show the ranked list to the user before probes so domain knowledge can re-rank it; if the user is away, proceed with the displayed ranking rather than blocking.
+
+**Gate to Phase 4:** 3–5 ranked hypotheses with explicit predictions have been shown to the user.
+
+### Phase 4 — Probe one prediction at a time
+
+Map every probe to one Phase 3 prediction and change exactly one variable. Prefer a debugger or REPL, then targeted boundary logs; never log everything and grep. Give temporary logs one diagnosis-unique `[DEBUG-...]` prefix so one final grep proves cleanup.
+
+For a performance regression, establish a repeatable baseline first, then use a profiler, query plan, bisection, or differential measurement. Measure first and fix second.
+
+**Gate to Phase 5:** a one-variable probe has falsified alternatives and produced evidence for the surviving cause. A plausible story is not enough.
+
+### Phase 5 — Fix at the real seam
+
+Write the regression test before the fix only where it exercises the real call-site pattern. If every available seam is too shallow, record the missing seam as an architectural finding instead of adding false-confidence coverage.
+
+When a real seam exists, turn the minimised repro into a failing test and watch it fail. Apply the smallest cause-directed fix, watch that test pass, then rerun the original un-minimised Phase 1 loop.
+
+**Gate to Phase 6:** the real-seam regression changed red to green, or the absence of a valid seam is explicitly documented, and the original loop is green.
+
+### Phase 6 — Verify, clean up, and learn
+
+Rerun the original loop and regression coverage. Remove all diagnosis-tagged instrumentation and delete or explicitly retain every throwaway artifact. Record the hypothesis proved correct and its evidence in the commit or PR so the next debugger can learn the cause.
+
+Only after the fix, ask what would have prevented the bug. If the answer is a missing seam, tangled callers, or hidden coupling, recommend a later architecture task with the concrete finding; do not auto-activate another explicit-only Skill.
+
+Finish the real use with exactly one handoff, without activating `recall`:
 
 ```text
-Status: provisional / case-pending; source-backed, not Captain-validated.
-Diagnosis: <cause and fix | blocked with exact evidence gap>
-Verification: <original signal and regression/repository checks>
 Recall handoff:
 - target_skill: diagnosing-bugs
 - evidence_scope: <session turns, commands, receipts, and artifact locators>
 - trigger: <observed bug or regression>
-- actual_process: <which workflow steps actually occurred>
+- actual_process: <phases and routes actually used>
 - outcome: <observable result>
-- observed_divergence: <difference from this provisional contract | none observed>
-- case_debt: user must explicitly invoke recall before this Skill can be treated as case-grounded
+- observed_divergence: <difference from this contract | none observed>
 ```
 
 ## References
 
-- 判断本 V1 的 evidence 来源、已采用行为和未决 case debt 时，读取 [source provenance](references/source-provenance.md)。
+- Read [source provenance](references/source-provenance.md) for the immutable Matt revision and blob identities behind this source-model replacement.
+- Use [the HITL loop helper](scripts/hitl-loop.template.sh) when the final workable route requires structured human actions.
 
 ## Validation
 
 Before done:
 
-- 用户已显式调用 `diagnosing-bugs`，且目标是一个具体 observed defect 或 performance regression；
-- provisional/case-pending status 已在首次 substantive response 与完成报告披露，没有声称 Captain validation；
-- 一个实际运行的 signal 命中 exact symptom，或无法建立 signal 的 precise blocker 已报告；
-- cause theory 和 production fix 没有先于 red signal；
-- hypotheses 是 ranked、falsifiable 且 probes 一次改变一个变量；
-- fix 由 original signal 与正确 seam 的 regression coverage 支持，或 seam gap 已明确；
-- secret 已 redacted，temporary instrumentation 和未保留 artifacts 已清除；
-- repository-required checks 已通过，或准确 blocker 已报告；
-- Recall handoff 包含 target Skill、evidence/session scope、trigger、actual process、outcome、observed divergence 和 case debt；
-- `recall` 没有被自动激活，Skill 仍诚实标记为 provisional/case-pending。
+- every entered phase satisfied its gate, or Phase 1 stopped with the exact missing access, artifact, or instrumentation permission;
+- the original loop is green and real-seam regression coverage passes, or the missing seam is documented;
+- temporary instrumentation and throwaways are removed or explicitly retained;
+- the proved cause is recorded durably and post-fix prevention was considered;
+- visible evidence is redacted and all changes stayed within the current bug task;
+- the final handoff is present and `recall` was not auto-activated.

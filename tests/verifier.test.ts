@@ -14,6 +14,8 @@ import {
   verifySourceProject,
 } from '../src/partita/verifier.ts'
 
+const { execFileSync } = process.getBuiltinModule('node:child_process')
+const { createHash } = process.getBuiltinModule('node:crypto')
 const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
@@ -47,18 +49,48 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     )
   }))
 
-  it.effect('keeps diagnosing-bugs provisional, explicit-only, and recall-ready', () => Effect.sync(() => {
+  it.effect('locks the reviewed Matt-centered diagnosis method against partial semantic weakening', () => Effect.sync(() => {
+    const skill = readFileSync('skills/orientation/diagnosing-bugs/SKILL.md', 'utf8')
+    const behavioralBody = markdownSection(skill, '## Rule', '## References')
+
+    assert.strictEqual(
+      sha256(behavioralBody),
+      '91f8e671f40cddf1b4cfe8532529349ff7e0d9872edccecc60ed66363ae0b605',
+    )
+  }))
+
+  it.effect('pins the audited Matt source identities while bounding the Partita lifecycle shell', () => Effect.sync(() => {
     const skill = readFileSync('skills/orientation/diagnosing-bugs/SKILL.md', 'utf8')
     const metadata = readFileSync('skills/orientation/diagnosing-bugs/agents/openai.yaml', 'utf8')
     const provenance = readFileSync('skills/orientation/diagnosing-bugs/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
 
-    assert.include(skill, 'Status MUST 保持为 `provisional / case-pending`')
-    assert.include(skill, '它不是 Captain-validated theory')
-    assert.include(skill, 'Recall handoff')
-    assert.include(skill, 'case_debt: user must explicitly invoke recall before this Skill can be treated as case-grounded')
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/diagnosing-bugs.md': '4527956c59fbd73967b1e90d84f4e1a8b28621c2',
+      'skills/engineering/diagnosing-bugs/SKILL.md': '7f8acf7e3c5929a557d7bf26c88a7844551e3976',
+      'skills/engineering/diagnosing-bugs/agents/openai.yaml': 'a13a755a77634ce61a649a3a0d905a66d3865b35',
+      'skills/engineering/diagnosing-bugs/scripts/hitl-loop.template.sh': '43daedd1bdbb47b49638c82557990fc5100d7c9c',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual(countOccurrences(skill, 'Recall handoff'), 1)
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
-    assert.include(provenance, 'read-only Matt Pocock Skills source evidence')
-    assert.include(provenance, 'No real Captain bug use currently confirms')
+  }))
+
+  it.effect('keeps the pinned HITL fallback byte-identical and agent-drivable', () => Effect.sync(() => {
+    const helperPath = 'skills/orientation/diagnosing-bugs/scripts/hitl-loop.template.sh'
+    const helper = readFileSync(helperPath)
+    const output = execFileSync('bash', [helperPath], {
+      encoding: 'utf8',
+      input: '\ny\nsynthetic failure\n',
+    })
+
+    assert.strictEqual(gitBlobId(helper), '43daedd1bdbb47b49638c82557990fc5100d7c9c')
+    assert.include(output, 'ERRORED=y')
+    assert.include(output, 'ERROR_MSG=synthetic failure')
   }))
 
   it.effect('accepts a valid source fixture', () =>
@@ -751,6 +783,28 @@ function markdownSection(text: string, start: string, end: string): string {
     throw new Error(`missing Markdown section: ${start}..${end}`)
   }
   return text.slice(startIndex + start.length, endIndex)
+}
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex')
+}
+
+function gitBlobId(value: Uint8Array): string {
+  return createHash('sha1')
+    .update(`blob ${value.byteLength}\0`)
+    .update(value)
+    .digest('hex')
+}
+
+function provenanceBlobMap(markdown: string): Record<string, string> {
+  return Object.fromEntries(
+    [...markdown.matchAll(/^\| `([^`]+)` \| `([0-9a-f]{40})` \|/gmu)]
+      .map(match => [match[1], match[2]]),
+  )
+}
+
+function countOccurrences(value: string, needle: string): number {
+  return value.split(needle).length - 1
 }
 
 function fencedBlockAfter(text: string, anchor: string): string {
