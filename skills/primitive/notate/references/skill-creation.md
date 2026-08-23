@@ -4,9 +4,7 @@
 
 `skill creation` 是根据 evidence-anchored skill case 创建一个可触发、可执行、可验证的 Partita source skill。
 
-`notate` 只处理单一 skill creation。
-
-workflow skill creation 属于 `conduct`。
+`notate` 只创建 implementation 调用零个 Skill 的 Primitive。implementation 调用一个或多个 predeclared Skills 时是 Workflow，creation 属于 `conduct`。这是唯一 classifier；步骤数、阶段、分支、本地 state/protocol、router/controller shape 与 Partita source family 都不决定 identity。
 
 ## Skill Case
 

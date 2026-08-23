@@ -27,14 +27,14 @@ Soft:
 
 - MUST 在创建 public workflow skill 前要求 evidence-anchored workflow case。
 - MUST 打回不能支撑 evidence、default failure、至少一个 workflow pressure、recognition surface、orchestration action 和 target runtime shape 的材料。
-- MUST NOT 编造 workflow case、evidence、routing、gate logic、disclosure boundary、recognition surface、target runtime shape 或 A/Y/X。
+- MUST NOT 编造 workflow case、evidence、component Skills、recognition surface、target runtime shape 或 composition behavior。
 - MUST 默认创建 OpenAI/Codex skill，除非用户指定其他 target。
 - MUST 只在 Partita landing 中应用 Partita family、source shape、policy 和 checks。
-- MUST 保持 public workflow skill 自己的 governance rule，不把它和被路由的 internal skills 混在一起。
-- MUST 让 public workflow owns primary marker、response envelope、effect budget 与 termination；只有实质改变本次回复的已显式激活/共同调用 skill 才能作为 ` + <Display Name>` contributor。每个 composed state/protocol component MUST 明确 Input、Transition、Output、Effects、Termination 与 Disclosure。
-- explicit-only public skill MUST NOT 被 workflow 自动激活；workflow 只能读取已由用户显式建立的 active state、处理显式 co-invocation，或携带自包含的 local contract projection。
-- local contract projection 是 owning workflow 的本地实现细节，MUST NOT 以 public skill 身份出现在 marker contributor 或 disclosure 中。
-- Partita public workflow MUST 默认使用 `policy.allow_implicit_invocation: false`；只有用户明确要求 future internal/model-invoked role 且 composition contract 已通过 interpretation gate 时，才可使用 `true`。
+- MUST 只按 implementation 是否调用 Skill 分类：调用零个 Skill 是 Primitive；调用一个或多个 Skill 是 Workflow。步骤数、阶段、分支、本地 state/protocol、router/controller shape 与 source family 都不是 identity test。
+- MUST 要求 Workflow 的 component Skills 是 closed、finite、predeclared set；calls 通过 typed input/output 或 Effect Requirements 连接，不得 ad hoc discovery。
+- MUST 让 public Workflow owns overall outcome、primary marker、response envelope、effect policy、termination 与 next-step decision；component 在声明 scope 内执行自己的 Effect 并返回 outer owner。
+- Workflow top-level invocation MUST 保持 explicit-only；显式调用 Workflow 后调用 predeclared component Skill 属于 composition，不是 component 的 top-level implicit invocation。
+- Partita public workflow MUST 使用 `policy.allow_implicit_invocation: false`。future internal/model-invoked top-level role 不在本 creation path 内。
 - MUST 让 skill runtime 携带执行自身 Rule、Pattern、Boundary、Workflow 和 Validation 所需的本地概念定义。
 - MUST 只把外部 workflow skills 和已删除旧 skill 当作参考，不能当作 source of truth。
 - 如果材料不足但可补救，SHOULD 只询问最小缺失 workflow material。
@@ -52,7 +52,7 @@ Hard:
 
 ## Effects
 
-- Conversation: MAY 展示打回原因、workflow rule、gate logic、internal skill routing、disclosure boundary 和验证结果。
+- Conversation: MAY 展示打回原因、workflow rule、predeclared component set、typed composition seams 和验证结果。
 - Filesystem: MAY 创建一个 OpenAI/Codex public workflow skill folder；在 Partita landing 中 MAY 在受支持的 direct skill path 下创建 public workflow source skill、`agents/openai.yaml`、本地 references 和直接需要的 generated files。
 - External: none.
 
@@ -60,11 +60,11 @@ Hard:
 
 1. 确认用户显式调用了 `conduct`，再读取 evidence-anchored workflow case。材料不足时，MUST 使用本地 insufficient-material reference 并停止。
 2. 读取 [case](references/case.md)，确认输入是可治理的 evidence-anchored workflow case。
-3. 读取 [workflow creation](references/workflow-creation.md)，读出 workflow A/Y/X、gate logic、outer owner、internal skill routing、component composition contract 和 disclosure boundary。
+3. 读取 [workflow creation](references/workflow-creation.md)，确认 implementation 调用一个或多个 predeclared Skills，并读出 closed component set、typed seams 与 outer owner contract。
 4. 读取 [rule](references/rule.md)，确保 public workflow skill 的 `## Rule` 是单一 runtime imperative，不是 workflow steps。
 5. 读取 [OpenAI skill](references/openai-skill.md)，确定默认 target runtime shape。
 6. 如果目标是 Partita landing，读取 [Partita skill](references/partita-skill.md)，确定 Partita family、shape、policy 和 checks。
-7. 确认目标是 public workflow skill；否则停止并给出显式调用 `notate` 或 `retune` 的 typed recommendation，不得自动激活另一个 explicit-only skill。
+7. 按 implementation 的 Skill calls 分类：一个或多个 predeclared calls 才是 Workflow；零 calls 时停止并给出显式调用 `notate` 的 typed recommendation，已有 skill patch 则推荐 `retune`。
 8. 创建 skill 文件：`SKILL.md`、可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 9. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 
@@ -82,10 +82,10 @@ Hard:
 Before done:
 
 - 输入是 evidence-anchored workflow case，或材料不足已被打回；
-- 创建文件前，evidence、default failure、至少一个 workflow pressure、recognition surface、workflow A/Y/X、gate logic、outer owner、internal skill routing、每个 component 的 Input/Transition/Output/Effects/Termination/Disclosure、target runtime shape 和本地概念定义已明确；
+- 创建文件前，evidence、default failure、至少一个 workflow pressure、recognition surface、nonempty closed predeclared component set、typed input/output 或 Effect Requirements seams、outer owner、target runtime shape 和本地概念定义已明确；
 - 创建的 `## Rule` 是单一 runtime governance constraint，没有展开 workflow、validation、boundary 或 effects；
 - 创建的 OpenAI/Codex public workflow skill 满足 target shape；
-- workflow 是唯一 marker/envelope/effect/termination owner；marker contributor 只包含实质参与的已显式激活/共同调用 skill，且没有自动激活 explicit-only public skill 或把 local projection 伪装成 public skill；
+- Workflow 保留 overall outcome、marker/envelope/effect policy/termination/next-step ownership；component calls 只来自 predeclared set，且没有被误判为 top-level implicit invocation；
 - Partita landing 中创建的 public workflow skill 有 `agents/openai.yaml`，且 `policy.allow_implicit_invocation` 决策明确；
 - `conduct` 没有创建非 workflow skill、已有 skill patch、无 evidence anchor 的外部迁移或 verifier implementation；
 - Effects 保持在声明的 filesystem scope 内；

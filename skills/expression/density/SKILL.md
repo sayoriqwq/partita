@@ -25,10 +25,10 @@ Do not use when:
 
 Soft:
 
-- MUST 持续到用户显式调用 `density` 退出，或更高优先级指令强制取消该 state。
-- 只有显式调用 `density` 才能创建、更新或退出 active Density state；后续应用属于已建立 state 的 continuation，不是 implicit invocation。更高优先级取消属于 forced cancellation，不是 user-controlled exit。
+- MUST 持续到用户显式调用 `density` 退出，或更高优先级指令中断该 state。
+- 只有显式调用 `density` 才能创建、更新或退出 active Density state；后续应用属于已建立 state 的 continuation，不是 implicit invocation。更高优先级要求使用 native interruption semantics 立即停止协议，不建立额外 control state。
 - 与另一个显式调用且 owns 当前 response envelope 的 skill 组合时，owning skill 保留 marker 与 shape；当 `density` materially changes 回复时，owner marker 追加 ` + Density`，Density 不显示第二个 top-level marker。`density` 只在 semantic invariance 允许时转换其 prose，不竞争 top-level output ownership。
-- `Activate | Continue` MUST 应用 [protocol](references/protocol.md) 和 [symbols](references/symbols.md) 中的运行时协议；`Exit | Cancelled` MUST NOT 继续应用。
+- `Activate | Continue` MUST 应用 [protocol](references/protocol.md) 和 [symbols](references/symbols.md) 中的运行时协议；`Exit` 或更高优先级 interruption 后 MUST NOT 继续应用。
 - MUST 保持 semantic invariance 高于 language density。
 - SHOULD 用分行、标签、术语保留和稳定符号让判断、行动、风险和问题更快浮现。
 - SHOULD 根据用户反馈校准密度，不设置固定行数上限。
@@ -58,7 +58,7 @@ Hard:
 
 ## Workflow
 
-1. 将当前 transition 分类为 `Activate | Continue | Exit | Cancelled`：显式调用可 Activate/更新/Exit；已有 state 且未显式退出时 Continue；更高优先级要求恢复普通表达时 Cancelled。
+1. 将用户控制的 transition 分类为 `Activate | Continue | Exit`：显式调用可 Activate/更新/Exit；已有 state 且未显式退出时 Continue。更高优先级要求恢复普通表达时立即中断协议，不产生 transition variant。
 2. `Exit` 时先关闭 state；没有其他 outer owner 时输出 canonical marker 与下一行 off payload 后停止：
 
    ```text
@@ -66,7 +66,7 @@ Hard:
    off
    ```
 
-   存在 co-invoked outer owner 时，owner marker 追加 ` + Density`，在 owner shape 中显示 `Density: off`，随后以普通表达继续 owner workflow；不得显示第二个 Density marker。`Cancelled` 立即停止应用 protocol，并只在准确性需要时报告取消。
+   存在 co-invoked outer owner 时，owner marker 追加 ` + Density`，在 owner shape 中显示 `Density: off`，随后以普通表达继续 owner workflow；不得显示第二个 Density marker。更高优先级 interruption 立即停止应用 protocol，并只在准确性需要时报告中断。
 3. `Activate | Continue` 时，MUST 应用 [protocol](references/protocol.md) 和 [symbols](references/symbols.md)。
 4. 删除铺垫、礼貌话、重复总结、低信息连接和不必要解释。
 5. 保留判断、行动、风险、问题、顺序、不确定性和必要上下文。
@@ -86,8 +86,8 @@ Before done:
 
 - `density` owns response 时，`Activate | Continue | Exit` 的每条用户可见回复第一行仅为 `💬 Density`，或带其他已显式且 materially active skill suffix；与 outer owner 组合且 Density materially changes 回复时，owner marker 追加 ` + Density` 且没有第二个 top-level marker；marker 行没有 status 或 payload，active-but-inert skill 未进入 suffix；
 - `density` 只在显式启用后持续；
-- `Exit` 已关闭 state 并使用准确 off receipt；`Cancelled` 已停止应用 protocol，二者都没有继续用高密度表达；
-- `Activate | Continue` 已按职责应用 `protocol.md` 和 `symbols.md`；`Exit | Cancelled` 没有继续应用；
+- `Exit` 已关闭 state 并使用准确 off receipt；更高优先级 interruption 已立即停止 protocol；
+- `Activate | Continue` 已按职责应用 `protocol.md` 和 `symbols.md`；`Exit` 或 interruption 后没有继续应用；
 - semantic invariance 完整；
 - 输出是现代中文，不是古文、破碎短语或符号堆叠；
 - 不确定性、风险、顺序、前提和 destructive consequences 仍清楚；

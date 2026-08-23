@@ -11,7 +11,7 @@ Partita family 是 source 组织方式。
 - orientation skills 使用 `skills/orientation/<name>/`。
 - maintenance skills 使用 `skills/maintenance/<name>/`。
 - Partita family 是 source 组织方式，不是 OpenAI target requirement。
-- state、protocol、workflow 与 router 是 runtime role，MUST 与 Partita family 分开判断。
+- Primitive/Workflow 与 Partita family 分开判断：implementation 调用零个 Skill 是 Primitive；调用一个或多个 predeclared Skills 是 Workflow。
 - Partita skill 仍然 MUST 满足 OpenAI skill target shape。
 
 ## Shape
@@ -34,13 +34,13 @@ local references MUST 能被 installed runtime skill 直接加载。
 
 ## Marker
 
-Partita skill 激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owning workflow 保持第一位且是唯一 envelope、effects 和 termination owner；只追加实质改变本次回复的其他已显式激活/共同调用 skill。active-but-inert skill 不出现；local contract projection MUST NOT 伪装成 public skill 或 marker contributor。
+Partita skill 激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owning Workflow 保持第一位，保留 overall outcome、envelope、effect policy、termination 与 next-step ownership；component 在声明 scope 内执行自己的 Effect。只追加实质改变本次回复的 contributor；active-but-inert skill 不出现。
 
 ## Policy
 
 current Partita-owned public runtime catalog MUST 使用 `policy.allow_implicit_invocation: false`。
 
-新 public workflow skill MUST 默认使用 `false`。只有用户明确要求 future internal/model-invoked role，且 role、composition ownership、effects、disclosure 与 trigger precision 已通过 interpretation gate 时，才可选择 `true`。
+新 public Workflow skill MUST 使用 `false`。显式调用 Workflow 后调用其 closed predeclared components 不改变 top-level invocation policy。future internal/model-invoked top-level role 不在本 creation path 内。
 
 ## Checks
 
