@@ -1,0 +1,6 @@
+interface:
+  display_name: "TDD"
+  short_description: "The user explicitly invokes tdd to build one concrete feature or fix one bug test-first through red-green vertical slices at agreed public seams"
+  default_prompt: "Use pm:tdd when the user explicitly invokes tdd to build one concrete feature or fix one bug test-first through red-green vertical slices at agreed public seams."
+policy:
+  allow_implicit_invocation: false
