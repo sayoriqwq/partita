@@ -1,0 +1,6 @@
+interface:
+  display_name: "Domain Modeling"
+  short_description: "The user explicitly invokes domain-modeling or co-invokes it while changing one bounded domain term, distinction, relationship, code/model claim, or possible architectural decision"
+  default_prompt: "Use pm:domain-modeling when the user explicitly invokes domain-modeling or co-invokes it while changing one bounded domain term, distinction, relationship, code/model claim, or possible architectural decision."
+policy:
+  allow_implicit_invocation: false
