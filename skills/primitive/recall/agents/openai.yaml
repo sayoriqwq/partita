@@ -1,0 +1,6 @@
+interface:
+  display_name: "Recall"
+  short_description: "The user explicitly invokes recall after a real Skill use to reconstruct an evidence-anchored use case and judge the next action"
+  default_prompt: "Use pm:recall when the user explicitly invokes recall after a real Skill use to reconstruct an evidence-anchored use case and judge the next action."
+policy:
+  allow_implicit_invocation: false

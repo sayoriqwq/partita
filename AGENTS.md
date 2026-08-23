@@ -104,3 +104,10 @@ pnpm home:diff
 
 For Effect application, test, package, TypeScript, editor, or lint changes, read the current Effect integration's `.prelude/**/managed/docs/index.md` first. Use `.prelude/**/managed/skills/adapt-effect-target/SKILL.md` when package selection or target-owned TypeScript topology needs adaptation. Keep `.prelude/**/feedback/**` target-owned. Treat `.prelude/**/repos/**` as read-only source diagnostics: consult it when installed declarations and managed guidance are insufficient, but never import or edit it.
 <!-- prelude:effect-harness-routing:end -->
+
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.
