@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research"
+  short_description: "The user explicitly invokes research to investigate one bounded question through delegated primary-source reading and leave one claim-cited Markdown report"
+  default_prompt: "Use pm:research when the user explicitly invokes research to investigate one bounded question through delegated primary-source reading and leave one claim-cited Markdown report."
+policy:
+  allow_implicit_invocation: false
