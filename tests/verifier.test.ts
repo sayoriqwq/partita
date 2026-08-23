@@ -27,6 +27,40 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('keeps recall read-only while retune owns existing-skill patches', () => Effect.sync(() => {
+    const recall = readFileSync('skills/primitive/recall/SKILL.md', 'utf8')
+    const recallMetadata = readFileSync('skills/primitive/recall/agents/openai.yaml', 'utf8')
+    const retune = readFileSync('skills/primitive/retune/SKILL.md', 'utf8')
+    const outputTemplate = fencedBlockAfter(recall, '使用以下 envelope 交付并停止')
+    const topLevelFields = [...outputTemplate.matchAll(/^([a-z_]+):/gmu)].map(match => match[1])
+
+    assert.deepStrictEqual(topLevelFields, ['case', 'judgment'])
+    assert.notInclude(outputTemplate, '\npatch:')
+    assert.notInclude(outputTemplate, '\ndiff:')
+    assert.include(markdownSection(recall, '## Effects', '## Workflow'), 'Filesystem: MAY 在明确 scope 内只读 Skill source 和 observable artifacts；no writes。')
+    assert.include(recall, '`retune` 是 existing identity-valid Skill patch 的唯一 owner。')
+    assert.include(retune, 'Filesystem: MAY 只更新 target source skill')
+    assert.include(recallMetadata, 'policy:\n  allow_implicit_invocation: false')
+    assert.include(
+      primitiveReferenceCopySpec('primitive/case.md').targetPaths,
+      'skills/primitive/recall/references/case.md',
+    )
+  }))
+
+  it.effect('keeps diagnosing-bugs provisional, explicit-only, and recall-ready', () => Effect.sync(() => {
+    const skill = readFileSync('skills/orientation/diagnosing-bugs/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/orientation/diagnosing-bugs/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/orientation/diagnosing-bugs/references/source-provenance.md', 'utf8')
+
+    assert.include(skill, 'Status MUST 保持为 `provisional / case-pending`')
+    assert.include(skill, '它不是 Captain-validated theory')
+    assert.include(skill, 'Recall handoff')
+    assert.include(skill, 'case_debt: user must explicitly invoke recall before this Skill can be treated as case-grounded')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+    assert.include(provenance, 'read-only Matt Pocock Skills source evidence')
+    assert.include(provenance, 'No real Captain bug use currently confirms')
+  }))
+
   it.effect('accepts a valid source fixture', () =>
     Effect.gen(function* () {
       const root = makeValidSourceFixture()
@@ -708,6 +742,25 @@ function firstTargetPath(paths: ReadonlyArray<string>) {
     throw new Error('missing primitive copy target')
   }
   return path
+}
+
+function markdownSection(text: string, start: string, end: string): string {
+  const startIndex = text.indexOf(start)
+  const endIndex = text.indexOf(end, startIndex + start.length)
+  if (startIndex === -1 || endIndex === -1) {
+    throw new Error(`missing Markdown section: ${start}..${end}`)
+  }
+  return text.slice(startIndex + start.length, endIndex)
+}
+
+function fencedBlockAfter(text: string, anchor: string): string {
+  const anchorIndex = text.indexOf(anchor)
+  const fenceStart = text.indexOf('```yaml\n', anchorIndex)
+  const fenceEnd = text.indexOf('\n```', fenceStart + '```yaml\n'.length)
+  if (anchorIndex === -1 || fenceStart === -1 || fenceEnd === -1) {
+    throw new Error(`missing YAML block after: ${anchor}`)
+  }
+  return text.slice(fenceStart + '```yaml\n'.length, fenceEnd)
 }
 
 function write(root: string, path: string, contents: string) {

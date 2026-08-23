@@ -23,6 +23,7 @@ export const primitiveReferenceCopySpecs: ReadonlyArray<PrimitiveReferenceCopySp
     targetPaths: [
       'skills/primitive/notate/references/case.md',
       'skills/primitive/conduct/references/case.md',
+      'skills/primitive/recall/references/case.md',
       'skills/primitive/retune/references/case.md',
     ],
   },

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Diagnosing Bugs"
+  short_description: "The user explicitly invokes diagnosing-bugs to investigate a specific observed defect or performance regression through an evidence-producing diagnosis loop"
+  default_prompt: "Use og:diagnosing-bugs when the user explicitly invokes diagnosing-bugs to investigate a specific observed defect or performance regression through an evidence-producing diagnosis loop."
+policy:
+  allow_implicit_invocation: false
