@@ -80,6 +80,66 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+    const resultContract = fencedBlockAfter(skill, '用以下 contract 形成 bounded result')
+    const resultClass = /^ {2}class: (.+)$/mu.exec(resultContract)?.[1]
+    const completionMode = /^ {4}mode: (.+)$/mu.exec(resultContract)?.[1]
+
+    assert.include(rule, '提出精确 canonical distinction 供 human meaning authority 裁决')
+    assertInOrder(workflow, [
+      'exactly one bounded model pressure',
+      '立即点名冲突，提出一个 precise canonical distinction',
+      '构造 concrete edge case',
+      '只有 observable implementation claim 才 cross-check bounded relevant code',
+      '交给 human meaning authority',
+      '选择 exactly one result class',
+      'supplied authorized target',
+      '以 `handoff` completion 返回 resolved delta 与 required owner action',
+      '立即归还控制',
+    ])
+    assert.deepStrictEqual(resultClass?.split(' | '), [
+      'canonical_term_or_difference',
+      'resolved_relationship',
+      'code_model_conflict_plus_question',
+      'adr_offered_or_rejected_by_gates',
+      'no_change',
+      'typed_handoff_or_blocker',
+    ])
+    assert.deepStrictEqual(completionMode?.split(' | '), ['persisted', 'handoff'])
+    assert.include(resultContract, 'bounded_pressure: <the single entry pressure>')
+    assert.include(boundary, 'human 始终是 meaning authority')
+    assert.include(boundary, 'MUST NOT 把 agent proposal 写成 accepted language')
+    assert.include(boundary, 'MUST NOT invent storage path')
+  }))
+
+  it.effect('pins Matt domain-modeling provenance and the reviewed Partita behavioral projection', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/domain-modeling/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/domain-modeling/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      '8d33568421501807ea8fa827a08f420cb720903c9b034f13507c0aab8b2451c6',
+    )
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/domain-modeling.md': '01d172876f08f68f492c9c38c18d30048c1bbc07',
+      'skills/engineering/domain-modeling/ADR-FORMAT.md': 'da7e78ec1c220cd0aedf7ad36424c9398034f375',
+      'skills/engineering/domain-modeling/CONTEXT-FORMAT.md': 'eaf2a18573f0a2d8c69ed53e29e4d9e21baf81d8',
+      'skills/engineering/domain-modeling/SKILL.md': 'd0f7e1a5ccb06a7184056ff9af02b67bc77f9dda',
+      'skills/engineering/domain-modeling/agents/openai.yaml': '7f1522d2f11506ee205275ab7c282aa52366ecf6',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
   it.effect('keeps the pinned HITL fallback byte-identical and agent-drivable', () => Effect.sync(() => {
     const helperPath = 'skills/orientation/diagnosing-bugs/scripts/hitl-loop.template.sh'
     const helper = readFileSync(helperPath)
@@ -805,6 +865,15 @@ function provenanceBlobMap(markdown: string): Record<string, string> {
 
 function countOccurrences(value: string, needle: string): number {
   return value.split(needle).length - 1
+}
+
+function assertInOrder(value: string, needles: ReadonlyArray<string>): void {
+  let previousIndex = -1
+  for (const needle of needles) {
+    const index = value.indexOf(needle)
+    assert.isAbove(index, previousIndex, `expected ${JSON.stringify(needle)} after index ${previousIndex}`)
+    previousIndex = index
+  }
 }
 
 function fencedBlockAfter(text: string, anchor: string): string {
