@@ -1,6 +1,7 @@
 /* eslint-disable ts/no-use-before-define */
 import type { ValidationIssue } from './validation.ts'
 
+import { createHash } from 'node:crypto'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
@@ -25,6 +26,28 @@ export type VerifyLevel = 'project' | 'runtime' | 'source'
 
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/gu
 const urlPrefixes = ['http://', 'https://', 'mailto:', 'ftp://', 'tel:', 'data:']
+
+const arrangeSourceRoot = 'repos/score'
+const arrangeTargetRoot = 'skills/primitive/arrange'
+const arrangeSourceDigests = {
+  'SKILL.md': 'c7c91423aa32fbcec5cd2373737c8300f010ad99489ace44eaa661a31780c11e',
+  'agents/openai.yaml': 'd348b64634e9d9732c58fa2803c7479de6c1edfd9f5c2e0fa6ba4bf72fb7eb15',
+  'references/assertion.md': '55ddc98aef5644ee2776d85d8306acff98dcffcc871f1ca9ad2bd915d764a998',
+  'references/audience.md': '1954502997dd55332f8c96dd78badd674ecedee04ff7ac83dec6da35f4050b9d',
+  'references/boundary.md': 'e72cd50f33e625ba835acebeacbf31aebb7fce9bb015fb568cbb231fcf4375e4',
+  'references/index-routing-case.md': '89b99ea6aea59d94f464dd764f241489ffc4743b6678729158963f9ed05a9461',
+  'references/keywords.md': 'c0975b20e20d2dd0d3e76c5370b7a191f9df426e5a207b27fa5097695a11660c',
+  'references/language.md': '7369e1e6b9798f197a9dc3be24a6b5c9f47349f0e993ba08e9561eca3e97654f',
+  'references/links.md': '13119871db48bbfae6f49c595327e72e463945f30b056777ea96d06cc073ff6c',
+  'references/metadata.md': '41ce5a5ed605599b24b2605f15367e02159ad51d20ece0d5a2d69f7522c2560a',
+  'references/module.md': 'db2ee8d94923daddd8cc98797f4c187155390f2073058e6c1c177b97c01dd6e3',
+  'references/path.md': 'c65fc36eca9f2562c3c686fff1faa3872a11223e8ffed8fbb195f026ddfb2870',
+  'references/pattern.md': 'cb310317184325fcc450a9db846e79583fc75c058db0a2f7a770b75de98a1cc1',
+  'references/section.md': 'b6f1628673a25fb4c931f63ca53a0066db42e8338487425d26ef27e7e145fe1b',
+} as const
+const arrangeTargetOverlayDigests = {
+  'references/source-provenance.md': '766a22fa72d5457ea60c90212a6f60b4bc5498c0a6dfdce616e92d20e82a65eb',
+} as const
 
 export const verifyRuntimeSkills = Effect.fn('verifyRuntimeSkills')(function* (options: VerifyProjectOptions) {
   const path = yield* Path.Path
@@ -77,6 +100,7 @@ const buildSourceReport = Effect.fn('buildSourceReport')(function* (root: string
     ...skillResult.issues,
     ...(yield* checkMarkdownLinks(fs, root)),
     ...(yield* checkPrimitiveReferenceCopies(fs, root)),
+    ...(yield* checkArrangeSourceProjection(fs, root)),
     ...(yield* checkRemovedSurfaces(fs, root)),
     ...(yield* checkNoRootSkill(fs, root)),
   ]
@@ -205,6 +229,162 @@ const checkPrimitiveReferenceCopies = Effect.fn('checkPrimitiveReferenceCopies')
 
   return issues
 })
+
+const checkArrangeSourceProjection = Effect.fn('checkArrangeSourceProjection')(function* (
+  fs: FileSystem.FileSystem,
+  root: string,
+) {
+  const path = yield* Path.Path
+  const sourceRoot = path.join(root, arrangeSourceRoot)
+  const targetRoot = path.join(root, arrangeTargetRoot)
+  const sourceExists = yield* pathExists(fs, sourceRoot)
+  const targetExists = yield* pathExists(fs, targetRoot)
+  if (!sourceExists && !targetExists) {
+    return []
+  }
+
+  const issues: Array<ValidationIssue> = []
+  if (!sourceExists) {
+    issues.push(issue('arrange_source.missing_root', 'Arrange upstream Source Pin is missing', arrangeSourceRoot))
+  }
+  if (!targetExists) {
+    issues.push(issue('arrange_source.missing_root', 'Arrange runtime projection is missing', arrangeTargetRoot))
+  }
+  if (!sourceExists || !targetExists) {
+    return issues
+  }
+
+  const expectedSourcePaths = Object.keys(arrangeSourceDigests)
+  const expectedTargetPaths = [...expectedSourcePaths, ...Object.keys(arrangeTargetOverlayDigests)].sort()
+  const sourcePaths = yield* relativeFilePaths(fs, sourceRoot)
+  const targetPaths = yield* relativeFilePaths(fs, targetRoot)
+  issues.push(...checkArrangePathSet(sourcePaths, expectedSourcePaths, arrangeSourceRoot, 'upstream'))
+  issues.push(...checkArrangePathSet(targetPaths, expectedTargetPaths, arrangeTargetRoot, 'target'))
+
+  for (const relativePath of expectedSourcePaths) {
+    if (!sourcePaths.includes(relativePath)) {
+      continue
+    }
+    const sourceText = yield* readText(fs, path.join(sourceRoot, relativePath))
+    if (sha256(sourceText) !== arrangeSourceDigests[relativePath as keyof typeof arrangeSourceDigests]) {
+      issues.push(issue(
+        'arrange_source.upstream_drift',
+        'Score Source Pin behavior file differs from the reviewed baseline',
+        `${arrangeSourceRoot}/${relativePath}`,
+      ))
+    }
+    if (!targetPaths.includes(relativePath)) {
+      continue
+    }
+    const targetText = yield* readText(fs, path.join(targetRoot, relativePath))
+    if (targetText !== arrangeProjectionText(relativePath, sourceText)) {
+      issues.push(issue(
+        'arrange_source.projection_drift',
+        'Arrange behavior file differs from the approved Score projection',
+        `${arrangeTargetRoot}/${relativePath}`,
+      ))
+    }
+  }
+
+  for (const [relativePath, digest] of Object.entries(arrangeTargetOverlayDigests)) {
+    if (!targetPaths.includes(relativePath)) {
+      continue
+    }
+    const targetText = yield* readText(fs, path.join(targetRoot, relativePath))
+    if (sha256(targetText) !== digest) {
+      issues.push(issue(
+        'arrange_source.overlay_drift',
+        'Arrange Partita-owned overlay differs from its approved bytes',
+        `${arrangeTargetRoot}/${relativePath}`,
+      ))
+    }
+  }
+
+  return issues
+})
+
+function arrangeProjectionText(relativePath: string, sourceText: string): string {
+  let projected = sourceText
+    .replaceAll('Score', 'Arrange')
+    .replaceAll('score', 'arrange')
+    .replaceAll(
+      'apply sayoriqwq-style Markdown writing preferences to Markdown docs',
+      'reshape a concrete Markdown artifact under Score while preserving its meaning',
+    )
+  if (relativePath !== 'SKILL.md') {
+    return projected
+  }
+
+  projected = projected.replace(
+    '面对用户显式调用 `arrange` 处理 Markdown 时，MUST 按 sayoriqwq-style Markdown preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。',
+    '面对用户显式调用 `arrange` 处理 concrete Markdown artifact 时，MUST 在保持语义不变的前提下按 Score writing preferences 组织 module、section 和 assertion，并维护 metadata、audience、language、pattern、index、path、links 与 normative keywords，避免 agent 写出无边界、不可审查、不可复用或不符合用户文档偏好的 Markdown。',
+  )
+  projected = projected.replace(
+    '- 需要 OFM-first linking 时，读取 [links](references/links.md)。',
+    '- 需要 OFM-first linking 时，读取 [links](references/links.md)。\n- 需要核对 Score source、projection boundary 或 Partita overlay 时，读取 [source provenance](references/source-provenance.md)。',
+  )
+  return projected.replace(
+    '- target surface 是 Markdown；',
+    '- target surface 是 concrete Markdown artifact，且 reshape 保持其 meaning；',
+  )
+}
+
+function checkArrangePathSet(
+  actualPaths: ReadonlyArray<string>,
+  expectedPaths: ReadonlyArray<string>,
+  root: string,
+  side: 'target' | 'upstream',
+): ReadonlyArray<ValidationIssue> {
+  return [
+    ...expectedPaths
+      .filter(path => !actualPaths.includes(path))
+      .map(path => issue(
+        `arrange_source.${side}_missing`,
+        `Arrange ${side} behavior file is missing`,
+        `${root}/${path}`,
+      )),
+    ...actualPaths
+      .filter(path => !expectedPaths.includes(path))
+      .map(path => issue(
+        `arrange_source.${side}_extra`,
+        `Arrange ${side} contains an unapproved behavior file`,
+        `${root}/${path}`,
+      )),
+  ]
+}
+
+const relativeFilePaths = Effect.fn('arrangeRelativeFilePaths')(function* (
+  fs: FileSystem.FileSystem,
+  root: string,
+) {
+  const files: Array<string> = []
+  yield* walkAllFiles(fs, root, root, files)
+  return files.sort()
+})
+
+const walkAllFiles = Effect.fn('walkAllArrangeFiles')(function* (
+  fs: FileSystem.FileSystem,
+  root: string,
+  current: string,
+  files: Array<string>,
+): Effect.fn.Return<void, PartitaError, Path.Path> {
+  const path = yield* Path.Path
+  const stat = yield* fs.stat(current).pipe(Effect.mapError(cause => fileSystemError(`Stat ${current}`, cause)))
+  if (stat.type === 'Directory') {
+    const entries = yield* fs.readDirectory(current).pipe(
+      Effect.mapError(cause => fileSystemError(`Read directory ${current}`, cause)),
+    )
+    for (const entry of entries) {
+      yield* walkAllFiles(fs, root, path.join(current, entry), files)
+    }
+    return
+  }
+  files.push(relativePathFrom(path, root, current))
+})
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex')
+}
 
 const checkNoRootSkill = Effect.fn('checkNoRootSkill')(function* (fs: FileSystem.FileSystem, root: string) {
   const path = yield* Path.Path

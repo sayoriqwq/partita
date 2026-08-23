@@ -1,13 +1,21 @@
 {
   "typescript.preferences.autoImportFileExcludePatterns": [
     "repos/**",
-    ".prelude/**/repos/**"
+    ".prelude/**/repos/**",
+    "repos/score/**"
   ],
   "javascript.preferences.autoImportFileExcludePatterns": [
     "repos/**",
-    ".prelude/**/repos/**"
+    ".prelude/**/repos/**",
+    "repos/score/**"
   ],
   "typescript.native-preview.tsdk": "node_modules/@typescript/native",
   "typescript.experimental.useTsgo": true,
-  "js/ts.experimental.useTsgo": true
+  "js/ts.experimental.useTsgo": true,
+  "files.watcherExclude": {
+    "repos/score/**": true
+  },
+  "search.exclude": {
+    "repos/score/**": true
+  }
 }

@@ -27,7 +27,7 @@ try {
   assert.equal(code.status, 0, commandOutput(code))
   assert.match(commandOutput(code), /Code gate: PASS/)
   assert.match(commandOutput(code), /Test Files\s+9 passed \(9\)/)
-  assert.match(commandOutput(code), /Tests\s+82 passed \(82\)/)
+  assert.match(commandOutput(code), /Tests\s+109 passed \(109\)/)
   console.log('[fresh-checkout] code-only: PASS')
 
   const integration = runGate(fixture, 'integration', 60_000)
@@ -40,7 +40,7 @@ try {
   assert.match(commandOutput(aggregate), /Integration gate: FAIL — Integration drift/)
   assert.match(commandOutput(aggregate), /Code gate: PASS/)
   assert.match(commandOutput(aggregate), /Test Files\s+9 passed \(9\)/)
-  assert.match(commandOutput(aggregate), /Tests\s+82 passed \(82\)/)
+  assert.match(commandOutput(aggregate), /Tests\s+109 passed \(109\)/)
   assert.match(commandOutput(aggregate), /Aggregate: FAIL — Integration drift/)
   console.log('[fresh-checkout] aggregate: FAIL — Integration drift; Code gate: PASS')
 }

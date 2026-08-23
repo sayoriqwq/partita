@@ -1,26 +1,71 @@
 {
   "languages": {
     "JavaScript": {
-      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+      "language_servers": [
+        "tsgo",
+        "!vtsls",
+        "!typescript-language-server",
+        "..."
+      ]
     },
     "TypeScript": {
-      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+      "language_servers": [
+        "tsgo",
+        "!vtsls",
+        "!typescript-language-server",
+        "..."
+      ]
     },
     "TSX": {
-      "language_servers": ["tsgo", "!vtsls", "!typescript-language-server", "..."]
+      "language_servers": [
+        "tsgo",
+        "!vtsls",
+        "!typescript-language-server",
+        "..."
+      ]
     }
   },
   "lsp": {
     "tsgo": {
       "binary": {
         "path": "node_modules/@typescript/native/bin/tsc",
-        "arguments": ["--lsp", "--stdio"]
+        "arguments": [
+          "--lsp",
+          "--stdio"
+        ]
       },
       "initialization_options": {
         "preferences": {
           "autoImportFileExcludePatterns": [
             "repos/**",
             ".prelude/**/repos/**"
+          ]
+        }
+      }
+    },
+    "vtsls": {
+      "settings": {
+        "javascript": {
+          "preferences": {
+            "autoImportFileExcludePatterns": [
+              "repos/score/**"
+            ]
+          }
+        },
+        "typescript": {
+          "preferences": {
+            "autoImportFileExcludePatterns": [
+              "repos/score/**"
+            ]
+          }
+        }
+      }
+    },
+    "typescript-language-server": {
+      "initialization_options": {
+        "preferences": {
+          "autoImportFileExcludePatterns": [
+            "repos/score/**"
           ]
         }
       }
