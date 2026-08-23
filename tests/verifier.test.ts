@@ -366,6 +366,60 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('protects Matt Research delegated primary-source artifact core', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/research/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(rule),
+      'acc02feec462f1280e5077e6089cd4b65c9d48b1092e6870493e24ef004f9e7c',
+    )
+    assert.include(rule, 'exactly one answerable research question and its evidence scope')
+    assert.include(rule, 'exactly one background worker')
+    assert.include(rule, 'exactly one durable Markdown report')
+    assert.include(rule, 'every material claim points to the primary authority that supports it')
+    assert.include(boundary, 'Secondary material MAY locate a primary source but MUST NOT support a report claim')
+    assert.include(boundary, 'report the exact blocker and stop; do not research synchronously')
+    assert.include(boundary, 'Research does not invoke Ground')
+    assert.include(boundary, 'Background workers and source tools are runtime surfaces, not Skill composition.')
+    assertInOrder(workflow, [
+      'Restate exactly one answerable question',
+      'Preflight the target-provided background worker and its tools',
+      'Dispatch exactly one background worker',
+      'must not delegate again',
+      'follow every material claim to the primary authority that owns it',
+      'write exactly one Markdown report',
+      'inspect the one report',
+      'Announce completion without restating the research answer in conversation',
+      'Finish a real use with exactly one handoff',
+    ])
+  }))
+
+  it.effect('pins Matt Research provenance and the provisional Partita lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/research/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/research/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/research/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/research.md': 'f17edac5ccdd1f4fab3cf7bfecc19d386083bc13',
+      'skills/engineering/research/SKILL.md': '0ba594a07f306479baa67104381f48e209ab6aae',
+      'skills/engineering/research/agents/openai.yaml': 'e18b96ca0ccc1003889d5d6991386207c2454bc2',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(provenance, '## Core governing idea')
+    assert.include(provenance, '## Secondary repository-placement mechanics')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST then be performed through a separate explicit `retune`')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
   it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
     const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
     const rule = markdownSection(skill, '## Rule', '## Pattern')
