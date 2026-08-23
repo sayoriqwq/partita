@@ -16,7 +16,7 @@ import {
 
 const { execFileSync } = process.getBuiltinModule('node:child_process')
 const { createHash } = process.getBuiltinModule('node:crypto')
-const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
@@ -203,6 +203,63 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       gitBlobId(readFileSync('skills/primitive/tdd/references/mocking.md')),
       '71cbfee674d93244ce81d1830b930ca9a69200bd',
     )
+  }))
+
+  it.effect('locks Implement to real TDD and terminal Code Review composition', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/implement/SKILL.md', 'utf8')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+    const componentContract = fencedBlockAfter(skill, 'The complete component set is closed, finite, and predeclared')
+    const components = [...componentContract.matchAll(/^ {2}- skill: (pm:[a-z-]+)$/gmu)].map(match => match[1])
+    const mentionedComponents = [...new Set([...skill.matchAll(/`(pm:[a-z-]+)`/gu)].map(match => match[1]))].sort()
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      '0edd1b35f8aabf354f36d55d05449ba28dff0265fb1277162792690c1d991baa',
+    )
+    assert.deepStrictEqual(components, ['pm:tdd', 'pm:code-review'])
+    assert.deepStrictEqual(mentionedComponents, ['pm:code-review', 'pm:tdd'])
+    assert.include(boundary, 'Invoke the actual installed Partita component Skills.')
+    assert.include(boundary, 'Do not reproduce or locally project their rules, workflows, references, or validation.')
+    assert.include(boundary, 'Code Review is terminal. After its call begins, make no filesystem changes in this run.')
+    assert.include(boundary, 'Implement retains the overall outcome, primary marker and response envelope, effect authority and policy, final validation, termination, next-step decision, and delivery-contract governance.')
+    assert.include(boundary, 'Git commit, push, and merge authority are external to this Skill.')
+    assert.deepStrictEqual(readdirSync('skills/primitive/implement/references'), ['source-provenance.md'])
+    assertInOrder(workflow, [
+      'call the actual Partita Skill `pm:tdd` with a `TddRequest`',
+      'run the repository-required tests, build, typecheck, lint, and delivery checks under Implement ownership',
+      'require the external delivery contract to furnish a committed, non-empty `fixed-point...HEAD` review scope',
+      'Call the actual Partita Skill `pm:code-review` terminally with a `CodeReviewRequest`',
+      'consume the returned `CodeReviewResult`',
+      'After the terminal call, make no further filesystem changes',
+      'Implement alone owns that decision and the next step',
+    ])
+  }))
+
+  it.effect('pins Implement provenance and its provisional lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/implement/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/implement/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/implement/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/implement.md': '20293b523446d3089ec07822d1fd0c07c8a026ad',
+      'skills/engineering/implement/SKILL.md': '7a0b11f5f4fe9505ea5c7983c3083ba1bf754f69',
+      'skills/engineering/implement/agents/openai.yaml': 'f8794dc153b409052a9167baf10858cf01b36175',
+      'skills/primitive/tdd/SKILL.md': 'c91392efcc319e07cd68af31a0e3721b8b311b29',
+      'skills/primitive/tdd/agents/openai.yaml': 'ba31ef8aa75f83f4bd24f0a23a94c143ba971a79',
+      'skills/primitive/code-review/SKILL.md': 'c49cefb4e947c43d6b4958984f1a93ddcb4b74ef',
+      'skills/primitive/code-review/agents/openai.yaml': 'ecac1fd2ac88061920e087498bcc86452feaaf3f',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(skill, 'Every resulting patch MUST be performed through a separate explicit `retune`')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST be performed through a later separate explicit `retune`')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
   it.effect('protects Prototypes one-question throwaway observable-answer core', () => Effect.sync(() => {
