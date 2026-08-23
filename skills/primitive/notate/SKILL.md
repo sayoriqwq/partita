@@ -1,6 +1,6 @@
 ---
 name: notate
-description: "Use when the user explicitly invokes notate to create a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family. Not for public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
+description: "Use when the user explicitly invokes notate to create a case-rooted Partita skill from an evidence-anchored skill case with default failure, pressure, recognition surface, governance action, and source family. Not for creation whose implementation composes one or more predeclared Skills, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation."
 ---
 
 # Notate
@@ -19,7 +19,7 @@ Use when:
 
 Do not use when:
 
-- public workflow skill creation, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation.
+- creation whose implementation composes one or more predeclared Skills, patching existing skills, abstract capability requests, hypothetical scenarios, or verifier implementation.
 
 ## Boundary
 
@@ -66,7 +66,7 @@ Hard:
 4. 读取 [rule](references/rule.md)，确保新 skill 的 `## Rule` 是从 case governance action 投影出的单一 runtime imperative。
 5. 读取 [Partita skill](references/partita-skill.md)，确定 Partita family、handle、marker、shape、policy 和 checks。
 6. 读取 [OpenAI skill](references/openai-skill.md)，确认 Partita source skill 满足 OpenAI/Codex runtime shape。
-7. 确认目标不是 public workflow skill 或已有 skill patch；否则停止并给出显式调用 `conduct` 或 `retune` 的 typed recommendation，不得自动激活另一个 explicit-only skill。
+7. 按 implementation 的 Skill calls 分类：零 calls 是 Primitive，继续创建；一个或多个 predeclared calls 是 Workflow，停止并推荐显式调用 `conduct`；已有 skill patch 则推荐 `retune`。步骤数、阶段、分支、本地 state/protocol、router/controller shape 都不参与判断。
 8. 使用 [skill creation](references/skill-creation.md) 中的可复制模板创建 `SKILL.md`；创建可用时的 `agents/openai.yaml`、必要本地 references，以及 Partita landing 中直接需要的 generated files。
 9. 运行 target runtime 或 Partita landing 要求的 checks，或报告准确 blocker。
 
@@ -92,6 +92,6 @@ Before done:
 - 创建的 source skill family、path、handle、marker 和 metadata projection 一致；
 - expression/link/orientation/maintenance/primitive family 已按目标行为选择，没有默认回落到 primitive；
 - 创建的 source skill 有明确的 `policy.allow_implicit_invocation`；
-- `notate` 没有创建 public workflow skill、已有 skill patch、无 evidence anchor 的外部迁移或 verifier implementation；
+- `notate` 只创建 implementation 调用零个 Skill 的 Primitive，没有创建 Workflow、已有 skill patch、无 evidence anchor 的外部迁移或 verifier implementation；
 - Effects 保持在声明的 filesystem scope 内；
 - target runtime 或 Partita landing 要求的 checks 已通过，或准确 blocker 已报告。

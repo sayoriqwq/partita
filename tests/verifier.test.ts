@@ -29,6 +29,25 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('locks composition-only creation routing and native Density interruption', () => Effect.sync(() => {
+    const agents = readFileSync('AGENTS.md', 'utf8')
+    const conduct = readFileSync('skills/primitive/conduct/SKILL.md', 'utf8')
+    const workflowCreation = readFileSync('skills/primitive/conduct/references/workflow-creation.md', 'utf8')
+    const notate = readFileSync('skills/primitive/notate/SKILL.md', 'utf8')
+    const density = readFileSync('skills/expression/density/SKILL.md', 'utf8')
+
+    assert.include(agents, 'Primitive 的 implementation 不调用 Skill；Workflow 的 implementation 调用一个或多个 predeclared Skills')
+    assert.include(agents, '这属于 Workflow composition，不是 component 的 top-level implicit invocation')
+    assert.include(conduct, '调用零个 Skill 是 Primitive；调用一个或多个 Skill 是 Workflow')
+    assert.include(workflowCreation, '`components` MUST 是 nonempty、closed、finite set')
+    assert.include(notate, '零 calls 是 Primitive，继续创建；一个或多个 predeclared calls 是 Workflow')
+    assert.notInclude(workflowCreation, '`state primitive`')
+    assert.notInclude(workflowCreation, '`protocol primitive`')
+    assert.notInclude(workflowCreation, '`router`')
+    assert.notInclude(density, 'Cancelled')
+    assert.include(density, 'native interruption semantics')
+  }))
+
   it.effect('keeps recall read-only while retune owns existing-skill patches', () => Effect.sync(() => {
     const recall = readFileSync('skills/primitive/recall/SKILL.md', 'utf8')
     const recallMetadata = readFileSync('skills/primitive/recall/agents/openai.yaml', 'utf8')

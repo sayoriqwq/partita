@@ -67,8 +67,9 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - agent MUST NOT 直接编辑 `~/.agents/skills` 里的 installed runtime copy。
 - current Partita-owned public runtime skill catalog MUST 保持 explicit-only；每个现有 `agents/openai.yaml` MUST 使用 `policy.allow_implicit_invocation: false`。
 - explicit invocation 创建的 conversation-local state 可在其声明的 lifecycle 内继续生效；这属于 state continuation，不是 implicit skill invocation。
-- workflow MUST NOT 自动激活另一个 explicit-only public skill；只能读取已显式建立的 state、处理用户显式 co-invocation，或携带自包含的 local contract projection。
-- namespaced Partita skill 激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`；owner 保持第一位且独占 envelope/effects/termination ownership，只追加实质参与的其他已显式激活/共同调用 skill，active-but-inert skill 与 local contract projection MUST 省略。多个 co-invoked skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问最小 owner 问题，不显示 skill marker。
+- top-level skill invocation MUST 保持 explicit-only。显式调用 Workflow 后，Workflow MAY 调用其 closed、finite、predeclared component Skills；这属于 Workflow composition，不是 component 的 top-level implicit invocation。component calls MUST 使用 typed input/output 或 Effect Requirements，且不得 ad hoc discovery。
+- Primitive 与 Workflow 的唯一 classifier 是 Skill composition：Primitive 的 implementation 不调用 Skill；Workflow 的 implementation 调用一个或多个 predeclared Skills。步骤数、阶段、分支、本地 state/protocol、router/controller shape 与 source family 都不决定分类。
+- namespaced Partita skill 激活期间，每条用户可见回复的第一行 MUST 是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`；outer owner 保持第一位且独占 overall outcome、envelope、effect policy、termination 与 next-step ownership，只追加实质参与的其他已显式激活/共同调用 skill，active-but-inert skill MUST 省略。多个 co-invoked top-level skill 争夺 ownership 且 precedence 未确定时，MUST 在激活前只问最小 owner 问题，不显示 skill marker。
 - future internal/model-invoked role 或 invocation policy 变化 MUST 先明确 role、composition ownership、effects 和 disclosure，并通过 interpretation gate。
 - zero skills MUST 保持为合法 framework state。
 - 修改 skill names、trigger policy、harness install behavior、global skill state 或 marker conventions 前，如果用户指令有多种解读，MUST 使用 interpretation gate。
