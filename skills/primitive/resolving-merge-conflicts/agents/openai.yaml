@@ -1,0 +1,6 @@
+interface:
+  display_name: "Resolving Merge Conflicts"
+  short_description: "The user explicitly invokes resolving-merge-conflicts to resolve an in-progress Git merge or rebase by recovering both sides' intent and verifying the resulting behavior"
+  default_prompt: "Use pm:resolving-merge-conflicts when the user explicitly invokes resolving-merge-conflicts to resolve an in-progress Git merge or rebase by recovering both sides' intent and verifying the resulting behavior."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "To Spec"
+  short_description: "The user explicitly invokes to-spec to preserve one settled multi-session decision context as one durable specification with user-approved test seams"
+  default_prompt: "Use pm:to-spec when the user explicitly invokes to-spec to preserve one settled multi-session decision context as one durable specification with user-approved test seams."
+policy:
+  allow_implicit_invocation: false
