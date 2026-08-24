@@ -258,7 +258,9 @@ Partita 从 `SKILL.md` frontmatter 只读取 `name` 和 `description`。
 
 `policy.allow_implicit_invocation` MUST 位于 `agents/openai.yaml` 的 `policy` block 下。
 
-当前 Partita-owned public runtime catalog 是 explicit-only：所有现有 skill 的 `policy.allow_implicit_invocation` 都是 `false`。显式调用可以创建 skill 声明的 conversation-local state；该 state 在 lifecycle 内继续生效属于 continuation，不是新的 implicit invocation。
+Partita 消费 Captain 的规范 [Skill Theory `core/` bundle（commit `937e847720c8fdb2c62166ef7763ddd6116e7a0f`）](https://github.com/sayoriqwq/skill-theory/tree/937e847720c8fdb2c62166ef7763ddd6116e7a0f/core)，其 Partita projection 见 [Skill、Agent 与 Harness 的协作关系](https://github.com/sayoriqwq/skill-theory/blob/937e847720c8fdb2c62166ef7763ddd6116e7a0f/core/skill-agent-and-harness-collaboration.md#partita-%E6%B6%88%E8%B4%B9%E6%8A%95%E5%BD%B1%E6%9C%80%E5%B0%8F-effect-%E6%A8%A1%E5%9E%8B)；该状态由 [skill-theory#6](https://github.com/sayoriqwq/skill-theory/pull/6) 发布。Skill Theory 仍由上游拥有，Partita 只维护非配置化、非 runtime 的消费投影；上游 `matt-skills-theory/` 是描述性证据，不是 Captain 规范 authority。
+
+Codex-first 和 top-level explicit-only 是 Partita policy，不是通用 Skill Theory。当前 Partita-owned public runtime catalog 的所有 skill 都使用 `policy.allow_implicit_invocation: false`。显式调用可以创建 skill 声明的 conversation-local state；该 state 在 lifecycle 内继续生效属于 continuation，不是新的 implicit invocation。
 
 namespaced Partita skill 激活期间，每条用户可见回复的第一行是 `<family emoji> <Markdown title/display name>[ + <Display Name>...]`。owner 保持第一位；只追加实质改变本次回复的其他已显式激活或共同调用 skill。primitive catalog 对应 `🎼 Arrange`、`🎼 Conduct`、`🎼 Notate`、`🎼 Retune`。
 
