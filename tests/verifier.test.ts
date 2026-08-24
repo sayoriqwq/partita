@@ -363,6 +363,167 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
     assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
   }))
 
+  it.effect('protects To Specs settled-decision synthesis and seam-approval core', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/to-spec/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      'b33bd07436e1dcbcb6d96663993fb937c53eedc18dff16450aa9c2007ecaf110',
+    )
+    assert.include(rule, 'Synthesize settled decisions; do not reopen them.')
+    assert.include(rule, 'propose the fewest highest public test seams and obtain the user\'s approval')
+    assert.include(rule, 'invent nothing to fill the shape')
+    assert.include(boundary, 'Seam approval and artifact authority are the only clarifications inside this Skill')
+    assert.include(boundary, 'MUST NOT conduct a fresh design interview or choose for the user')
+    assert.include(boundary, 'MUST create or explicitly update exactly one authorized specification')
+    assert.include(boundary, 'MUST call no Skill')
+    assertInOrder(workflow, [
+      'Read the complete supplied conversation or decision record',
+      'Sketch the fewest highest public test seams',
+      'obtain approval before drafting',
+      'Draft one specification',
+      'Audit every material sentence against the settled input',
+      'Create or explicitly update only the one authorized artifact',
+      'Do not decompose tickets, implement, or review',
+    ])
+  }))
+
+  it.effect('pins Matt To Spec provenance and its provisional lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/to-spec/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/to-spec/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/to-spec/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/to-spec.md': '42cbf939af619508efa302050a9eba70ceb3e7a3',
+      'skills/engineering/to-spec/SKILL.md': '3fd64959895b7eb095a13d797e1c7544f1f08c8f',
+      'skills/engineering/to-spec/agents/openai.yaml': '549e6f76f020a1b9ba65f52ccda336566ee6222a',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(provenance, '## Core governing idea')
+    assert.include(provenance, '## Secondary suite and publication mechanics')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST then be performed through a separate explicit `retune`')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
+  it.effect('protects To Tickets vertical tracer graph and wide-refactor exception', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/to-tickets/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      '1e05472b1351bc2ced96fbb16f48b6c97a513b5f51ccb6beabc0d26ef5e6f5a2',
+    )
+    assert.include(rule, 'independently verifiable vertical tracer tickets')
+    assert.include(rule, 'genuine blocking edges')
+    assert.include(rule, 'obtain user approval of granularity and edges before publishing')
+    assert.include(rule, 'expand–migrate–contract')
+    assert.include(boundary, 'one narrow but complete user-visible or operator-visible behavior through every required layer')
+    assert.include(boundary, 'The published graph MUST be acyclic and MUST expose at least one unblocked frontier ticket.')
+    assert.include(boundary, 'MUST publish no ticket')
+    assert.include(boundary, 'MUST call no Skill')
+    assertInOrder(workflow, [
+      'Read the complete source',
+      'normal work becomes narrow end-to-end behavior slices',
+      'a wide refactor becomes expand → independently green migrate batches → contract',
+      'acceptance criteria with observable falsifiers',
+      'Audit the graph',
+      'Ask whether granularity is too coarse or fine',
+      'Publish exactly the approved graph',
+      'Stop before dispatch, implementation, parent mutation, or state transitions',
+    ])
+  }))
+
+  it.effect('pins Matt To Tickets provenance and its provisional lifecycle shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/to-tickets/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/to-tickets/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/to-tickets/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/to-tickets.md': 'c594031a5fab5c59e04d04786aaf4217356eae18',
+      'skills/engineering/to-tickets/SKILL.md': '96deac51d4391a3f691478d48f85f43261516c08',
+      'skills/engineering/to-tickets/agents/openai.yaml': '24605a5db64e4fc750b999aa94aea126bee814ee',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(provenance, '## Core governing idea')
+    assert.include(provenance, '## Secondary suite and tracker mechanics')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST then be performed through a separate explicit `retune`')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
+  it.effect('protects intent-sensitive conflict resolution and Captain-authorized safe stops', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/resolving-merge-conflicts/SKILL.md', 'utf8')
+    const rule = markdownSection(skill, '## Rule', '## Pattern')
+    const boundary = markdownSection(skill, '## Boundary', '## Effects')
+    const workflow = markdownSection(skill, '## Workflow', '## References')
+
+    assert.strictEqual(
+      sha256(markdownSection(skill, '## Rule', '## References')),
+      '3f596725df9dd0c9d38404373d728b79dc6866dcc108c8eb1c118290f99c4f06',
+    )
+    assert.include(rule, 'Resolve intent, not markers.')
+    assert.include(rule, 'recover the primary-source intent of both sides before editing each hunk')
+    assert.include(rule, 'Verify the resulting behavior with the repository\'s checks')
+    assert.include(rule, 'ambiguous or destructive choices stop safely for authority')
+    assert.include(boundary, 'A branch label such as ours/theirs is orientation, not intent evidence.')
+    assert.include(boundary, 'MUST leave that hunk unresolved, preserve the current Git operation')
+    assert.include(boundary, 'safe stop is the default and never discards the operation or existing work')
+    assert.include(boundary, 'explicit Skill invocation alone never grants commit, rebase-continue, merge-finish, push, or force-update authority')
+    assert.include(boundary, 'MUST call no Skill')
+    assert.notInclude(boundary, 'Always resolve; never `--abort`')
+    assertInOrder(workflow, [
+      'Prove the in-progress merge/rebase state',
+      'Inventory every conflict before editing',
+      'identify both originating commits and diffs',
+      'Write a short intent pair for each hunk',
+      'Resolve only evidence-complete hunks',
+      'Stage only paths whose every hunk is resolved',
+      'Run the narrowest relevant checks that exercise both sides\' intended behavior',
+      'A newly surfaced conflict starts again at Step 2',
+      'Before claiming completion, prove the Git operation has ended',
+      'Never push or mutate a remote',
+    ])
+  }))
+
+  it.effect('pins Matt conflict-resolution provenance and the authority-bounded Partita shell', () => Effect.sync(() => {
+    const skill = readFileSync('skills/primitive/resolving-merge-conflicts/SKILL.md', 'utf8')
+    const metadata = readFileSync('skills/primitive/resolving-merge-conflicts/agents/openai.yaml', 'utf8')
+    const provenance = readFileSync('skills/primitive/resolving-merge-conflicts/references/source-provenance.md', 'utf8')
+    const sourceRevision = '84fdeffd12f2ee307994d1eb6feb48173b6e0502'
+    const sourceRevisions = [...provenance.matchAll(/github\.com\/mattpocock\/skills\/(?:blob|tree)\/([0-9a-f]{40})/gu)]
+      .map(match => match[1])
+
+    assert.deepStrictEqual(provenanceBlobMap(provenance), {
+      'docs/engineering/resolving-merge-conflicts.md': '6a05a003bef359587042c6e073930bdd691673b8',
+      'skills/engineering/resolving-merge-conflicts/SKILL.md': 'aadb3fcb1dfb43413dff30c2fb4b18b7cf58e90e',
+      'skills/engineering/resolving-merge-conflicts/agents/openai.yaml': '331ffb9d38937877f51a5f867a66dc61eee259ae',
+    })
+    assert.isAbove(sourceRevisions.length, 0)
+    assert.isTrue(sourceRevisions.every(revision => revision === sourceRevision))
+    assert.strictEqual(countOccurrences(skill, 'provisional / case-pending'), 1)
+    assert.strictEqual([...skill.matchAll(/^Recall handoff:$/gmu)].length, 1)
+    assert.include(provenance, '## Core governing idea')
+    assert.include(provenance, '## Source completion posture and Captain authority')
+    assert.include(provenance, 'Every patch to this identity-valid Skill MUST then be performed through a separate explicit `retune`')
+    assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+  }))
+
   it.effect('protects the bounded domain-modeling intervention and completion semantics', () => Effect.sync(() => {
     const skill = readFileSync('skills/primitive/domain-modeling/SKILL.md', 'utf8')
     const rule = markdownSection(skill, '## Rule', '## Pattern')
