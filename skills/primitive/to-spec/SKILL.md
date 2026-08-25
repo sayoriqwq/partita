@@ -32,6 +32,8 @@ Soft:
 - The specification contains `Problem Statement`, `Solution`, `User Outcomes or Stories`, `Implementation Decisions`, `Testing Decisions`, `Out of Scope`, and `Further Notes`. A section with no settled evidence says so instead of attracting fabricated content.
 - Implementation decisions describe stable modules, interfaces, invariants, schema or API contracts without volatile file paths or working code. A short decision-rich snippet from an already supplied prototype MAY appear only when prose would lose the settled decision.
 - The artifact is a decision snapshot, not a live source of truth. Retention, replacement, labels, and later cleanup remain target-owned lifecycle choices.
+- When the authorized surface is the Docwarden V1 FILE backend, publish only `.docwarden/issue-tracker/specs/<spec-id>.md` under its target-owned contract. The accepted record uses `kind: spec` and `status: ready`, owns its bounded outcome and acceptance criteria, and remains work/progress state rather than standing domain or current-state authority.
+- Publication returns a receipt and proposed STATE delta to the outer Lead. To Spec does not write STATE or own record completion.
 
 Hard:
 
@@ -45,13 +47,15 @@ Hard:
   Do: MUST report the exact missing authority and stop rather than inventing a path, tracker, issue, or label.
 - When: drafting and publication proceed.
   Do: MUST create or explicitly update exactly one authorized specification, inspect every material statement against the settled context, and make no other repository or tracker mutation.
+- When: publishing to the Docwarden V1 FILE backend.
+  Do: MUST obey its Spec path and schema, read back the record, and return the receipt plus proposed authority delta; MUST NOT mark the record `completed`, write STATE, create a Ticket, or update CONTEXT/GLOSSARY/ADR on the outer Lead's behalf.
 - When: this implementation runs.
   Do: MUST call no Skill; repository reads and artifact tools are local mechanics.
 
 ## Effects
 
 - Conversation: MAY show provisional status, the bounded source context, seam proposal and approval request, exact blocker, artifact locator, unresolved gaps, and final handoff.
-- Filesystem: MAY inspect the target repository and create or explicitly update exactly one authorized target-owned Markdown specification.
+- Filesystem: MAY inspect the target repository and create or explicitly update exactly one authorized target-owned Markdown specification, including one Docwarden V1 FILE Spec under its existing target contract.
 - External: MAY read supplied decision evidence and publish exactly one specification to an explicitly authorized tracker surface; no label, branch, ticket decomposition, implementation, PR, or other mutation.
 
 ## Workflow
@@ -68,8 +72,8 @@ Hard:
    - `Out of Scope`: every deliberate exclusion or refused expansion;
    - `Further Notes`: unresolved gaps and source locators that belong in the snapshot.
 5. Audit every material sentence against the settled input. Remove inferred requirements, generic filler, unstable implementation detail, and any choice the user did not make. Preserve unresolved or conflicting evidence visibly.
-6. Create or explicitly update only the one authorized artifact. Read it back and confirm the approved seams, settled decisions, and exclusions survived publication. Apply no default label or follow-on workflow.
-7. Return the decision-context scope, approved seams, artifact locator, publication mode, and unresolved gaps. Do not decompose tickets, implement, or review.
+6. Create or explicitly update only the one authorized artifact. In Docwarden V1 FILE mode, write `.docwarden/issue-tracker/specs/<spec-id>.md` with `kind: spec`, `status: ready`, the bounded outcome, acceptance criteria, settled evidence, exclusions, reconciliation, and acceptance-evidence sections. Read it back and confirm the approved seams, settled decisions, and exclusions survived publication. Apply no default label or follow-on workflow.
+7. Return the decision-context scope, approved seams, artifact locator, publication mode, unresolved gaps, receipt and proposed STATE delta. Leave STATE writes and completion to the outer Lead. Do not decompose tickets, implement, or review.
 8. Finish a real use with exactly one handoff, without activating `recall` or `retune`:
 
 ```text
@@ -96,6 +100,7 @@ Before done:
 - the user approved the fewest highest public test seams before publication;
 - every material statement came from supplied decisions or repository evidence, while missing or conflicting decisions remained unresolved rather than invented;
 - exactly one specification records the problem, solution, outcomes, implementation and testing decisions, out-of-scope boundaries, and further notes;
+- Docwarden V1 FILE publication, when selected, used the distinct Spec path/schema, returned a read-back receipt and proposed STATE delta, and left STATE writes plus `completed` transition to the outer Lead;
 - no fresh design interview, ticket decomposition, implementation, review, other Skill call, or unauthorized repository/tracker mutation occurred;
 - exactly one final handoff records observed use, neither `recall` nor `retune` was auto-activated, and every future patch remains owned by explicit `retune` after Recall case/judgment;
 - target runtime or landing checks passed, or the exact authority, evidence, or publication blocker was reported.

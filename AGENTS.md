@@ -36,6 +36,22 @@ Partita 不拥有 user-home dotfile materialization、global runtime skill unive
 - project-specific commands、private local paths 或 one-off workflow history；
 - `sayoriqwq/sayoriqwq` personal skills monorepo 路径。
 
+## Docwarden
+
+Root `AGENTS.md` is the concise runtime entry. For repository work, load stable meaning and collaboration semantics before reconciled state, in this order:
+
+1. [`.docwarden/CONTEXT.md`](.docwarden/CONTEXT.md)；
+2. [`.docwarden/GLOSSARY.md`](.docwarden/GLOSSARY.md)；
+3. [`.docwarden/STATE.md`](.docwarden/STATE.md)。
+
+Follow active work and ADR pointers from STATE instead of scanning ambient records. Read `.docwarden/NOTES.md` only after explicit authorization; it is local human continuity authority, and Agents never write `NOTES.md`.
+
+Preserve one outer Lead. Workers and component Skills return evidence, receipts, and proposed deltas. Lead records a reconcilable intent in STATE before the effect; after evidence, Lead records `Applied`, `NotApplied`, or `Unknown`. Never retry `Unknown` before reconciliation. Lead alone writes STATE and completes Specs or Tickets, after effect reconciliation, authority updates, ADR impact handling, and acceptance evidence.
+
+Within this module, accepted active ADRs govern their decisions; CONTEXT and GLOSSARY govern their separate semantics; STATE governs reconciled current reality; an active [FILE Spec or Ticket](.docwarden/issue-tracker/CONTRACT.md) governs only its bounded execution slice. Authorized NOTES may inform Lead but never silently override tracked authority. A conflict between owners blocks execution until Lead obtains the smallest Captain decision.
+
+Create accepted ADRs lazily at `.docwarden/adr/<scope>/<date>-<slug>.md`. Each contains `Why necessary`, `Decision`, `Context-at-the-time`, and `Revisit-when`, plus optional `Supersedes`. Accepted ADRs are immutable: a changed decision creates a new ADR and updates the STATE pointer.
+
 ## Rules
 
 - 除非用户显式定义 skill，否则 MUST NOT 新增 skill。

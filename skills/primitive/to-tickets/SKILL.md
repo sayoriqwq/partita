@@ -32,6 +32,8 @@ Soft:
 - Acceptance criteria belong to that ticket, name an observable falsifier, and are not already true at the ticket's starting point. They do not depend on behavior another ticket owns.
 - A blocking edge exists only when the blocked ticket cannot begin or remain valid before its blocker completes. The published graph MUST be acyclic and MUST expose at least one unblocked frontier ticket.
 - A wide refactor is one mechanical change whose blast radius cannot land green as a vertical slice. Sequence it as expand, independently green migrate batches, then contract; if batches cannot stay green, make that limitation and the final integration/verification gate explicit.
+- When the authorized surface is the Docwarden V1 FILE backend, the source is an accepted FILE Spec and every Ticket lives at `.docwarden/issue-tracker/tickets/<ticket-id>.md` with `kind: ticket`, `status: ready`, a `parent_spec` link, and `blocked_by` repository-relative links. Specs and Tickets never share a path or schema.
+- FILE publication returns a receipt and proposed STATE delta to the outer Lead. To Tickets does not write STATE or own record completion.
 
 Hard:
 
@@ -47,13 +49,15 @@ Hard:
   Do: MUST publish no ticket.
 - When: publishing.
   Do: MUST use only the authorized target surface, create one artifact per approved ticket in blocker-first order, preserve native blocking relationships when available, and make no parent, label, branch, dispatch, or implementation mutation without separate outer authority.
+- When: publishing to the Docwarden V1 FILE backend.
+  Do: MUST require one accepted parent Spec, obey the distinct Ticket path/schema, and read back every parent/blocker link; MUST NOT mark any record `completed`, write STATE, mutate the parent Spec, or update CONTEXT/GLOSSARY/ADR on the outer Lead's behalf.
 - When: this implementation runs.
   Do: MUST call no Skill; source reads, repository inspection, and tracker tools are local mechanics.
 
 ## Effects
 
 - Conversation: MAY show provisional status, source and scope, numbered draft tickets, blocking edges, approval questions, exact blocker, published locators, frontier, and final handoff.
-- Filesystem: MAY inspect the target repository and create one target-owned local ticket file per approved ticket under an existing authorized convention; no source implementation changes.
+- Filesystem: MAY inspect the target repository and create one target-owned local ticket file per approved ticket under an existing authorized convention, including distinct Docwarden V1 FILE Tickets under its existing target contract; no source implementation changes.
 - External: MAY read the supplied source and create approved tickets plus their blocking relationships on one explicitly authorized tracker; no parent modification, labels, dispatch, branch, PR, or implementation.
 
 ## Workflow
@@ -67,9 +71,10 @@ Hard:
 5. Audit the graph: every ordinary ticket is independently demoable or verifiable, every criterion is owned and initially falsifiable, edges are acyclic, at least one frontier ticket is unblocked, and ticket size fits one fresh Codex context.
 6. Present the draft as a numbered blocker-first list. For each item show `Title`, `Blocked by`, and `What it delivers`. Ask whether granularity is too coarse or fine, whether every edge is real, and which tickets should merge or split. Iterate only the decomposition until the user approves both dimensions.
 7. Publish exactly the approved graph to the authorized surface in blocker-first order:
-   - local mode writes one clearly identified file per ticket using the target's existing convention and textual blocker identifiers;
+   - Docwarden V1 FILE mode writes `.docwarden/issue-tracker/tickets/<ticket-id>.md` records with `kind: ticket`, `status: ready`, the accepted Spec's `parent_spec` link, and only genuine `blocked_by` repository-relative links; use `blocked_by: []` for frontier Tickets;
+   - other local mode writes one clearly identified file per ticket using the target's existing convention and textual blocker identifiers;
    - tracker mode creates one issue per ticket and uses native blocking relationships when the surface supports them, otherwise explicit blocker references in the ticket body.
-8. Read back every artifact and edge. Return the source, ordered ticket locators, frontier, and any publication limitation. Stop before dispatch, implementation, parent mutation, or state transitions.
+8. Read back every artifact, parent link, and blocker edge. Return the source, ordered ticket locators, frontier, publication limitation, receipt and proposed STATE delta. Leave STATE writes and completion to the outer Lead. Stop before dispatch, implementation, parent mutation, or state transitions.
 9. Finish a real use with exactly one handoff, without activating `recall` or `retune`:
 
 ```text
@@ -97,6 +102,7 @@ Before done:
 - every ticket is independently demoable or verifiable, sized for one fresh context, and has acceptance criteria it owns with an observable pre-implementation falsifier;
 - blocking edges are genuine and acyclic, at least one frontier ticket is unblocked, and the user approved granularity plus edges before publication;
 - one artifact per approved ticket and every blocker relationship were read back from the authorized surface;
+- Docwarden V1 FILE publication, when selected, used the distinct Ticket path/schema, resolvable parent/blocker links, returned a read-back receipt and proposed STATE delta, and left STATE writes plus `completed` transitions to the outer Lead;
 - no specification synthesis, implementation, dispatch, parent or label mutation, other Skill call, or unauthorized repository/tracker action occurred;
 - exactly one final handoff records observed use, neither `recall` nor `retune` was auto-activated, and every future patch remains owned by explicit `retune` after Recall case/judgment;
 - target runtime or landing checks passed, or the exact source, graph, authority, or publication blocker was reported.

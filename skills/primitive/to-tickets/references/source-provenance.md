@@ -39,6 +39,12 @@ Partita makes top-level invocation explicit-only and classifies To Tickets as a 
 
 This projection adds no router, automatic selector, tracker runtime, compatibility layer, Gate object, state/error model, component schema, parent workflow, implementation dispatch, or external mutation beyond the approved ticket graph.
 
+## Captain-accepted Docwarden V1 FILE projection
+
+The 2026-08-25 Captain acceptance authorizes one additional target-owned publication branch: To Tickets may decompose an accepted FILE Spec into `.docwarden/issue-tracker/tickets/<ticket-id>.md` records. Every Ticket carries a resolvable parent Spec link and only genuine blocker links, while retaining the pinned Matt vertical tracer, falsifiable acceptance, graph, and wide-refactor behavior. To Tickets returns read-back evidence and a proposed STATE delta; the outer Lead alone writes STATE and completes records.
+
+Separate `specs/` and `tickets/` paths and schemas close Matt's `.scratch/**/issues` collision without adding a generic tracker interface. This branch rejects the `setup-matt-pocock-skills` dependency, labels, remote adapters, Projects, milestones, templates, and parent mutation. Docwarden owns module reconciliation; To Tickets consumes the authorized FILE contract directly and calls no Skill.
+
 ## Pending evidence and evolution
 
 No real Captain To Tickets use yet validates this projection. Evidence must test whether the one-context threshold is useful, whether vertical behavior survives realistic cross-cutting work, whether the graph audit catches false blockers and empty frontiers, whether wide-refactor batching remains green, whether target tracker edges can be read back reliably, and whether fresh Codex contexts can complete the tickets without hidden source context.
