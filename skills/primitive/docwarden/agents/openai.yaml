@@ -1,0 +1,6 @@
+interface:
+  display_name: "Docwarden"
+  short_description: "The user explicitly invokes docwarden to establish or reconcile one target repository's bounded `.docwarden` authority module"
+  default_prompt: "Use pm:docwarden when the user explicitly invokes docwarden to establish or reconcile one target repository's bounded `.docwarden` authority module."
+policy:
+  allow_implicit_invocation: false

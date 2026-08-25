@@ -102,6 +102,7 @@ const buildSourceReport = Effect.fn('buildSourceReport')(function* (root: string
     ...(yield* checkPrimitiveReferenceCopies(fs, root)),
     ...(yield* checkArrangeSourceProjection(fs, root)),
     ...(yield* checkRemovedSurfaces(fs, root)),
+    ...(yield* checkDocwardenV1(fs, root)),
     ...(yield* checkNoRootSkill(fs, root)),
   ]
   return reportFromIssues(issues)
@@ -179,6 +180,148 @@ const checkRemovedSurfaces = Effect.fn('checkRemovedSurfaces')(function* (fs: Fi
       issues.push(issue('surface.removed_exists', message, path))
     }
   }
+  return issues
+})
+
+const checkDocwardenV1 = Effect.fn('checkDocwardenV1')(function* (
+  fs: FileSystem.FileSystem,
+  root: string,
+) {
+  const path = yield* Path.Path
+  const packagePath = path.join(root, 'package.json')
+  if (!(yield* pathExists(fs, packagePath))) {
+    return []
+  }
+
+  const packageText = yield* readText(fs, packagePath)
+  if (!/"name"\s*:\s*"@sayoriqwq\/partita"/u.test(packageText)) {
+    return []
+  }
+
+  const issues: Array<ValidationIssue> = []
+  const requiredFiles = [
+    'AGENTS.md',
+    '.gitignore',
+    '.docwarden/CONTEXT.md',
+    '.docwarden/GLOSSARY.md',
+    '.docwarden/STATE.md',
+    '.docwarden/issue-tracker/CONTRACT.md',
+  ] as const
+  const requiredDirectories = [
+    '.docwarden/issue-tracker/specs',
+    '.docwarden/issue-tracker/tickets',
+  ] as const
+
+  for (const relativePath of requiredFiles) {
+    const absolutePath = path.join(root, relativePath)
+    if (!(yield* pathExists(fs, absolutePath))) {
+      issues.push(issue('docwarden.required_missing', 'required Docwarden V1 file is missing', relativePath))
+      continue
+    }
+    const stat = yield* fs.stat(absolutePath).pipe(
+      Effect.mapError(cause => fileSystemError(`Stat ${absolutePath}`, cause)),
+    )
+    if (stat.type !== 'File') {
+      issues.push(issue('docwarden.required_shape', 'required Docwarden V1 path must be a file', relativePath))
+    }
+  }
+
+  for (const relativePath of requiredDirectories) {
+    const absolutePath = path.join(root, relativePath)
+    if (!(yield* pathExists(fs, absolutePath))) {
+      issues.push(issue('docwarden.required_missing', 'required Docwarden V1 directory is missing', relativePath))
+      continue
+    }
+    const stat = yield* fs.stat(absolutePath).pipe(
+      Effect.mapError(cause => fileSystemError(`Stat ${absolutePath}`, cause)),
+    )
+    if (stat.type !== 'Directory') {
+      issues.push(issue('docwarden.required_shape', 'required Docwarden V1 path must be a directory', relativePath))
+    }
+  }
+
+  if (yield* pathExists(fs, path.join(root, '.gitignore'))) {
+    const gitignore = yield* readText(fs, path.join(root, '.gitignore'))
+    if (!/^\/\.docwarden\/NOTES\.md$/mu.test(gitignore)) {
+      issues.push(issue(
+        'docwarden.notes_not_ignored',
+        'Docwarden NOTES must have the exact repository-root ignore boundary',
+        '.gitignore',
+      ))
+    }
+  }
+
+  const requiredFragments: ReadonlyArray<readonly [string, string]> = [
+    ['AGENTS.md', '[`.docwarden/CONTEXT.md`](.docwarden/CONTEXT.md)'],
+    ['AGENTS.md', 'Lead records a reconcilable intent in STATE before the effect'],
+    ['AGENTS.md', 'Never retry `Unknown` before reconciliation'],
+    ['AGENTS.md', 'Lead alone writes STATE and completes Specs or Tickets'],
+    ['AGENTS.md', 'Agents never write `NOTES.md`'],
+    ['.docwarden/CONTEXT.md', 'This file owns stable domain meaning'],
+    ['.docwarden/GLOSSARY.md', 'This file owns behavior-changing collaboration leading words'],
+    ['.docwarden/GLOSSARY.md', '## Unknown'],
+    ['.docwarden/STATE.md', '## Current reality'],
+    ['.docwarden/STATE.md', '## Active work and decisions'],
+    ['.docwarden/STATE.md', '## Mutable effects'],
+    ['.docwarden/issue-tracker/CONTRACT.md', 'Supported kinds: `spec | ticket`'],
+    ['.docwarden/issue-tracker/CONTRACT.md', 'Supported lifecycle: `draft | ready | in-progress | blocked | completed | not-planned`'],
+    ['.docwarden/issue-tracker/CONTRACT.md', 'Lead alone writes `completed`'],
+  ]
+  for (const [relativePath, fragment] of requiredFragments) {
+    const absolutePath = path.join(root, relativePath)
+    if (!(yield* pathExists(fs, absolutePath))) {
+      continue
+    }
+    if (!(yield* readText(fs, absolutePath)).includes(fragment)) {
+      issues.push(issue('docwarden.contract_drift', `missing Docwarden V1 contract: ${fragment}`, relativePath))
+    }
+  }
+
+  const docwardenRoot = path.join(root, '.docwarden')
+  if (yield* pathExists(fs, docwardenRoot)) {
+    const allowed = new Set(['CONTEXT.md', 'GLOSSARY.md', 'NOTES.md', 'STATE.md', 'adr', 'issue-tracker'])
+    for (const entry of yield* fs.readDirectory(docwardenRoot).pipe(
+      Effect.mapError(cause => fileSystemError(`Read directory ${docwardenRoot}`, cause)),
+    )) {
+      if (!allowed.has(entry)) {
+        issues.push(issue('docwarden.unsupported_surface', 'unsupported Docwarden V1 root surface', `.docwarden/${entry}`))
+      }
+    }
+  }
+
+  const issueRoot = path.join(root, '.docwarden/issue-tracker')
+  if (yield* pathExists(fs, issueRoot)) {
+    const allowed = new Set(['CONTRACT.md', 'specs', 'tickets'])
+    for (const entry of yield* fs.readDirectory(issueRoot).pipe(
+      Effect.mapError(cause => fileSystemError(`Read directory ${issueRoot}`, cause)),
+    )) {
+      if (!allowed.has(entry)) {
+        issues.push(issue(
+          'docwarden.unsupported_surface',
+          'Docwarden V1 FILE backend allows only its contract and distinct specs/tickets paths',
+          `.docwarden/issue-tracker/${entry}`,
+        ))
+      }
+    }
+  }
+
+  const adrRoot = path.join(root, '.docwarden/adr')
+  if (yield* pathExists(fs, adrRoot)) {
+    for (const relativePath of yield* relativeFilePaths(fs, adrRoot)) {
+      const issuePath = `.docwarden/adr/${relativePath}`
+      if (!/^[a-z0-9-]+\/\d{4}-\d{2}-\d{2}-[a-z0-9-]+\.md$/u.test(relativePath)) {
+        issues.push(issue('docwarden.adr_shape', 'accepted ADR path must match <scope>/<date>-<slug>.md', issuePath))
+        continue
+      }
+      const text = yield* readText(fs, path.join(adrRoot, relativePath))
+      for (const heading of ['## Why necessary', '## Decision', '## Context-at-the-time', '## Revisit-when']) {
+        if (!text.includes(heading)) {
+          issues.push(issue('docwarden.adr_shape', `accepted ADR is missing ${heading}`, issuePath))
+        }
+      }
+    }
+  }
+
   return issues
 })
 

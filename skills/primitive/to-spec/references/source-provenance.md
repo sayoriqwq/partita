@@ -39,6 +39,12 @@ Partita makes top-level invocation explicit-only and classifies To Spec as a Pri
 
 This projection adds no selector, automatic route, tracker runtime, compatibility layer, Gate object, state/error model, setup flow, ticket decomposition, implementation, review, or external mutation beyond the one authorized specification.
 
+## Captain-accepted Docwarden V1 FILE projection
+
+The 2026-08-25 Captain acceptance authorizes one additional target-owned publication branch: an accepted To Spec output may be created or reconciled at `.docwarden/issue-tracker/specs/<spec-id>.md` under the target's Docwarden V1 FILE contract. The record is `ready` work state, not standing CONTEXT or STATE authority. To Spec returns read-back evidence and a proposed STATE delta; the outer Lead alone writes STATE and completes the record.
+
+This branch keeps the pinned Matt synthesis and seam-approval core while rejecting the `setup-matt-pocock-skills` dependency, setup-managed labels, remote mutation, and shared `.scratch` issue namespace. Docwarden owns module reconciliation; To Spec consumes the authorized FILE contract directly and calls no Skill.
+
 ## Pending evidence and evolution
 
 No real Captain To Spec use yet validates this projection. Evidence must test whether the multi-session threshold earns the artifact, whether one seam-approval exchange is sufficient without reopening design, whether the semantic section shape works beyond feature work, whether artifact authority is practical across target repositories, and whether fresh sessions recover the settled decisions without hidden invention.

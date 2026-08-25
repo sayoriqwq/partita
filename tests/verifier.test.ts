@@ -16,13 +16,134 @@ import {
 
 const { execFileSync } = process.getBuiltinModule('node:child_process')
 const { createHash } = process.getBuiltinModule('node:crypto')
-const { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
+const { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = process.getBuiltinModule('node:fs')
 const { tmpdir } = process.getBuiltinModule('node:os')
 const { dirname, join } = process.getBuiltinModule('node:path')
 
 const marker = '🧭'
 
 layer(NodeServices.layer)('Partita verifier', (it) => {
+  it.effect('ships Docwarden as an explicit-only Primitive with pinned setup lineage', () =>
+    Effect.gen(function* () {
+      const skill = readFileSync('skills/primitive/docwarden/SKILL.md', 'utf8')
+      const metadata = readFileSync('skills/primitive/docwarden/agents/openai.yaml', 'utf8')
+      const provenance = readFileSync('skills/primitive/docwarden/references/source-provenance.md', 'utf8')
+      const report = yield* verifyPartitaSourceSkills({ root: process.cwd() })
+
+      assert.isTrue(report.ok)
+      assert.include(skill, 'name: docwarden')
+      assert.include(skill, '`🎼 Docwarden`')
+      assert.include(skill, 'MUST call no Skill')
+      assert.include(metadata, 'policy:\n  allow_implicit_invocation: false')
+      assert.include(provenance, '84fdeffd12f2ee307994d1eb6feb48173b6e0502')
+      assert.include(provenance, 'setup-matt-pocock-skills')
+    }))
+
+  it.effect('keeps the tracked Docwarden authority module and Lead-owned reconciliation coherent', () => Effect.sync(() => {
+    const agents = readFileSync('AGENTS.md', 'utf8')
+    const context = readFileSync('.docwarden/CONTEXT.md', 'utf8')
+    const glossary = readFileSync('.docwarden/GLOSSARY.md', 'utf8')
+    const state = readFileSync('.docwarden/STATE.md', 'utf8')
+    const tracker = readFileSync('.docwarden/issue-tracker/CONTRACT.md', 'utf8')
+    const ignored = execFileSync('git', ['check-ignore', '.docwarden/NOTES.md'], { encoding: 'utf8' })
+    const trackedNotes = execFileSync('git', ['ls-files', '.docwarden/NOTES.md'], { encoding: 'utf8' })
+
+    assertInOrder(agents, [
+      '[`.docwarden/CONTEXT.md`](.docwarden/CONTEXT.md)',
+      '[`.docwarden/GLOSSARY.md`](.docwarden/GLOSSARY.md)',
+      '[`.docwarden/STATE.md`](.docwarden/STATE.md)',
+    ])
+    assert.include(agents, 'Lead records a reconcilable intent in STATE before the effect')
+    assert.include(agents, '`Applied`, `NotApplied`, or `Unknown`')
+    assert.include(agents, 'Never retry `Unknown` before reconciliation')
+    assert.include(agents, 'Lead alone writes STATE and completes Specs or Tickets')
+    assert.include(agents, 'Agents never write `NOTES.md`')
+    assert.include(agents, '.docwarden/adr/<scope>/<date>-<slug>.md')
+    assert.include(agents, '`Why necessary`, `Decision`, `Context-at-the-time`, and `Revisit-when`')
+    assert.include(agents, 'Accepted ADRs are immutable')
+    assert.include(context, 'Partita')
+    assert.include(glossary, '## Lead')
+    assert.include(glossary, '## Unknown')
+    assert.notInclude(glossary, '## Partita')
+    assert.include(state, '## Current reality')
+    assert.include(state, '## Active work and decisions')
+    assert.include(state, '## Mutable effects')
+    assert.notInclude(state, 'Activity log')
+    assert.include(tracker, 'spec | ticket')
+    assert.include(tracker, 'draft | ready | in-progress | blocked | completed | not-planned')
+    assert.include(tracker, 'issue-tracker/specs/<spec-id>.md')
+    assert.include(tracker, 'issue-tracker/tickets/<ticket-id>.md')
+    assert.include(tracker, 'mutable effects are reconciled')
+    assert.include(tracker, 'acceptance evidence proves its criteria')
+    assert.strictEqual(ignored.trim(), '.docwarden/NOTES.md')
+    assert.strictEqual(trackedNotes, '')
+    assert.isFalse(existsSync('.docwarden/adr'))
+    for (const path of [
+      '.docwarden/activity-log.md',
+      '.docwarden/index.md',
+      '.docwarden/issue-tracker/github',
+      '.docwarden/issue-tracker/gitlab',
+      '.docwarden/issue-tracker/labels',
+      '.docwarden/issue-tracker/projects',
+      '.docwarden/issue-tracker/milestones',
+      '.docwarden/issue-tracker/templates',
+    ]) {
+      assert.isFalse(existsSync(path), path)
+    }
+  }))
+
+  it.effect('carries accepted Specs through distinct FILE Tickets to Lead-owned completion', () => Effect.sync(() => {
+    const toSpec = readFileSync('skills/primitive/to-spec/SKILL.md', 'utf8')
+    const toSpecProvenance = readFileSync('skills/primitive/to-spec/references/source-provenance.md', 'utf8')
+    const toTickets = readFileSync('skills/primitive/to-tickets/SKILL.md', 'utf8')
+    const toTicketsProvenance = readFileSync('skills/primitive/to-tickets/references/source-provenance.md', 'utf8')
+    const tracker = readFileSync('.docwarden/issue-tracker/CONTRACT.md', 'utf8')
+
+    assert.include(toSpec, '.docwarden/issue-tracker/specs/<spec-id>.md')
+    assert.include(toSpec, '`kind: spec` and `status: ready`')
+    assert.include(toSpec, 'receipt and proposed STATE delta')
+    assert.include(toSpec, 'MUST NOT mark the record `completed`')
+    assert.include(toSpecProvenance, 'Docwarden V1 FILE')
+    assert.include(toSpecProvenance, 'setup-matt-pocock-skills')
+
+    assert.include(toTickets, '.docwarden/issue-tracker/tickets/<ticket-id>.md')
+    assert.include(toTickets, '`parent_spec`')
+    assert.include(toTickets, '`blocked_by`')
+    assert.include(toTickets, 'repository-relative links')
+    assert.include(toTickets, 'receipt and proposed STATE delta')
+    assert.include(toTickets, 'MUST NOT mark any record `completed`')
+    assert.include(toTicketsProvenance, 'Docwarden V1 FILE')
+    assert.include(toTicketsProvenance, '.scratch/**/issues')
+
+    assertInOrder(tracker, [
+      '## Spec schema',
+      '## Ticket schema',
+      '## Lifecycle and completion',
+      'Lead alone writes `completed`',
+    ])
+  }))
+
+  it.effect('verifies the Partita Docwarden module and rejects V1 surface drift', () =>
+    Effect.gen(function* () {
+      const validRoot = makeDocwardenFixture()
+      const validReport = yield* verifySourceProject({ root: validRoot })
+
+      assert.isTrue(validReport.ok)
+      assert.deepStrictEqual(validReport.issues, [])
+
+      const driftRoot = makeDocwardenFixture()
+      rmSync(join(driftRoot, '.docwarden/CONTEXT.md'))
+      write(driftRoot, '.docwarden/issue-tracker/github/config.md', '# Remote adapter\n')
+      write(driftRoot, '.gitignore', '# missing NOTES boundary\n')
+      const driftReport = yield* verifySourceProject({ root: driftRoot })
+      const codes = driftReport.issues.map(issue => issue.code)
+
+      assert.isFalse(driftReport.ok)
+      assert.include(codes, 'docwarden.required_missing')
+      assert.include(codes, 'docwarden.notes_not_ignored')
+      assert.include(codes, 'docwarden.unsupported_surface')
+    }))
+
   it.effect('keeps arrange explicit invocation only', () => Effect.sync(() => {
     const metadata = readFileSync('skills/primitive/arrange/agents/openai.yaml', 'utf8')
 
@@ -371,7 +492,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
 
     assert.strictEqual(
       sha256(markdownSection(skill, '## Rule', '## References')),
-      'b33bd07436e1dcbcb6d96663993fb937c53eedc18dff16450aa9c2007ecaf110',
+      '36b6bc5e56d986602fbeac97481bcf24b545a0de50f8fe469d75562d77d569de',
     )
     assert.include(rule, 'Synthesize settled decisions; do not reopen them.')
     assert.include(rule, 'propose the fewest highest public test seams and obtain the user\'s approval')
@@ -422,7 +543,7 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
 
     assert.strictEqual(
       sha256(markdownSection(skill, '## Rule', '## References')),
-      '1e05472b1351bc2ced96fbb16f48b6c97a513b5f51ccb6beabc0d26ef5e6f5a2',
+      'e65fcfeda99ddc9417988f051051e4d51ab6dd11d305dc9e2a1cf27a65874bec',
     )
     assert.include(rule, 'independently verifiable vertical tracer tickets')
     assert.include(rule, 'genuine blocking edges')
@@ -1164,6 +1285,15 @@ layer(NodeServices.layer)('Partita verifier', (it) => {
       assert.isTrue(projectCodes.includes('openai_metadata.missing'))
     }))
 })
+
+function makeDocwardenFixture(): string {
+  const root = makeValidSourceFixture()
+  write(root, 'package.json', encodeJson({ name: '@sayoriqwq/partita', version: '0.1.0' }))
+  cpSync('AGENTS.md', join(root, 'AGENTS.md'))
+  cpSync('.gitignore', join(root, '.gitignore'))
+  cpSync('.docwarden', join(root, '.docwarden'), { recursive: true })
+  return root
+}
 
 function makeArrangeProjectionFixture(): string {
   const root = makeValidSourceFixture()

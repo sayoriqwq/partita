@@ -13,6 +13,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `src/partita/` 负责 Partita-specific verification、pin、skills.sh skill runtime wrapper 和 chezmoi home adapter。
 - `tests/` 承载 executable behavior checks。
 - root operating docs 是 `README.md` 和 `AGENTS.md`。
+- [`.docwarden/`](.docwarden/CONTEXT.md) 是 bounded repository authority module；root `AGENTS.md` 仍是 runtime entry。
 - Turbo/pnpm workspace 保留，即使 `packages/` 暂时没有 active package。
 
 当前没有 dispatcher、docs baseline 或 repo-internal materialization layer。
@@ -38,6 +39,7 @@ Partita 不 owns user-home dotfile materialization、global runtime skill univer
 - `src/partita/pin.ts` 管理 GitHub git-subtree pins。
 - `src/partita/skill.ts` 是 skills.sh CLI 的 thin wrapper。
 - `src/partita/home.ts` 是 chezmoi CLI 的 thin wrapper。
+- [`.docwarden/STATE.md`](.docwarden/STATE.md) 记录 reconciled current reality 和 active pointers；[FILE Issue contract](.docwarden/issue-tracker/CONTRACT.md) 定义 distinct Specs/Tickets work state。
 
 ## Commands
 
